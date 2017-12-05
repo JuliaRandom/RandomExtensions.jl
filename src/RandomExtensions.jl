@@ -1,6 +1,6 @@
 module RandomExtensions
 
-export Combine, Uniform, Normal, Exponential, CloseOpen
+export Combine, Uniform, Normal, Exponential, CloseOpen, Rand
 
 import Random: Sampler, rand, rand!
 
@@ -13,6 +13,7 @@ using SparseArrays: sprand, sprandn
 include("distributions.jl")
 include("sampling.jl")
 include("containers.jl")
+include("iteration.jl")
 
 
 ## updated rand docstring (TODO: replace Base's one)
