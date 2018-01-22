@@ -1,0 +1,3 @@
+module RandomExtensions
+
+end # module
