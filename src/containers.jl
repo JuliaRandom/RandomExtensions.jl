@@ -44,7 +44,7 @@ rand!(rng::AbstractRNG, A::AbstractSet, sp::Sampler) = _rand!(rng, A, length(A),
 rand(r::AbstractRNG, ::Type{T}, n::Integer) where {T<:AbstractSet} = rand(r, Float64, T, n)
 rand(                ::Type{T}, n::Integer) where {T<:AbstractSet} = rand(GLOBAL_RNG, T, n)
 
-rand(r::AbstractRNG, X, ::Type{T}, n::Integer) where {T<:AbstractSet} = _rand0!(r, deduce_type(T, eltype(X))(), n, X)
+rand(r::AbstractRNG, X, ::Type{T}, n::Integer) where {T<:AbstractSet} = _rand0!(r, deduce_type(T, gentype(X))(), n, X)
 rand(                X, ::Type{T}, n::Integer) where {T<:AbstractSet} = rand(GLOBAL_RNG, X, T, n)
 
 rand(r::AbstractRNG, ::Type{X}, ::Type{T}, n::Integer) where {X,T<:AbstractSet} = _rand0!(r, deduce_type(T, X)(), n, X)
@@ -70,7 +70,7 @@ rand(r::AbstractRNG, ::Type{X}, p::AbstractFloat, m::Integer) where {X} =
 rand(X, p::AbstractFloat, m::Integer) = rand(GLOBAL_RNG, X, p, m)
 
 rand(r::AbstractRNG, X::Sampler, p::AbstractFloat, m::Integer, n::Integer) =
-    sprand(r, m, n, p, (r, n)->rand(r, X, n), eltype(X))
+    sprand(r, m, n, p, (r, n)->rand(r, X, n), gentype(X))
 
 rand(r::AbstractRNG, X, p::AbstractFloat, m::Integer, n::Integer) =
     rand(r, Sampler(r, X), p, m, n)

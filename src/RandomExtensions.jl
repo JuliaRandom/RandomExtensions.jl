@@ -2,7 +2,7 @@ module RandomExtensions
 
 export Combine, Uniform, Normal, Exponential, CloseOpen, Rand
 
-import Random: Sampler, rand, rand!
+import Random: Sampler, rand, rand!, gentype
 
 using Random
 using Random: GLOBAL_RNG, SamplerTrivial, SamplerSimple, SamplerTag, Repetition

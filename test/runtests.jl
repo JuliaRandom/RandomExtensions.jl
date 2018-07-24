@@ -113,3 +113,12 @@ Random.rand(rng::AbstractRNG, ::Random.SamplerTrivial{PairDistrib}) = 1=>2
     @test d == Dict(1=>2)
     @test typeof(d) == Dict{Any,Any}
 end
+
+@testset "some tight typing" begin
+    UI = Random.UInt52()
+    @test eltype(rand(MersenneTwister(), Random.Sampler(MersenneTwister, UI), .6, 1, 0)) == UInt64
+    @test eltype(rand(UI, Set, 3)) == UInt64
+    @test eltype(rand(Uniform(UI), 3)) == UInt64
+    a = rand(RandomExtensions.Combine(Pair, Int, UI))
+    @test fieldtype(typeof(a), 2) == UInt64
+end

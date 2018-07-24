@@ -30,8 +30,8 @@ Combine(::Type{T}, ::Type{X}, y::Y) where {T,X,Y} = Combine2{deduce_type(T,X,Y),
 Combine(::Type{T}, x::X, ::Type{Y}) where {T,X,Y} = Combine2{deduce_type(T,X,Y),X,Type{Y}}(x, Y)
 Combine(::Type{T}, ::Type{X}, ::Type{Y}) where {T,X,Y} = Combine2{deduce_type(T,X,Y),Type{X},Type{Y}}(X, Y)
 
-deduce_type(::Type{T}, ::Type{X}, ::Type{Y}) where {T,X,Y} = _deduce_type(T, Val(isconcretetype(T)), eltype(X), eltype(Y))
-deduce_type(::Type{T}, ::Type{X}) where {T,X} = _deduce_type(T, Val(isconcretetype(T)), eltype(X))
+deduce_type(::Type{T}, ::Type{X}, ::Type{Y}) where {T,X,Y} = _deduce_type(T, Val(isconcretetype(T)), gentype(X), gentype(Y))
+deduce_type(::Type{T}, ::Type{X}) where {T,X} = _deduce_type(T, Val(isconcretetype(T)), gentype(X))
 
 _deduce_type(::Type{T}, ::Val{true},  ::Type{X}, ::Type{Y}) where {T,X,Y} = T
 _deduce_type(::Type{T}, ::Val{false}, ::Type{X}, ::Type{Y}) where {T,X,Y} = deduce_type(T{X}, Y)
@@ -55,7 +55,7 @@ struct UniformWrap{T,E} <: Uniform{E}
     val::T
 end
 
-Uniform(x::T) where {T} = UniformWrap{T,eltype(T)}(x)
+Uniform(x::T) where {T} = UniformWrap{T,gentype(T)}(x)
 
 Base.getindex(x::UniformWrap) = x.val
 
