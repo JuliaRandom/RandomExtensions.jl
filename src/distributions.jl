@@ -110,9 +110,6 @@ CloseOpen(::Type{T}=Float64) where {T<:AbstractFloat} = CloseOpen01{T}()
 CloseOpen(a::T, b::T) where {T<:AbstractFloat} = CloseOpenAB{T}(a, b)
 
 
-Base.eltype(::Type{<:FloatInterval{T}}) where {T<:AbstractFloat} = T
-
-
 ## a dummy container type to take advangage of SamplerTag constructor
 
 struct Cont{T} end
