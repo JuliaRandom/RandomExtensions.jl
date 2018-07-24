@@ -8,7 +8,7 @@ rand!(A::AbstractDict{K,V}, dist::Distribution{<:Pair}=Combine(Pair, K, V)) wher
 
 rand!(rng::AbstractRNG, A::AbstractDict{K,V},
       dist::Distribution{<:Pair}=Combine(Pair, K, V)) where {K,V} =
-          rand!(GLOBAL_RNG, A, Sampler(rng, dist))
+          rand!(rng, A, Sampler(rng, dist))
 
 function _rand!(rng::AbstractRNG, A::Union{AbstractDict,AbstractSet}, n::Integer, sp::Sampler)
     empty!(A)
