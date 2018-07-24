@@ -5,7 +5,7 @@
 
 abstract type Distribution{T} end
 
-Base.eltype(::Type{Distribution{T}}) where {T} = T
+Base.eltype(::Type{<:Distribution{T}}) where {T} = T
 
 abstract type Combine{T} <: Distribution{T} end
 
