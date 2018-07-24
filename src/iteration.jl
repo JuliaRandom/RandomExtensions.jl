@@ -16,15 +16,7 @@ Rand(::Type{X}=Float64) where {X} = Rand(GLOBAL_RNG, X)
 
 (R::Rand)(args...) = rand(R.rng, R.sp, args...)
 
-Base.start(R::Rand) = R
-
-function Base.next(::Union{Rand,Distribution}, R::Rand)
-    e = R()
-    e, R
-end
-
-Base.done(::Union{Rand,Distribution}, ::Rand) = false
-
+Base.iterate(iter::Union{Rand,Distribution}, R::Rand=iter) = R(), R
 Base.IteratorSize(::Type{<:Rand}) = Base.IsInfinite()
 
 Base.IteratorEltype(::Type{<:Rand}) = Base.HasEltype()
@@ -32,5 +24,5 @@ Base.eltype(::Type{<:Rand{R, <:Sampler{T}}}) where {R,T} = T
 
 # convenience iteration over distributions
 
-Base.start(d::Distribution) = Rand(GLOBAL_RNG, d)
+Base.iterate(d::Distribution) = iterate(Rand(GLOBAL_RNG, d))
 Base.IteratorSize(::Type{<:Distribution}) = Base.IsInfinite()
