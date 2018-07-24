@@ -20,8 +20,8 @@ end
 
 rand!(rng::AbstractRNG, A::AbstractDict{K,V}, sp::Sampler) where {K,V} = _rand!(rng, A, length(A), sp)
 
-rand(rng::AbstractRNG, dist::Distribution{<:Pair}, ::Type{T}, n::Integer) where {T<:AbstractDict} =
-    _rand!(rng, deduce_type(T, eltype(dist).parameters...)(), n, Sampler(rng, dist))
+rand(rng::AbstractRNG, dist::Distribution{P}, ::Type{T}, n::Integer) where {P<:Pair,T<:AbstractDict} =
+    _rand!(rng, deduce_type(T, fieldtype(P, 1), fieldtype(P, 2))(), n, Sampler(rng, dist))
 
 rand(u::Distribution{<:Pair}, ::Type{T}, n::Integer) where {T<:AbstractDict} = rand(GLOBAL_RNG, u, T, n)
 

@@ -102,3 +102,14 @@ end
         @test collect(Iterators.take(d, 10)) isa Vector{Int}
     end
 end
+
+struct PairDistrib <: RandomExtensions.Distribution{Pair}
+end
+
+Random.rand(rng::AbstractRNG, ::Random.SamplerTrivial{PairDistrib}) = 1=>2
+
+@testset "allow abstract Pair when generating a Dict" begin
+    d = rand(PairDistrib(), Dict, 1)
+    @test d == Dict(1=>2)
+    @test typeof(d) == Dict{Any,Any}
+end
