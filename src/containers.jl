@@ -97,13 +97,13 @@ end
 const BitArrays = Union{BitArray,BitVector,BitMatrix}
 
 rand(r::AbstractRNG, ::Type{T}, dims::Dims) where {T<:BitArrays} =
-    rand!(r, T(uninitialized, dims))
+    rand!(r, T(undef, dims))
 
 rand(r::AbstractRNG, ::Type{T}, dims::Integer...) where {T<:BitArrays} =
-    rand!(r, T(uninitialized, convert(Dims, dims)))
+    rand!(r, T(undef, convert(Dims, dims)))
 
 rand(::Type{T}, dims::Dims) where {T<:BitArrays} =
-    rand!(T(uninitialized, dims))
+    rand!(T(undef, dims))
 
 rand(::Type{T}, dims::Integer...) where {T<:BitArrays} =
-    rand!(T(uninitialized, convert(Dims, dims)))
+    rand!(T(undef, convert(Dims, dims)))
