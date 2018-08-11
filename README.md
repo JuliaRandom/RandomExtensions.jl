@@ -8,8 +8,8 @@ This package explores a possible extension of `rand`-related
 functionalities (from the `Random` module); the code is initially
 taken from https://github.com/JuliaLang/julia/pull/24912.
 Note that type piracy is commited!
-While hopefully useful, this package is still very experimental, and
-hence unstable.
+While hopefully useful, this package is still experimental, and
+hence unstable. Design or implementation contributions are welcome.
 
 This does mainly 3 things:
 
@@ -26,6 +26,17 @@ This does mainly 3 things:
    (like `Set`, `Dict`, `SparseArray`, `String`, `BitArray`);
 
 3) define a `Rand` iterator, which produces lazily random values.
+
+
+Point 1) defines a `Distribution` type which is incompatible with the
+"Distributions.jl" package. Input on how to unify the two approaches is
+welcome.
+Point 2) goes somewhat against the trend in `Base` to create
+containers using their constructors -- which by the way may be
+achieved with the `Rand` iterator from point 3).
+Still, I like the terser approach here, as it simply generalizes
+to other containers the __current__ `rand` API creating arrays.
+See the issue linked above for a discussion on those topics.
 
 
 There is not much documentation for now: `rand`'s docstring is updated,
@@ -97,3 +108,8 @@ julia> collect(Iterators.take(Uniform(1:10), 3)) # distributions can be iterated
  10
   5
 ```
+
+In some cases, the `Rand` iterator can provide some efficiency gains compared to
+repeated calls to `rand`, as it uses the same mechanism as non-scalar generation.
+For example, given `a = zeros(10000)`,
+`a .+ Rand(1:1000).()` will be faster than `a .+ rand.(Ref(1:1000))`.
