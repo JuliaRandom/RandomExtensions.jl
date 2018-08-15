@@ -22,6 +22,12 @@ using Test
     @test z.re ∈ 1:3
     @test z.im ∈ 6:9
     @test z isa ComplexF64
+    for (C, R) in ((Complex, Int), (ComplexF64, Float64), (Complex{Int}, Int))
+        z = rand(Combine(C, 1:3))
+        @test z.re ∈ 1:3
+        @test z.im ∈ 1:3
+        @test z isa Complex{R}
+    end
     @test rand(ComplexF64) isa ComplexF64
 
     # Uniform

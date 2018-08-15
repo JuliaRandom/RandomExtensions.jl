@@ -49,8 +49,8 @@ Sampler(RNG::Type{<:AbstractRNG}, ::Type{Pair{A,B}}, n::Repetition) where {A,B} 
     Sampler(RNG, Combine(Pair{A,B}, A, B), n)
 
 # rand(Combine(Complex, x)) => rand(Combine(Combine, x, x))
-Sampler(RNG::Type{<:AbstractRNG}, u::Combine1{Complex}, n::Repetition) =
-    Sampler(RNG, Combine(Complex, u.x, u.x), n)
+Sampler(RNG::Type{<:AbstractRNG}, u::Combine1{T}, n::Repetition) where {T<:Complex} =
+    Sampler(RNG, Combine(T, u.x, u.x), n)
 
 # rand(Complex{T}) => rand(Combine(Complex{T}, T, T)) (redundant with implem in Random)
 Sampler(RNG::Type{<:AbstractRNG}, ::Type{Complex{T}}, n::Repetition) where {T<:Real} =
