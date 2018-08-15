@@ -52,6 +52,9 @@ end
     @test s === rand!(s, 3:9) <= Set(3:9)
     @test length(s) == 2
 
+    @test rand(rng..., Pair{Int,Float64}, Set, 3) isa Set{Pair{Int,Float64}}
+    @test rand(rng..., Pair{Int,Float64}, Set{Pair}, 3) isa Set{Pair}
+
     # Dict
     for s = (rand(rng..., Combine(Pair, 1:99, 1:99), Dict, 10),
              rand(rng..., Combine(Pair, 1:99, 1:99), Dict{Int,Int}, 10))
