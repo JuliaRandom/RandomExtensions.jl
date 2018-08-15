@@ -3,11 +3,11 @@
 
 ## dicts
 
-rand!(A::AbstractDict{K,V}, dist::Distribution{<:Pair}=Combine(Pair, K, V)) where {K,V} =
+rand!(A::AbstractDict{K,V}, dist::Union{Type{<:Pair},Distribution{<:Pair}}=Combine(Pair, K, V)) where {K,V} =
     rand!(GLOBAL_RNG, A, dist)
 
 rand!(rng::AbstractRNG, A::AbstractDict{K,V},
-      dist::Distribution{<:Pair}=Combine(Pair, K, V)) where {K,V} =
+      dist::Union{Type{<:Pair},Distribution{<:Pair}}=Combine(Pair, K, V)) where {K,V} =
           rand!(rng, A, Sampler(rng, dist))
 
 function _rand!(rng::AbstractRNG, A::Union{AbstractDict,AbstractSet}, n::Integer, sp::Sampler)
@@ -23,7 +23,11 @@ rand!(rng::AbstractRNG, A::AbstractDict{K,V}, sp::Sampler) where {K,V} = _rand!(
 rand(rng::AbstractRNG, dist::Distribution{P}, ::Type{T}, n::Integer) where {P<:Pair,T<:AbstractDict} =
     _rand!(rng, deduce_type(T, fieldtype(P, 1), fieldtype(P, 2))(), n, Sampler(rng, dist))
 
+rand(rng::AbstractRNG, ::Type{P}, ::Type{T}, n::Integer) where {P<:Pair,T<:AbstractDict} = rand(rng, Uniform(P), T, n)
+
 rand(u::Distribution{<:Pair}, ::Type{T}, n::Integer) where {T<:AbstractDict} = rand(GLOBAL_RNG, u, T, n)
+
+rand(::Type{P}, ::Type{T}, n::Integer) where {P<:Pair,T<:AbstractDict} = rand(GLOBAL_RNG, Uniform(P), T, n)
 
 
 ## sets

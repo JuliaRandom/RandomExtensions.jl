@@ -72,6 +72,15 @@ end
     @test length(s) == 2
     @test first(s).first ∈ 3:9
 
+    d = rand(rng..., Pair{Int,Float64}, Dict, 3)
+    @test d isa Dict{Int,Float64}
+    dd = rand!(rng..., d, Pair{Int,Int8})
+    @test dd === d
+    delt = pop!(d)
+    @test delt isa Pair{Int,Float64}
+    @test delt[2] ∈ typemin(Int8):typemax(Int8)
+    @test rand(rng..., Pair{Int,Float64}, Dict{Any,Any}, 3) isa Dict{Any,Any}
+
     # sparse
     @test rand(rng..., Float64, .5, 10) isa SparseVector{Float64}
     @test rand(rng..., .5, 10) isa SparseVector{Float64}
