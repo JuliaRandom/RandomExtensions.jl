@@ -61,6 +61,9 @@ julia> rand(Combine(Pair, 1:10, Normal())) # random Pair, where both members hav
 julia> rand(Combine(Pair{Number, Any}, 1:10, Normal())) # specify the Pair type
 Pair{Number,Any}(1, -0.131617)
 
+julia> rand(Pair{Float64,Int}) # equivalent to rand(Combine(Pair, Float64, Int))
+0.321676 => -4583276276690463733
+
 julia> rand(Combine(Complex, Normal())) # each coordinate is drawn from the normal distribution
 1.5112317924121632 + 0.723463453534426im
 

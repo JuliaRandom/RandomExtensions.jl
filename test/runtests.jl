@@ -13,6 +13,7 @@ using Test
 
     # pairs/complexes
     @test rand(Combine(Pair, 1:3, Float64)) isa Pair{Int,Float64}
+    @test rand(Pair{Int,Float64}) isa Pair{Int,Float64}
     z = rand(Combine(Complex, 1:3, 6:9))
     @test z.re ∈ 1:3
     @test z.im ∈ 6:9
@@ -21,6 +22,7 @@ using Test
     @test z.re ∈ 1:3
     @test z.im ∈ 6:9
     @test z isa ComplexF64
+    @test rand(ComplexF64) isa ComplexF64
 
     # Uniform
     @test rand(Uniform(Float64)) isa Float64

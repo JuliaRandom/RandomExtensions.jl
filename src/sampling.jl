@@ -42,13 +42,19 @@ rand(rng::AbstractRNG, sp::SamplerTag{Cont{T}}) where {T<:Union{Pair,Complex}} =
     T(rand(rng, sp.data[1]), rand(rng, sp.data[2]))
 
 
-### additional methods for complex numbers
+### additional convenience methods
 
+# rand(Pair{A,B}) => rand(Combine(Pair{A,B}, A, B))
+Sampler(RNG::Type{<:AbstractRNG}, ::Type{Pair{A,B}}, n::Repetition) where {A,B} =
+    Sampler(RNG, Combine(Pair{A,B}, A, B), n)
+
+# rand(Combine(Complex, x)) => rand(Combine(Combine, x, x))
 Sampler(RNG::Type{<:AbstractRNG}, u::Combine1{Complex}, n::Repetition) =
     Sampler(RNG, Combine(Complex, u.x, u.x), n)
 
+# rand(Complex{T}) => rand(Combine(Complex{T}, T, T)) (redundant with implem in Random)
 Sampler(RNG::Type{<:AbstractRNG}, ::Type{Complex{T}}, n::Repetition) where {T<:Real} =
-    Sampler(RNG, Combine(Complex, T, T), n)
+    Sampler(RNG, Combine(Complex{T}, T, T), n)
 
 
 ## Normal & Exponential
