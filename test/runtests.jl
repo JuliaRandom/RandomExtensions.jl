@@ -30,6 +30,9 @@ using Test
     end
     @test rand(ComplexF64) isa ComplexF64
 
+    @test rand(Combine(Complex,Int), 3) isa Vector{Complex{Int}}
+    @test rand(Combine(Complex,1:3), 3) isa Vector{Complex{Int}}
+
     # Uniform
     @test rand(Uniform(Float64)) isa Float64
     @test rand(Uniform(1:10)) isa Int
