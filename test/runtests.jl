@@ -145,3 +145,9 @@ end
     a = rand(RandomExtensions.Combine(Pair, Int, UI))
     @test fieldtype(typeof(a), 2) == UInt64
 end
+
+@testset "rand(::Pair)" begin
+    @test rand(1=>3) ∈ (1, 3)
+    @test rand(1=>2, 3) isa Vector{Int}
+    @test rand(1=>'2', 3) isa Vector{Union{Char, Int}}
+end
