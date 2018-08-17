@@ -63,6 +63,28 @@ Sampler(RNG::Type{<:AbstractRNG}, ::Type{Complex{T}}, n::Repetition) where {T<:R
     Sampler(RNG, Combine(Complex{T}, T, T), n)
 
 
+## sampler for tuples
+
+@generated function Sampler(RNG::Type{<:AbstractRNG}, ::Type{T}, n::Repetition) where {T<:Tuple}
+    U = unique(T.parameters)
+    sps = [:(Sampler(RNG, $(U[i]), n)) for i in 1:length(U)]
+    :(SamplerTag{Cont{T}}(tuple($(sps...))))
+end
+
+@generated function rand(rng::AbstractRNG, sp::SamplerTag{Cont{T},S}) where {T<:Tuple,S}
+    rands = []
+    for i = 1:fieldcount(T)
+        for j = 1:i
+            if fieldtype(T, i) == gentype(fieldtype(S, j))
+                push!(rands, :(rand(rng, sp.data[$j])))
+                break
+            end
+        end
+    end
+    :(tuple($(rands...)))
+end
+
+
 ## Normal & Exponential
 
 rand(rng::AbstractRNG, ::SamplerTrivial{Normal01{T}}) where {T<:Union{AbstractFloat,Complex{<:AbstractFloat}}} =

@@ -166,3 +166,12 @@ end
         @test 1 <= rand(m, sp) < 2
     end
 end
+
+@testset "rand(::Type{<:Tuple})" begin
+    for types in ([Base.BitInteger_types..., Float16, Float32, Float64, BigFloat, Char, Bool],
+                  [Int, UInt64, Char]) # more repetitions
+        tlist = rand(types, rand(1:10))
+        T = Tuple{tlist...}
+        @test rand(T) isa Tuple{tlist...}
+    end
+end
