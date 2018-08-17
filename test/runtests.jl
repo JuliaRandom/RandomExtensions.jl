@@ -151,3 +151,18 @@ end
     @test rand(1=>2, 3) isa Vector{Int}
     @test rand(1=>'2', 3) isa Vector{Union{Char, Int}}
 end
+
+@testset "rand(::AbstractFloat)" begin
+    # check that overridden methods still work
+    m = MersenneTwister()
+    for F in (Float16, Float32, Float64, BigFloat)
+        @test rand(F) isa F
+        sp = Random.Sampler(MersenneTwister, RandomExtensions.CloseOpen01(F))
+        @test rand(m, sp) isa F
+        @test 0 <= rand(m, sp) < 1
+        F ∈ (Float64, BigFloat) || continue # only types implemented in Random
+        sp = Random.Sampler(MersenneTwister, RandomExtensions.CloseOpen12(F))
+        @test rand(m, sp) isa F
+        @test 1 <= rand(m, sp) < 2
+    end
+end

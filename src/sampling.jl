@@ -14,12 +14,18 @@ Sampler(RNG::Type{<:AbstractRNG}, d::Union{UniformWrap,UniformType}, n::Repetiti
 Sampler(RNG::Type{<:AbstractRNG}, ::Type{T}, n::Repetition) where {T<:AbstractFloat} =
     Sampler(RNG, CloseOpen01(T), n)
 
+for CO in (:CloseOpen01, :CloseOpen12)
+    @eval Sampler(::Type{<:AbstractRNG}, I::$CO{BigFloat}, ::Repetition) =
+        Random.SamplerBigFloat{Random.$CO{BigFloat}}(precision(BigFloat))
+end
+
 ### fall-back on Random definitions
 rand(r::AbstractRNG, ::SamplerTrivial{CloseOpen01{T}}) where {T} =
     rand(r, SamplerTrivial(Random.CloseOpen01{T}()))
 
 rand(r::AbstractRNG, ::SamplerTrivial{CloseOpen12{T}}) where {T} =
     rand(r, SamplerTrivial(Random.CloseOpen12{T}()))
+
 
 ### CloseOpenAB
 
