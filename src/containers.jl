@@ -111,3 +111,10 @@ rand(::Type{T}, dims::Dims) where {T<:BitArrays} =
 
 rand(::Type{T}, dims::Integer...) where {T<:BitArrays} =
     rand!(T(undef, convert(Dims, dims)))
+
+## NTuple as a container
+
+rand(r::AbstractRNG, X,         ::Type{NTuple{N}}) where {N}   = rand(r,          Combine(NTuple{N}, X))
+rand(                X,         ::Type{NTuple{N}}) where {N}   = rand(GLOBAL_RNG, Combine(NTuple{N}, X))
+rand(r::AbstractRNG, ::Type{X}, ::Type{NTuple{N}}) where {X,N} = rand(r,          Combine(NTuple{N}, X))
+rand(                ::Type{X}, ::Type{NTuple{N}}) where {X,N} = rand(GLOBAL_RNG, Combine(NTuple{N}, X))

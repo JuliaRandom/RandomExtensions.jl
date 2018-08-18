@@ -110,6 +110,13 @@ end
     s = rand(rng..., "asd", String)
     @test length(s) == 8
     @test Set(s) <= Set("asd")
+
+    # NTuple
+    s = rand(rng..., Int, NTuple{3})
+    @test s isa NTuple{3,Int}
+    s = rand(rng..., 1:3, NTuple{3})
+    @test s isa NTuple{3,Int}
+    @test all(in(1:3), s)
 end
 
 @testset "Rand" for rng in ([], [MersenneTwister(0)], [RandomDevice()])

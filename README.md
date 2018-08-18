@@ -122,6 +122,9 @@ julia> rand(BitArray, 3) # equivalent to bitrand(3)
   true
  false
 
+julia> rand(1:3, NTuple{3}) # NTuple{3} considered as a container, equivalent to rand(Combine(NTuple{3}, 1:3))
+(3, 3, 1)
+
 julia> Set(Iterators.take(Rand(RandomDevice(), 1:10), 3)) # RNG defaults to Random.GLOBAL_RNG
 Set([9, 2, 6])
 
