@@ -197,3 +197,17 @@ end
     T = Random.gentype(s)
     rand(Combine(NTuple{N}, s)) isa NTuple{N,T}
 end
+
+@testset "rand(Combine(String, ...))" begin
+    b = UInt8['0':'9';'A':'Z';'a':'z']
+
+    for (s, c, n) in [(rand(String), b, 8),
+                      (rand(Combine(String, 3)), b, 3),
+                      (rand(Combine(String, "asd")), "asd", 8),
+                      (rand(Combine(String, 3, "asd")), "asd", 3),
+                      (rand(Combine(String, "qwe", 3)), "qwe", 3)]
+
+        @test s ⊆ map(Char, c)
+        @test length(s) == n
+    end
+end

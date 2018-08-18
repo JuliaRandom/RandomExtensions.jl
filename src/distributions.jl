@@ -27,6 +27,8 @@ struct Combine2{T,X,Y} <: Combine{T}
     y::Y
 end
 
+Combine2{T}(x::X, y::Y) where {T,X,Y} = Combine2{T,X,Y}(x, y)
+
 Combine(::Type{T}, x::X, y::Y) where {T,X,Y} = Combine2{deduce_type(T,gentype(X),gentype(Y)),X,Y}(x, y)
 Combine(::Type{T}, ::Type{X}, y::Y) where {T,X,Y} = Combine2{deduce_type(T,X,gentype(Y)),Type{X},Y}(X, y)
 Combine(::Type{T}, x::X, ::Type{Y}) where {T,X,Y} = Combine2{deduce_type(T,gentype(X),Y),X,Type{Y}}(x, Y)

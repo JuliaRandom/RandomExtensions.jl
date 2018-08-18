@@ -116,6 +116,15 @@ julia> rand(Normal(), 0.3, 2, 3) # equivalent to sprandn(2, 3, 0.3)
 julia> rand(String, 4) # equivalent to randstring(4)
 "5o75"
 
+julia> rand("123", String, 4) # String considered as a container
+"2131"
+
+julia> rand(String, Set, 3) # String considered as a scalar
+Set(["0Dfqj6Yr", "ILngfcRz", "HT5IEyK3"])
+
+julia> rand(Combine(String, 3, "123"))
+"211"
+
 julia> rand(BitArray, 3) # equivalent to bitrand(3)
 3-element BitArray{1}:
   true
@@ -139,3 +148,12 @@ In some cases, the `Rand` iterator can provide some efficiency gains compared to
 repeated calls to `rand`, as it uses the same mechanism as non-scalar generation.
 For example, given `a = zeros(10000)`,
 `a .+ Rand(1:1000).()` will be faster than `a .+ rand.(Ref(1:1000))`.
+
+Note: as seen in the examples above, `String` can be considered as a scalar or as a container (in the `rand` API).
+In a call like `rand(String)`, both APIs coincide, but in `rand(String, 3)`, should we construct a `String` of
+length `3` (container API), or an array of strings of default length `8` ? Currently, the package chooses
+the first interpretation, for no other good reason that it was the first implemented. It may also be the one
+most useful (and offers the tersest API to compete with `randstring`).
+But as this package is still unstable, this choice may be revisited in the future.
+Note that it's easy to get the result of the second interpretation via `rand(Combine(String), 3)`.
+Also, the variant `rand(String, Vector, 3)` could be introduced in the future, similar to `rand(String, Set, 3)`.

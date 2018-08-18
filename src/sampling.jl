@@ -167,3 +167,29 @@ Sampler(RNG::Type{<:AbstractRNG}, t::Pair, n::Repetition) =
 
 rand(rng::AbstractRNG, sp::SamplerSimple{<:Pair}) =
     @inbounds return sp[][1 + rand(rng, sp.data)]
+
+
+## String as a scalar
+
+let b = UInt8['0':'9';'A':'Z';'a':'z'],
+    s = Sampler(MersenneTwister, b, Val(Inf)) # cache for the likely most common case
+
+    global Sampler, rand, Combine
+
+    Combine(::Type{String}) = Combine2{String}(8, b)
+    Combine(::Type{String}, chars) = Combine2{String}(8, chars)
+    Combine(::Type{String}, n::Integer) = Combine2{String}(Int(n), b)
+    Combine(::Type{String}, chars, n::Integer) = Combine2{String}(Int(n), chars)
+    Combine(::Type{String}, n::Integer, chars) = Combine2{String}(Int(n), chars)
+
+    Sampler(RNG::Type{<:AbstractRNG}, ::Type{String}, n::Repetition) =
+        SamplerTag{Cont{String}}((RNG === MersenneTwister ? s : Sampler(RNG, b, n)) => 8)
+
+    function Sampler(RNG::Type{<:AbstractRNG}, c::Combine2{String}, n::Repetition)
+        sp = RNG === MersenneTwister && c.y === b ?
+            s : Sampler(RNG, c.y, n)
+        SamplerTag{Cont{String}}(sp => c.x)
+    end
+
+    rand(rng::AbstractRNG, sp::SamplerTag{Cont{String}}) = String(rand(rng, sp.data.first, sp.data.second))
+end
