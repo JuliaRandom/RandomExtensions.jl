@@ -181,6 +181,7 @@ end
         T = Tuple{tlist...}
         @test rand(T) isa Tuple{tlist...}
     end
+    @test rand(Tuple{}) === ()
 end
 
 @testset "rand(Combine(Tuple, ...))" begin

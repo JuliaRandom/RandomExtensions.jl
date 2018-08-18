@@ -118,3 +118,7 @@ rand(r::AbstractRNG, X,         ::Type{NTuple{N}}) where {N}   = rand(r,        
 rand(                X,         ::Type{NTuple{N}}) where {N}   = rand(GLOBAL_RNG, Combine(NTuple{N}, X))
 rand(r::AbstractRNG, ::Type{X}, ::Type{NTuple{N}}) where {X,N} = rand(r,          Combine(NTuple{N}, X))
 rand(                ::Type{X}, ::Type{NTuple{N}}) where {X,N} = rand(GLOBAL_RNG, Combine(NTuple{N}, X))
+
+### disambiguate
+
+rand(::AbstractRNG, ::Type{Tuple{}}) = ()
