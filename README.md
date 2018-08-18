@@ -19,8 +19,7 @@ This does mainly 3 things:
    `CloseOpen` (for generation of floats in a close-open range),
    `Uniform` (which can wrap an implicit uniform distribution),
    `Combine` (to "combine" distribution for objects made of multiple
-   scalars, like `Pair` or `Complex`);
-
+   scalars, like `Pair`, `Tuple`, or `Complex`);
 
 2) define generation of some containers filled with random values
    (like `Set`, `Dict`, `SparseArray`, `String`, `BitArray`);
@@ -63,6 +62,12 @@ Pair{Number,Any}(1, -0.131617)
 
 julia> rand(Pair{Float64,Int}) # equivalent to rand(Combine(Pair, Float64, Int))
 0.321676 => -4583276276690463733
+
+julia> rand(Combine(Tuple, 1:10, Normal()))
+(9, 1.3407309364427373)
+
+julia> rand(Tuple{Float64,Int}) # equivalent to rand(Combine(Tuple, Float64, Int))
+(0.9830769470405203, -6048436354564488035)
 
 julia> rand(Combine(Complex, Normal())) # each coordinate is drawn from the normal distribution
 1.5112317924121632 + 0.723463453534426im
