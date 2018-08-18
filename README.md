@@ -37,6 +37,15 @@ Still, I like the terser approach here, as it simply generalizes
 to other containers the __current__ `rand` API creating arrays.
 See the issue linked above for a discussion on those topics.
 
+For convenience, the following objects from `Random` are re-exported
+in this package: `rand!`, `AbstractRNG`, `MersenneTwister`,
+`RandomDevice` (`rand` is in `Base`). Functions like `randn!` or
+`bitrand` are considered to be obsoleted by this package so are not
+re-exported. It's still needed to import `Random` separately in order
+to use functions which don't extend the `rand` API, namely
+`randsubseq`, `shuffle`, `randperm`, `randcycle`, and their mutating
+variants.
+
 
 There is not much documentation for now: `rand`'s docstring is updated,
 and here are some examples:
