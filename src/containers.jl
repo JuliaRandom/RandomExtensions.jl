@@ -87,13 +87,11 @@ rand(X, p::AbstractFloat, m::Integer, n::Integer) = rand(GLOBAL_RNG, X, p, m, n)
 
 ## String
 
-let b = UInt8['0':'9';'A':'Z';'a':'z']
-    global rand
-    rand(rng::AbstractRNG, chars, ::Type{String}, n::Integer=8) = String(rand(rng, chars, n))
-    rand(                  chars, ::Type{String}, n::Integer=8) = rand(GLOBAL_RNG, chars, String, n)
-    rand(rng::AbstractRNG, ::Type{String}, n::Integer=8) = rand(rng, b, String, n)
-    rand(                  ::Type{String}, n::Integer=8) = rand(GLOBAL_RNG, b, String, n)
-end
+rand(rng::AbstractRNG, chars, ::Type{String}, n::Integer=8) = rand(rng, Combine(String, chars, n))
+rand(                  chars, ::Type{String}, n::Integer=8) = rand(GLOBAL_RNG, Combine(String, chars, n))
+
+rand(rng::AbstractRNG, ::Type{String}, n::Integer=8) = rand(rng, Combine(String, n))
+rand(                  ::Type{String}, n::Integer=8) = rand(GLOBAL_RNG, Combine(String, n))
 
 
 ## BitArray
