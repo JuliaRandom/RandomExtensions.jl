@@ -71,10 +71,13 @@ Sampler(RNG::Type{<:AbstractRNG}, ::Type{Complex{T}}, n::Repetition) where {T<:R
     :(SamplerTag{Cont{T}}(tuple($(sps...))))
 end
 
-@generated function rand(rng::AbstractRNG, sp::SamplerTag{Cont{T},S}) where {T<:Tuple,S}
+@generated function rand(rng::AbstractRNG, sp::SamplerTag{Cont{T},S}) where {T<:Tuple,S<:Tuple}
     rands = []
     for i = 1:fieldcount(T)
-        for j = 1:i
+        # if as many fields for S and T, don't try to shortcut, as it's
+        # unnecessary, and even wrong when sp was created from Combine
+        k = fieldcount(S) == fieldcount(T) ? i : 1
+        for j = k:i
             if fieldtype(T, i) == gentype(fieldtype(S, j))
                 push!(rands, :(rand(rng, sp.data[$j])))
                 break
@@ -82,6 +85,40 @@ end
         end
     end
     :(tuple($(rands...)))
+end
+
+
+### with Combine
+
+# implement Combine(Tuple, S1, S2...), e.g. for rand(Combine(Tuple, Int, 1:3))
+
+@generated function _Combine(::Type{Tuple}, args...)
+    types = [t <: Type ? t.parameters[1] : gentype(t) for t in args]
+    T = Tuple{types...}
+    S = Tuple{[t <: Type ? UniformType{t.parameters[1]} : t for t in args]...}
+    samples = [t <: Type ? :(UniformType{$(t.parameters[1])}()) :
+               :(args[$i]) for (i, t) in enumerate(args)]
+    :(Combine1{$T,$S}(tuple($(samples...))))
+end
+
+Combine(::Type{Tuple}, args...) = _Combine(Tuple, args...)
+
+# disambiguate
+
+Combine(::Type{Tuple}, X) = _Combine(Tuple, X)
+Combine(::Type{Tuple}, ::Type{X}) where {X} = _Combine(Tuple, X)
+
+Combine(::Type{Tuple}, X, Y) = _Combine(Tuple, X, Y)
+Combine(::Type{Tuple}, ::Type{X}, Y) where {X} = _Combine(Tuple, X, Y)
+Combine(::Type{Tuple}, X, ::Type{Y}) where {Y} = _Combine(Tuple, X, Y)
+Combine(::Type{Tuple}, ::Type{X}, ::Type{Y}) where {X,Y} = _Combine(Tuple, X, Y)
+
+
+# Sampler (rand is already implemented above, like for rand(Tuple{...})
+
+@generated function Sampler(RNG::Type{<:AbstractRNG}, c::Combine1{T,X}, n::Repetition) where {T<:Tuple,X<:Tuple}
+    sps = [:(Sampler(RNG, c.x[$i], n)) for i in 1:length(T.parameters)]
+    :(SamplerTag{Cont{T}}(tuple($(sps...))))
 end
 
 

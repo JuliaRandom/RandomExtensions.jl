@@ -175,3 +175,12 @@ end
         @test rand(T) isa Tuple{tlist...}
     end
 end
+
+@testset "rand(Combine(Tuple, ...))" begin
+    s = rand([Char, Int, Float64, Bool, 1:3, "abcd", Set([1, 2, 3])], rand(1:10))
+    @test rand(Combine(Tuple, s...)) isa Tuple{Random.gentype.(s)...}
+    t = rand(Combine(Tuple, 1:3, Char, Int))
+    @test t[1] ∈ 1:3
+    @test t[2] isa Char
+    @test t[3] isa Int && t[3] ∉ 1:3 # extremely unlikely
+end
