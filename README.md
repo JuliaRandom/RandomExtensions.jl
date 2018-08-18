@@ -78,6 +78,12 @@ julia> rand(Combine(Tuple, 1:10, Normal()))
 julia> rand(Tuple{Float64,Int}) # equivalent to rand(Combine(Tuple, Float64, Int))
 (0.9830769470405203, -6048436354564488035)
 
+julia> rand(Combine(NTuple{3}, 1:10)) # produces a 3-tuple with values from 1:10
+(5, 9, 6)
+
+julia> rand(Combine(NTuple{3}, Combine(Pair, 1:9, Bool))) # Combine calls can be nested
+(2 => false, 8 => true, 7 => false)
+
 julia> rand(Combine(Complex, Normal())) # each coordinate is drawn from the normal distribution
 1.5112317924121632 + 0.723463453534426im
 

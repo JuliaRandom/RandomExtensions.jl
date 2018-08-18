@@ -17,6 +17,8 @@ struct Combine1{T,X} <: Combine{T}
     x::X
 end
 
+Combine1{T}(x::X) where {T,X} = Combine1{T,X}(x)
+
 Combine(::Type{T}, x::X) where {T,X} = Combine1{deduce_type(T,gentype(X)),X}(x)
 Combine(::Type{T}, ::Type{X}) where {T,X} = Combine1{deduce_type(T,X),Type{X}}(X)
 

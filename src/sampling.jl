@@ -90,18 +90,28 @@ end
 
 ### with Combine
 
-# implement Combine(Tuple, S1, S2...), e.g. for rand(Combine(Tuple, Int, 1:3))
+# implement Combine(Tuple, S1, S2...), e.g. for rand(Combine(Tuple, Int, 1:3)),
+# and       Combine(NTuple{N}, S)
 
 @generated function _Combine(::Type{Tuple}, args...)
     types = [t <: Type ? t.parameters[1] : gentype(t) for t in args]
     T = Tuple{types...}
-    S = Tuple{[t <: Type ? UniformType{t.parameters[1]} : t for t in args]...}
     samples = [t <: Type ? :(UniformType{$(t.parameters[1])}()) :
                :(args[$i]) for (i, t) in enumerate(args)]
-    :(Combine1{$T,$S}(tuple($(samples...))))
+    :(Combine1{$T}(tuple($(samples...))))
 end
 
 Combine(::Type{Tuple}, args...) = _Combine(Tuple, args...)
+
+@generated function _Combine(::Type{NTuple{N}}, arg) where {N}
+    T, a = arg <: Type ?
+        (arg.parameters[1], :(Uniform(arg))) :
+        (gentype(arg), :arg)
+    :(Combine1{NTuple{N,$T}}($a))
+end
+
+Combine(::Type{NTuple{N}}, X) where {N} = _Combine(NTuple{N}, X)
+Combine(::Type{NTuple{N}}, ::Type{X}) where {N,X} = _Combine(NTuple{N}, X)
 
 # disambiguate
 
@@ -121,6 +131,13 @@ Combine(::Type{Tuple}, ::Type{X}, ::Type{Y}) where {X,Y} = _Combine(Tuple, X, Y)
     :(SamplerTag{Cont{T}}(tuple($(sps...))))
 end
 
+Sampler(RNG::Type{<:AbstractRNG}, c::Combine1{T,X}, n::Repetition) where {T<:Tuple,X} =
+    SamplerTag{Cont{T}}(Sampler(RNG, c.x, n))
+
+@generated function rand(rng::AbstractRNG, sp::SamplerTag{Cont{T},S}) where {T<:NTuple,S<:Sampler}
+    rands = fill(:(rand(rng, sp.data)), fieldcount(T))
+    :(tuple($(rands...)))
+end
 
 ## Normal & Exponential
 
