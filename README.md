@@ -90,6 +90,9 @@ julia> rand(Combine(Complex, Normal())) # each coordinate is drawn from the norm
 julia> rand(Combine(Complex, Normal(), 1:10)) # distinct distributions
 1.096731587266045 + 8.0im
 
+julia> rand(Normal(ComplexF64)) # equivalent to randn(ComplexF64)
+0.9322376894079347 + 0.2812214248483498im
+
 julia> rand(Set, 3)
 Set([0.717172, 0.78481, 0.86901])
 
