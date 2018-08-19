@@ -13,6 +13,15 @@ using Random: GLOBAL_RNG, SamplerTrivial, SamplerSimple, SamplerTag, Repetition
 using SparseArrays: sprand, sprandn
 
 
+## a dummy container type to take advangage of SamplerTag constructor
+
+struct Cont{T} end
+
+Base.eltype(::Type{Cont{T}}) where {T} = T
+
+
+## includes
+
 include("distributions.jl")
 include("sampling.jl")
 include("containers.jl")
