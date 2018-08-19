@@ -41,6 +41,20 @@ using Test
 end
 
 @testset "Containers" for rng in ([], [MersenneTwister(0)], [RandomDevice()])
+    # Array
+    for T = (Int, Int8)
+        for (A, AT) = ((Array, Int8), (Array{T}, T), (Vector, Int8), (Vector{T}, T))
+            @inferred rand(rng..., Int8.(1:9), A, 10)
+            a = rand(rng..., Int8.(1:9), A, 10)
+            @test a isa Vector{AT}
+            @test all(in(1:9), a)
+            @inferred rand(rng..., Int8, A, 10)
+            a = rand(rng..., Int8, A, 10)
+            @test a isa Vector{AT}
+            @test all(in(typemin(Int8):typemax(Int8)), a)
+        end
+    end
+
     # Set
     for s = (rand(rng..., 1:99, Set{Int}, 10),
              rand(rng..., 1:99, Set, 10))

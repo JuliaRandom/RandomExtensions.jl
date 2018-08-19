@@ -1,5 +1,38 @@
 # generation of some containers filled with random values
 
+## arrays (same as in Random, but with explicit type specification, e.g. rand(Int, Array, 4)
+
+check_dims(A::Type{<:AbstractArray{T,N} where T}, dims::Dims) where {N} =
+    length(dims) == N ? dims : throw(DomainError(dims, "incompatible dimensions for $A"))
+check_dims(::Type{<:AbstractArray}, dims::Dims) = dims
+
+# cf. inference bug https://github.com/JuliaLang/julia/issues/28762
+# we have to write out all combinations for getting proper inference
+array_type(::Type{Array{T}}, ::Type{X}) where {T,X} = T
+array_type(::Type{Array{T,N} where T}, ::Type{X}) where {N,X} = X
+array_type(::Type{Array{T,N}}, ::Type{X}) where {T,N,X} = T
+array_type(::Type{Array}, ::Type{X}) where {X} = X
+
+make_array(A::Type{<:Array}, ::Type{X}, dims::Dims) where {X} = Array{array_type(A, X)}(undef, check_dims(A, dims))
+
+rand(r::AbstractRNG, A::Type{<:Array}, dims::Dims) = rand(r, Float64, A, dims)
+rand(                A::Type{<:Array}, dims::Dims) = rand(GLOBAL_RNG, Float64, A, dims)
+
+rand(r::AbstractRNG, A::Type{<:Array}, dims::Integer...) = rand(r, Float64, A, Dims(dims))
+rand(                A::Type{<:Array}, dims::Integer...) = rand(GLOBAL_RNG, Float64, A, Dims(dims))
+
+rand(r::AbstractRNG, X, A::Type{<:Array}, dims::Dims) = rand!(r, make_array(A, gentype(X), dims), X)
+rand(                X, A::Type{<:Array}, dims::Dims) = rand(GLOBAL_RNG, X, A, dims)
+
+rand(r::AbstractRNG, X, A::Type{<:Array}, dims::Integer...) = rand(r, X, A, Dims(dims))
+rand(                X, A::Type{<:Array}, dims::Integer...) = rand(GLOBAL_RNG, X, A, Dims(dims))
+
+rand(r::AbstractRNG, ::Type{X}, A::Type{<:Array}, dims::Dims) where {X} = rand!(r, make_array(A, X, dims), X)
+rand(                ::Type{X}, A::Type{<:Array}, dims::Dims) where {X} = rand(GLOBAL_RNG, X, A, dims)
+
+rand(r::AbstractRNG, ::Type{X}, A::Type{<:Array}, dims::Integer...) where {X} = rand(r, X, A, Dims(dims))
+rand(                ::Type{X}, A::Type{<:Array}, dims::Integer...) where {X} = rand(GLOBAL_RNG, X, A, Dims(dims))
+
 
 ## dicts
 

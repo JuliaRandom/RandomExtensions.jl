@@ -155,8 +155,8 @@ For example, given `a = zeros(10000)`,
 Note: as seen in the examples above, `String` can be considered as a scalar or as a container (in the `rand` API).
 In a call like `rand(String)`, both APIs coincide, but in `rand(String, 3)`, should we construct a `String` of
 length `3` (container API), or an array of strings of default length `8` ? Currently, the package chooses
-the first interpretation, for no other good reason that it was the first implemented. It may also be the one
+the first interpretation, partly because it was the first implemented, and also because it may actually be the one
 most useful (and offers the tersest API to compete with `randstring`).
 But as this package is still unstable, this choice may be revisited in the future.
-Note that it's easy to get the result of the second interpretation via `rand(Combine(String), 3)`.
-Also, the variant `rand(String, Vector, 3)` could be introduced in the future, similar to `rand(String, Set, 3)`.
+Note that it's easy to get the result of the second interpretation via either `rand(Combine(String), 3)`,
+`rand(String, (3,))` or `rand(String, Vector, 3)`.
