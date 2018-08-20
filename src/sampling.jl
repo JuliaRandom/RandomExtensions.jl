@@ -193,3 +193,12 @@ let b = UInt8['0':'9';'A':'Z';'a':'z'],
 
     rand(rng::AbstractRNG, sp::SamplerTag{Cont{String}}) = String(rand(rng, sp.data.first, sp.data.second))
 end
+
+
+## Bernoulli
+
+Sampler(RNG::Type{<:AbstractRNG}, b::Bernoulli, n::Repetition) =
+    SamplerTag{typeof(b)}(b.p+1.0)
+
+rand(rng::AbstractRNG, sp::SamplerTag{Bernoulli{T}}) where {T} =
+    ifelse(rand(rng, CloseOpen12()) < sp.data, one(T), zero(T))

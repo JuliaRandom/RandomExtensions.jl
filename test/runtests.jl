@@ -38,6 +38,13 @@ using Test
     @test rand(Uniform(1:10)) isa Int
     @test rand(Uniform(1:10)) ∈ 1:10
     @test rand(Uniform(Int)) isa Int
+
+    # Bernoulli
+    @test rand(Bernoulli()) ∈ (0, 1)
+    @test rand(Bernoulli(1)) == 1
+    @test rand(Bernoulli(0)) == 0
+    # TODO: do the math to estimate proba of failure:
+    @test 620 < count(rand(Bernoulli(Bool, .7), 1000)) < 780
 end
 
 @testset "Containers" for rng in ([], [MersenneTwister(0)], [RandomDevice()])

@@ -112,3 +112,18 @@ CloseOpen12(::Type{T}=Float64) where {T<:AbstractFloat} = CloseOpen12{T}()
 
 CloseOpen(::Type{T}=Float64) where {T<:AbstractFloat} = CloseOpen01{T}()
 CloseOpen(a::T, b::T) where {T<:AbstractFloat} = CloseOpenAB{T}(a, b)
+
+
+## Bernoulli
+
+struct Bernoulli{T<:Integer} <: Distribution{T}
+    p::Float64
+
+    Bernoulli{T}(p::Real) where {T} = let pf = Float64(p)
+        0.0 <= pf <= 1.0 ? new(pf) :
+            throw(DomainError(p, "Bernoulli: parameter p must satisfy 0.0 <= p <= 1.0"))
+    end
+end
+
+Bernoulli(p::Real=0.5) = Bernoulli(Int, p)
+Bernoulli(::Type{T}, p::Real=0.5) where {T<:Integer} = Bernoulli{T}(p)
