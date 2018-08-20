@@ -114,12 +114,14 @@ end
     @test rand(rng..., Int, .5, 10, 3) isa SparseMatrixCSC{Int}
 
     # BitArray
-    @test rand(rng..., BitArray, 10) isa BitVector
-    @test rand(rng..., BitVector, 10) isa BitVector
-    @test_throws MethodError rand(rng..., BitVector, 10, 20) isa BitVector
-    @test rand(rng..., BitArray, 10, 3) isa BitMatrix
-    @test rand(rng..., BitMatrix, 10, 3) isa BitMatrix
-    @test_throws MethodError rand(rng..., BitVector, 10, 3) isa BitMatrix
+    for S = ([], [Bool], [Bernoulli()])
+        @test rand(rng..., S..., BitArray, 10) isa BitVector
+        @test rand(rng..., S..., BitVector, 10) isa BitVector
+        @test_throws MethodError rand(rng..., S..., BitVector, 10, 20) isa BitVector
+        @test rand(rng..., S..., BitArray, 10, 3) isa BitMatrix
+        @test rand(rng..., S..., BitMatrix, 10, 3) isa BitMatrix
+        @test_throws MethodError rand(rng..., S..., BitVector, 10, 3) isa BitMatrix
+    end
 
     # String
     s = rand(rng..., String)

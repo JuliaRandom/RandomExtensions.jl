@@ -134,6 +134,19 @@ julia> rand(BitArray, 3) # equivalent to bitrand(3)
   true
  false
 
+julia> julia> rand(Bernoulli(0.2), BitVector, 10) # using the Bernoulli distribution
+10-element BitArray{1}:
+ false
+ false
+ false
+ false
+  true
+ false
+  true
+ false
+ false
+  true
+
 julia> rand(1:3, NTuple{3}) # NTuple{3} considered as a container, equivalent to rand(Combine(NTuple{3}, 1:3))
 (3, 3, 1)
 

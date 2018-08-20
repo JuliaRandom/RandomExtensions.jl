@@ -143,6 +143,21 @@ rand(::Type{T}, dims::Dims) where {T<:BitArrays} =
 rand(::Type{T}, dims::Integer...) where {T<:BitArrays} =
     rand!(T(undef, convert(Dims, dims)))
 
+### with sample information
+
+rand(r::AbstractRNG, X, ::Type{T}, dims::Dims) where {T<:BitArrays} =
+    rand!(r, T(undef, dims), X)
+
+rand(r::AbstractRNG, X, ::Type{T}, dims::Integer...) where {T<:BitArrays} =
+    rand!(r, T(undef, Dims(dims)), X)
+
+rand(X, ::Type{T}, dims::Dims) where {T<:BitArrays} =
+    rand!(T(undef, dims), X)
+
+rand(X, ::Type{T}, dims::Integer...) where {T<:BitArrays} =
+    rand!(T(undef, convert(Dims, dims)), X)
+
+
 ## NTuple as a container
 
 rand(r::AbstractRNG, X,         ::Type{NTuple{N}}) where {N}   = rand(r,          Combine(NTuple{N}, X))
