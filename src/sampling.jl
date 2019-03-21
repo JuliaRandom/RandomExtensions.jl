@@ -54,7 +54,7 @@ rand(rng::AbstractRNG, sp::SamplerTag{Cont{T}}) where {T<:Union{Pair,Complex}} =
 Sampler(RNG::Type{<:AbstractRNG}, ::Type{Pair{A,B}}, n::Repetition) where {A,B} =
     Sampler(RNG, Combine(Pair{A,B}, A, B), n)
 
-# rand(Combine(Complex, x)) => rand(Combine(Combine, x, x))
+# rand(Combine(Complex, x)) => rand(Combine(Complex, x, x))
 Sampler(RNG::Type{<:AbstractRNG}, u::Combine1{T}, n::Repetition) where {T<:Complex} =
     Sampler(RNG, Combine(T, u.x, u.x), n)
 
