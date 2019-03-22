@@ -105,22 +105,6 @@ rand(                X, ::Type{T}, n::Integer) where {T<:AbstractSet} = rand(GLO
 rand(r::AbstractRNG, ::Type{X}, ::Type{T}, n::Integer) where {X,T<:AbstractSet} = _rand0!(r, deduce_type(T, X)(), n, X)
 rand(                ::Type{X}, ::Type{T}, n::Integer) where {X,T<:AbstractSet} = rand(GLOBAL_RNG, X, T, n)
 
-### BitSet
-
-default_sampling(::Type{BitSet}) = Int8 # almost arbitrary, may change
-
-Combine(::Type{BitSet},            n::Integer)           = Combine2{BitSet}(default_sampling(BitSet), Int(n))
-Combine(::Type{BitSet}, X,         n::Integer)           = Combine2{BitSet}(X, Int(n))
-Combine(::Type{BitSet}, ::Type{X}, n::Integer) where {X} = Combine2{BitSet}(X, Int(n))
-
-Sampler(RNG::Type{<:AbstractRNG}, c::Combine{BitSet}, n::Repetition) =
-    SamplerTag{BitSet}((Sampler(RNG, c.x, n), c.y))
-
-function rand(rng::MersenneTwister, sp::SamplerTag{BitSet})
-    s = sizehint!(BitSet(), sp.data[2])
-    _rand!(rng, s, sp.data[2], sp.data[1])
-end
-
 
 ## sparse vectors & matrices
 

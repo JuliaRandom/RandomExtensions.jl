@@ -26,7 +26,6 @@ rand(r::AbstractRNG, ::SamplerTrivial{CloseOpen01{T}}) where {T} =
 rand(r::AbstractRNG, ::SamplerTrivial{CloseOpen12{T}}) where {T} =
     rand(r, SamplerTrivial(Random.CloseOpen12{T}()))
 
-
 ### CloseOpenAB
 
 Sampler(RNG::Type{<:AbstractRNG}, d::CloseOpenAB{T}, n::Repetition) where {T} =
@@ -36,7 +35,48 @@ rand(rng::AbstractRNG, sp::SamplerTag{CloseOpenAB{T}}) where {T} =
     sp.data.a + sp.data.d  * rand(rng, sp.data.sp)
 
 
-## sampler for pairs and complex numbers
+## Normal & Exponential
+
+rand(rng::AbstractRNG, ::SamplerTrivial{Normal01{T}}) where {T<:Union{AbstractFloat,Complex{<:AbstractFloat}}} =
+    randn(rng, T)
+
+Sampler(RNG::Type{<:AbstractRNG}, d::Normalμσ{T}, n::Repetition) where {T} =
+    SamplerSimple(d, Sampler(RNG, Normal(T), n))
+
+rand(rng::AbstractRNG, sp::SamplerSimple{Normalμσ{T},<:Sampler}) where {T} =
+    sp[].μ + sp[].σ  * rand(rng, sp.data)
+
+rand(rng::AbstractRNG, ::SamplerTrivial{Exponential1{T}}) where {T<:AbstractFloat} =
+    randexp(rng, T)
+
+Sampler(RNG::Type{<:AbstractRNG}, d::Exponentialθ{T}, n::Repetition) where {T} =
+    SamplerSimple(d, Sampler(RNG, Exponential(T), n))
+
+rand(rng::AbstractRNG, sp::SamplerSimple{Exponentialθ{T},<:Sampler}) where {T} =
+    sp[].θ * rand(rng, sp.data)
+
+
+## Bernoulli
+
+Sampler(RNG::Type{<:AbstractRNG}, b::Bernoulli, n::Repetition) =
+    SamplerTag{typeof(b)}(b.p+1.0)
+
+rand(rng::AbstractRNG, sp::SamplerTag{Bernoulli{T}}) where {T} =
+    ifelse(rand(rng, CloseOpen12()) < sp.data, one(T), zero(T))
+
+
+## random elements from pairs
+
+Sampler(RNG::Type{<:AbstractRNG}, t::Pair, n::Repetition) =
+    SamplerSimple(t, Sampler(RNG, Bool, n))
+
+rand(rng::AbstractRNG, sp::SamplerSimple{<:Pair}) =
+    @inbounds return sp[][1 + rand(rng, sp.data)]
+
+
+## composite types
+
+### sampler for pairs and complex numbers
 
 function Sampler(RNG::Type{<:AbstractRNG}, u::Combine2{T}, n::Repetition) where T <: Union{Pair,Complex}
     sp1 = Sampler(RNG, u.x, n)
@@ -48,7 +88,7 @@ rand(rng::AbstractRNG, sp::SamplerTag{Cont{T}}) where {T<:Union{Pair,Complex}} =
     T(rand(rng, sp.data[1]), rand(rng, sp.data[2]))
 
 
-### additional convenience methods
+#### additional convenience methods
 
 # rand(Pair{A,B}) => rand(Combine(Pair{A,B}, A, B))
 Sampler(RNG::Type{<:AbstractRNG}, ::Type{Pair{A,B}}, n::Repetition) where {A,B} =
@@ -63,7 +103,7 @@ Sampler(RNG::Type{<:AbstractRNG}, ::Type{Complex{T}}, n::Repetition) where {T<:R
     Sampler(RNG, Combine(Complex{T}, T, T), n)
 
 
-## sampler for tuples
+### sampler for tuples
 
 @generated function Sampler(RNG::Type{<:AbstractRNG}, ::Type{T}, n::Repetition) where {T<:Tuple}
     U = unique(T.parameters)
@@ -87,8 +127,7 @@ end
     :(tuple($(rands...)))
 end
 
-
-### with Combine
+#### with Combine
 
 # implement Combine(Tuple, S1, S2...), e.g. for rand(Combine(Tuple, Int, 1:3)),
 # and       Combine(NTuple{N}, S)
@@ -139,37 +178,27 @@ Sampler(RNG::Type{<:AbstractRNG}, c::Combine1{T,X}, n::Repetition) where {T<:Tup
     :(tuple($(rands...)))
 end
 
-## Normal & Exponential
 
-rand(rng::AbstractRNG, ::SamplerTrivial{Normal01{T}}) where {T<:Union{AbstractFloat,Complex{<:AbstractFloat}}} =
-    randn(rng, T)
+## collections
 
-Sampler(RNG::Type{<:AbstractRNG}, d::Normalμσ{T}, n::Repetition) where {T} =
-    SamplerSimple(d, Sampler(RNG, Normal(T), n))
+### BitSet
 
-rand(rng::AbstractRNG, sp::SamplerSimple{Normalμσ{T},<:Sampler}) where {T} =
-    sp[].μ + sp[].σ  * rand(rng, sp.data)
+default_sampling(::Type{BitSet}) = Int8 # almost arbitrary, may change
 
-rand(rng::AbstractRNG, ::SamplerTrivial{Exponential1{T}}) where {T<:AbstractFloat} =
-    randexp(rng, T)
+Combine(::Type{BitSet},            n::Integer)           = Combine2{BitSet}(default_sampling(BitSet), Int(n))
+Combine(::Type{BitSet}, X,         n::Integer)           = Combine2{BitSet}(X, Int(n))
+Combine(::Type{BitSet}, ::Type{X}, n::Integer) where {X} = Combine2{BitSet}(X, Int(n))
 
-Sampler(RNG::Type{<:AbstractRNG}, d::Exponentialθ{T}, n::Repetition) where {T} =
-    SamplerSimple(d, Sampler(RNG, Exponential(T), n))
+Sampler(RNG::Type{<:AbstractRNG}, c::Combine{BitSet}, n::Repetition) =
+    SamplerTag{BitSet}((Sampler(RNG, c.x, n), c.y))
 
-rand(rng::AbstractRNG, sp::SamplerSimple{Exponentialθ{T},<:Sampler}) where {T} =
-    sp[].θ * rand(rng, sp.data)
-
-
-## random elements from pairs
-
-Sampler(RNG::Type{<:AbstractRNG}, t::Pair, n::Repetition) =
-    SamplerSimple(t, Sampler(RNG, Bool, n))
-
-rand(rng::AbstractRNG, sp::SamplerSimple{<:Pair}) =
-    @inbounds return sp[][1 + rand(rng, sp.data)]
+function rand(rng::MersenneTwister, sp::SamplerTag{BitSet})
+    s = sizehint!(BitSet(), sp.data[2])
+    _rand!(rng, s, sp.data[2], sp.data[1])
+end
 
 
-## String as a scalar
+### String as a scalar
 
 let b = UInt8['0':'9';'A':'Z';'a':'z'],
     s = Sampler(MersenneTwister, b, Val(Inf)) # cache for the likely most common case
@@ -193,12 +222,3 @@ let b = UInt8['0':'9';'A':'Z';'a':'z'],
 
     rand(rng::AbstractRNG, sp::SamplerTag{Cont{String}}) = String(rand(rng, sp.data.first, sp.data.second))
 end
-
-
-## Bernoulli
-
-Sampler(RNG::Type{<:AbstractRNG}, b::Bernoulli, n::Repetition) =
-    SamplerTag{typeof(b)}(b.p+1.0)
-
-rand(rng::AbstractRNG, sp::SamplerTag{Bernoulli{T}}) where {T} =
-    ifelse(rand(rng, CloseOpen12()) < sp.data, one(T), zero(T))
