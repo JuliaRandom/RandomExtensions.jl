@@ -44,7 +44,7 @@ Pick a random element or collection of random elements from the set of values sp
   point numbers;
 * a `Distribution` object, e.g. `Normal()` for a normal distribution (like `randn()`),
   or `CloseOpen(10.0, 20.0)` for uniform `Float64` numbers in the range ``[10.0, 20.0)``;
-* a `Combine` object, which can be either `Combine(Pair, S1, S2)` or `Combine(Complex, S1, S2)`,
+* a `Combine` object, which can be e.g. `Combine(Pair, S1, S2)` or `Combine(Complex, S1, S2)`,
   where `S1` and `S2` are one of the specifications above; `Pair` or `Complex` can optionally be
   given as concrete types, e.g. `Combine(ComplexF64, 1:3, Int)` to generate `ComplexF64` instead
   of `Complex{Int}`.

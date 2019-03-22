@@ -63,21 +63,27 @@ end
     end
 
     # Set
-    for s = (rand(rng..., 1:99, Set{Int}, 10),
-             rand(rng..., 1:99, Set, 10))
-        @test s isa Set{Int}
+    for S = (Set{Int}, Set, BitSet)
+        s = rand(rng..., 1:99, S, 10)
+        @test s isa (S === BitSet ? BitSet : Set{Int})
         @test length(s) == 10
         @test rand(s) ∈ 1:99
     end
-    s = Set([1, 2])
-    @test s === rand!(s)
-    @test first(s) ∉ (1, 2) # extremely unlikely
-    @test length(s) == 2
-    @test s === rand!(s, 3:9) <= Set(3:9)
-    @test length(s) == 2
-
+    for s = (Set([1, 2]), BitSet([1, 2]))
+        @test s === rand!(s, Int8)
+        @test s != Set([1, 2]) # very unlikely
+        @test length(s) == 2
+        @test s === rand!(s, 3:9) <= Set(3:9)
+        @test length(s) == 2
+    end
     @test rand(rng..., Pair{Int,Float64}, Set, 3) isa Set{Pair{Int,Float64}}
     @test rand(rng..., Pair{Int,Float64}, Set{Pair}, 3) isa Set{Pair}
+
+    # BitSet
+    s = rand(Combine(BitSet, 1:10, 3))
+    @test s isa BitSet
+    @test length(s) == 3
+    @test s <= Set(1:10)
 
     # Dict
     for s = (rand(rng..., Combine(Pair, 1:99, 1:99), Dict, 10),
