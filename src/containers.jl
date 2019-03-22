@@ -109,7 +109,9 @@ rand(                ::Type{X}, ::Type{T}, n::Integer) where {X,T<:AbstractSet} 
 
 default_sampling(::Type{BitSet}) = Int8 # almost arbitrary, may change
 
-Combine(::Type{BitSet}, X, n::Integer) = Combine2{BitSet}(X, Int(n))
+Combine(::Type{BitSet},            n::Integer)           = Combine2{BitSet}(default_sampling(BitSet), Int(n))
+Combine(::Type{BitSet}, X,         n::Integer)           = Combine2{BitSet}(X, Int(n))
+Combine(::Type{BitSet}, ::Type{X}, n::Integer) where {X} = Combine2{BitSet}(X, Int(n))
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Combine{BitSet}, n::Repetition) =
     SamplerTag{BitSet}((Sampler(RNG, c.x, n), c.y))

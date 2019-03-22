@@ -253,3 +253,12 @@ end
         @test length(s) == n
     end
 end
+
+@testset "rand(Combine(BitSet, ...))" begin
+    for (k, l) = ([1:9] => 1:9, [Int8] => rInt8, [] => rInt8)
+        s = rand(Combine(BitSet, k..., 3))
+        @test s isa BitSet
+        @test length(s) == 3
+        @test all(in(l), s)
+    end
+end
