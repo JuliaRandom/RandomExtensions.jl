@@ -262,3 +262,13 @@ end
         @test all(in(l), s)
     end
 end
+
+@testset "rand(Combine(BitArray, ...))" begin
+    for k = ([], [Bool], [Bernoulli(.3)]),
+        d = ((3,), 3)
+        s = rand(Combine(BitArray, k..., d))
+        @test s isa BitArray
+        @test length(s) == 3
+    end
+    # @test_throws rand(Combine(BitMatrix, 2))
+end

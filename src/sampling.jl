@@ -192,10 +192,31 @@ Combine(::Type{BitSet}, ::Type{X}, n::Integer) where {X} = Combine2{BitSet}(X, I
 Sampler(RNG::Type{<:AbstractRNG}, c::Combine{BitSet}, n::Repetition) =
     SamplerTag{BitSet}((Sampler(RNG, c.x, n), c.y))
 
-function rand(rng::MersenneTwister, sp::SamplerTag{BitSet})
+function rand(rng::AbstractRNG, sp::SamplerTag{BitSet})
     s = sizehint!(BitSet(), sp.data[2])
     _rand!(rng, s, sp.data[2], sp.data[1])
 end
+
+
+### BitArray
+
+default_sampling(::Type{<:BitArray}) = Bool
+
+Combine(::Type{BitArray{N}}, X,         dims::Dims{N}) where {N}   = Combine2{BitArray{N}}(X, dims)
+Combine(::Type{BitArray{N}}, ::Type{X}, dims::Dims{N}) where {N,X} = Combine2{BitArray{N}}(X, dims)
+Combine(::Type{BitArray},    X,         dims::Dims{N}) where {N}   = Combine2{BitArray{N}}(X, dims)
+Combine(::Type{BitArray},    ::Type{X}, dims::Dims{N}) where {N,X} = Combine2{BitArray{N}}(X, dims)
+
+Combine(B::Type{<:BitArray},         X, dims::Integer...)           = Combine(B, X, Dims(dims))
+Combine(B::Type{<:BitArray}, ::Type{X}, dims::Integer...) where {X} = Combine(B, X, Dims(dims))
+
+Combine(B::Type{<:BitArray}, dims::Dims)       = Combine(B, default_sampling(B), dims)
+Combine(B::Type{<:BitArray}, dims::Integer...) = Combine(B, default_sampling(B), Dims(dims))
+
+Sampler(RNG::Type{<:AbstractRNG}, c::Combine{B}, n::Repetition) where {B<:BitArray} =
+    SamplerTag{B}((Sampler(RNG, c.x, n), c.y))
+
+rand(rng::AbstractRNG, sp::SamplerTag{<:BitArray}) = rand!(rng, BitArray(undef, sp.data[2]), sp.data[1])
 
 
 ### String as a scalar

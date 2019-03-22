@@ -149,34 +149,30 @@ rand(                  ::Type{String}, n::Integer=8) = rand(GLOBAL_RNG, Combine(
 
 ## BitArray
 
-default_sampling(::Type{<:BitArray}) = Bool
-
-const BitArrays = Union{BitArray,BitVector,BitMatrix}
-
-rand(r::AbstractRNG, ::Type{T}, dims::Dims) where {T<:BitArrays} =
+rand(r::AbstractRNG, ::Type{T}, dims::Dims) where {T<:BitArray} =
     rand!(r, T(undef, dims))
 
-rand(r::AbstractRNG, ::Type{T}, dims::Integer...) where {T<:BitArrays} =
+rand(r::AbstractRNG, ::Type{T}, dims::Integer...) where {T<:BitArray} =
     rand!(r, T(undef, convert(Dims, dims)))
 
-rand(::Type{T}, dims::Dims) where {T<:BitArrays} =
+rand(::Type{T}, dims::Dims) where {T<:BitArray} =
     rand!(T(undef, dims))
 
-rand(::Type{T}, dims::Integer...) where {T<:BitArrays} =
+rand(::Type{T}, dims::Integer...) where {T<:BitArray} =
     rand!(T(undef, convert(Dims, dims)))
 
 ### with sample information
 
-rand(r::AbstractRNG, X, ::Type{T}, dims::Dims) where {T<:BitArrays} =
+rand(r::AbstractRNG, X, ::Type{T}, dims::Dims) where {T<:BitArray} =
     rand!(r, T(undef, dims), X)
 
-rand(r::AbstractRNG, X, ::Type{T}, dims::Integer...) where {T<:BitArrays} =
+rand(r::AbstractRNG, X, ::Type{T}, dims::Integer...) where {T<:BitArray} =
     rand!(r, T(undef, Dims(dims)), X)
 
-rand(X, ::Type{T}, dims::Dims) where {T<:BitArrays} =
+rand(X, ::Type{T}, dims::Dims) where {T<:BitArray} =
     rand!(T(undef, dims), X)
 
-rand(X, ::Type{T}, dims::Integer...) where {T<:BitArrays} =
+rand(X, ::Type{T}, dims::Integer...) where {T<:BitArray} =
     rand!(T(undef, convert(Dims, dims)), X)
 
 
