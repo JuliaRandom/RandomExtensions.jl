@@ -47,6 +47,8 @@ using Test
     @test 620 < count(rand(Bernoulli(Bool, .7), 1000)) < 780
 end
 
+const rInt8 = typemin(Int8):typemax(Int8)
+
 @testset "Containers" for rng in ([], [MersenneTwister(0)], [RandomDevice()])
     # Array
     for T = (Int, Int8)
@@ -58,7 +60,7 @@ end
             @inferred rand(rng..., Int8, A, 10)
             a = rand(rng..., Int8, A, 10)
             @test a isa Vector{AT}
-            @test all(in(typemin(Int8):typemax(Int8)), a)
+            @test all(in(rInt8), a)
         end
     end
 
@@ -87,7 +89,7 @@ end
     @testset "default_sampling(::BitSet) == Int8" begin
         Random.seed!(0)
         rand!(s)
-        @test s <= Set(typemin(Int8):typemax(Int8))
+        @test s <= Set(rInt8)
         Random.seed!(0)
         @test s == rand(BitSet, 3)
     end
@@ -115,7 +117,7 @@ end
     @test dd === d
     delt = pop!(d)
     @test delt isa Pair{Int,Float64}
-    @test delt[2] ∈ typemin(Int8):typemax(Int8)
+    @test delt[2] ∈ rInt8
     @test rand(rng..., Pair{Int,Float64}, Dict{Any,Any}, 3) isa Dict{Any,Any}
 
     # sparse
@@ -153,6 +155,9 @@ end
     s = rand(rng..., 1:3, NTuple{3})
     @test s isa NTuple{3,Int}
     @test all(in(1:3), s)
+    s = rand(rng..., NTuple{3, Int8})
+    @test s isa NTuple{3,Int8}
+    @test all(in(rInt8), s)
 end
 
 @testset "Rand" for rng in ([], [MersenneTwister(0)], [RandomDevice()])

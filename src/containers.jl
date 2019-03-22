@@ -196,11 +196,14 @@ rand(X, ::Type{T}, dims::Integer...) where {T<:BitArrays} =
 
 ## NTuple as a container
 
-rand(r::AbstractRNG, X,         ::Type{NTuple{N}}) where {N}   = rand(r,          Combine(NTuple{N}, X))
-rand(                X,         ::Type{NTuple{N}}) where {N}   = rand(GLOBAL_RNG, Combine(NTuple{N}, X))
-rand(r::AbstractRNG, ::Type{X}, ::Type{NTuple{N}}) where {X,N} = rand(r,          Combine(NTuple{N}, X))
-rand(                ::Type{X}, ::Type{NTuple{N}}) where {X,N} = rand(GLOBAL_RNG, Combine(NTuple{N}, X))
+rand(r::AbstractRNG, X,         ::Type{NTuple{N}})   where {N}   = rand(r,          Combine(NTuple{N}, X))
+rand(                X,         ::Type{NTuple{N}})   where {N}   = rand(GLOBAL_RNG, Combine(NTuple{N}, X))
+rand(r::AbstractRNG, ::Type{X}, ::Type{NTuple{N}})   where {X,N} = rand(r,          Combine(NTuple{N}, X))
+rand(                ::Type{X}, ::Type{NTuple{N}})   where {X,N} = rand(GLOBAL_RNG, Combine(NTuple{N}, X))
+rand(r::AbstractRNG,            ::Type{NTuple{N,X}}) where {X,N} = rand(r,          Combine(NTuple{N}, X))
+rand(                           ::Type{NTuple{N,X}}) where {X,N} = rand(GLOBAL_RNG, Combine(NTuple{N}, X))
 
 ### disambiguate
 
 rand(::AbstractRNG, ::Type{Tuple{}}) = ()
+rand(               ::Type{Tuple{}}) = ()
