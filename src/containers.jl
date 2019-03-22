@@ -1,5 +1,6 @@
 # generation of some containers filled with random values
 
+
 ## arrays (same as in Random, but with explicit type specification, e.g. rand(Int, Array, 4)
 
 check_dims(A::Type{<:AbstractArray{T,N} where T}, dims::Dims) where {N} =
@@ -15,11 +16,13 @@ array_type(::Type{Array}, ::Type{X}) where {X} = X
 
 make_array(A::Type{<:Array}, ::Type{X}, dims::Dims) where {X} = Array{array_type(A, X)}(undef, check_dims(A, dims))
 
-rand(r::AbstractRNG, A::Type{<:Array}, dims::Dims) = rand(r, Float64, A, dims)
-rand(                A::Type{<:Array}, dims::Dims) = rand(GLOBAL_RNG, Float64, A, dims)
+default_sampling(::Type{A}) where {A<:Array} = array_type(A, Float64)
 
-rand(r::AbstractRNG, A::Type{<:Array}, dims::Integer...) = rand(r, Float64, A, Dims(dims))
-rand(                A::Type{<:Array}, dims::Integer...) = rand(GLOBAL_RNG, Float64, A, Dims(dims))
+rand(r::AbstractRNG, A::Type{<:Array}, dims::Dims) = rand(r, default_sampling(A), A, dims)
+rand(                A::Type{<:Array}, dims::Dims) = rand(GLOBAL_RNG, default_sampling(A), A, dims)
+
+rand(r::AbstractRNG, A::Type{<:Array}, dims::Integer...) = rand(r, default_sampling(A), A, Dims(dims))
+rand(                A::Type{<:Array}, dims::Integer...) = rand(GLOBAL_RNG, default_sampling(A), A, Dims(dims))
 
 rand(r::AbstractRNG, X, A::Type{<:Array}, dims::Dims) = rand!(r, make_array(A, gentype(X), dims), X)
 rand(                X, A::Type{<:Array}, dims::Dims) = rand(GLOBAL_RNG, X, A, dims)
@@ -35,6 +38,11 @@ rand(                ::Type{X}, A::Type{<:Array}, dims::Integer...) where {X} = 
 
 
 ## dicts
+
+# again same inference bug
+# TODO: extend to AbstractDict ? (needs to work-around the inderence bug)
+default_sampling(::Type{<:Dict{K,V}}) where {K,V} = Pair{K,V}
+default_sampling(D::Type{<:Dict}) = throw(ArgumentError("under-specified scalar type for $D"))
 
 rand!(A::AbstractDict{K,V}, dist::Union{Type{<:Pair},Distribution{<:Pair}}=Combine(Pair, K, V)) where {K,V} =
     rand!(GLOBAL_RNG, A, dist)
@@ -58,12 +66,18 @@ rand(rng::AbstractRNG, dist::Distribution{P}, ::Type{T}, n::Integer) where {P<:P
 
 rand(rng::AbstractRNG, ::Type{P}, ::Type{T}, n::Integer) where {P<:Pair,T<:AbstractDict} = rand(rng, Uniform(P), T, n)
 
+rand(rng::AbstractRNG, ::Type{T}, n::Integer) where {T<:AbstractDict} = rand(rng, default_sampling(T), T, n)
+
 rand(u::Distribution{<:Pair}, ::Type{T}, n::Integer) where {T<:AbstractDict} = rand(GLOBAL_RNG, u, T, n)
 
 rand(::Type{P}, ::Type{T}, n::Integer) where {P<:Pair,T<:AbstractDict} = rand(GLOBAL_RNG, Uniform(P), T, n)
 
+rand(::Type{T}, n::Integer) where {T<:AbstractDict} = rand(GLOBAL_RNG, default_sampling(T), T, n)
 
 ## sets
+
+default_sampling(::Type{Set}) = Float64
+default_sampling(::Type{Set{T}}) where {T} = T
 
 rand!(A::AbstractSet{T}, X) where {T} = rand!(GLOBAL_RNG, A, X)
 rand!(A::AbstractSet{T}, ::Type{X}=T) where {T,X} = rand!(GLOBAL_RNG, A, X)
@@ -78,7 +92,7 @@ _rand0!(rng::AbstractRNG, A::AbstractSet, n::Integer, sp::Sampler) = _rand!(rng,
 rand!(rng::AbstractRNG, A::AbstractSet, sp::Sampler) = _rand!(rng, A, length(A), sp)
 
 
-rand(r::AbstractRNG, ::Type{T}, n::Integer) where {T<:AbstractSet} = rand(r, Float64, T, n)
+rand(r::AbstractRNG, ::Type{T}, n::Integer) where {T<:AbstractSet} = rand(r, default_sampling(T), T, n)
 rand(                ::Type{T}, n::Integer) where {T<:AbstractSet} = rand(GLOBAL_RNG, T, n)
 
 rand(r::AbstractRNG, X, ::Type{T}, n::Integer) where {T<:AbstractSet} = _rand0!(r, deduce_type(T, gentype(X))(), n, X)
@@ -89,6 +103,8 @@ rand(                ::Type{X}, ::Type{T}, n::Integer) where {X,T<:AbstractSet} 
 
 
 ## sparse vectors & matrices
+
+# TODO: implement default_sampling
 
 rand(r::AbstractRNG, p::AbstractFloat, m::Integer) = sprand(r, m, p)
 rand(                p::AbstractFloat, m::Integer) = sprand(GLOBAL_RNG, m, p)
@@ -128,6 +144,8 @@ rand(                  ::Type{String}, n::Integer=8) = rand(GLOBAL_RNG, Combine(
 
 
 ## BitArray
+
+default_sampling(::Type{<:BitArray}) = Bool
 
 const BitArrays = Union{BitArray,BitVector,BitMatrix}
 

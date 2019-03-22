@@ -54,14 +54,20 @@ Pick a random element or collection of random elements from the set of values sp
 If `C...` is not specified, `rand` produces a scalar. Otherwise, `C...` can be:
 
 * a set of integers, or a tuple of `Int`, which specify the dimensions of an `Array` to generate;
-* `(p::AbstractFloat, m::Integer, [n::Integer])`, which produces a sparse array of dimensions `(m, n)`,
+* `(Array, dims...)`: same as above, but with `Array` specified explicitely
+* `(p::AbstractFloat, m::Integer, [n::Integer])...`, which produces a sparse array of dimensions `(m, n)`,
   in which the probability of any element being nonzero is independently given by `p`
-* `(String, [n=8])`, which produces a random `String` of length `n`; the generated string consists of `Char`
+* `(String, [n=8])...`, which produces a random `String` of length `n`; the generated string consists of `Char`
   taken from a predefined set like `randstring`, and can be specified with the `S` parameter.
-* `(Dict, n)`, which produces a `Dict` of length `n`; `S` must then specify the type of its elements,
+* `(Dict, n)...`, which produces a `Dict` of length `n`; `S` must then specify the type of its elements,
   e.g. `Combine(Pair, Int, 2:3)`;
-* `(Set, n)`, which produces a `Set` of length `n`;
-* `(BitArray, dims...)`, which produces a `BitArray` with the specified dimensions.
+* `(Set, n)...`, which produces a `Set` of length `n`;
+* `(BitArray, dims...)...`, which produces a `BitArray` with the specified dimensions.
+
+For `Array`, `Dict` and `Set`, a less abstract type can be specified, e.g. `Set{Float64}`, to force
+the type of the result regardless of the `S` parameter. In particular, in the absence of `S`, the
+type parameter(s) of the container play the role of `S`; for example, `rand(Dict{Int,Float64}, n)`
+is equivalent to `rand(Combine(Pair, Int, Float64), Dict, n)`.
 
 # Examples
 ```julia-repl
@@ -78,6 +84,9 @@ julia> rand("abc", String, 12)
 
 julia> rand(1:10, Set, 3)
 Set([3, 8, 6])
+
+julia> rand(1:10, Set{Float64}, 3)
+Set([10.0, 5.0, 6.0])
 ```
 
 !!! note
