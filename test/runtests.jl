@@ -70,7 +70,7 @@ end
         @test rand(s) ∈ 1:99
     end
     for s = (Set([1, 2]), BitSet([1, 2]))
-        @test s === rand!(s, Int8)
+        @test s === rand!(s)
         @test s != Set([1, 2]) # very unlikely
         @test length(s) == 2
         @test s === rand!(s, 3:9) <= Set(3:9)
@@ -84,6 +84,13 @@ end
     @test s isa BitSet
     @test length(s) == 3
     @test s <= Set(1:10)
+    @testset "default_sampling(::BitSet) == Int8" begin
+        Random.seed!(0)
+        rand!(s)
+        @test s <= Set(typemin(Int8):typemax(Int8))
+        Random.seed!(0)
+        @test s == rand(BitSet, 3)
+    end
 
     # Dict
     for s = (rand(rng..., Combine(Pair, 1:99, 1:99), Dict, 10),

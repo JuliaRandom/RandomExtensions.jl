@@ -1,6 +1,9 @@
 # generation of some containers filled with random values
 
 
+default_sampling(::Type{X}) where {X} = error("default_sampling($X) not defined")
+default_sampling(x::X) where {X} = default_sampling(X)
+
 ## arrays (same as in Random, but with explicit type specification, e.g. rand(Int, Array, 4)
 
 check_dims(A::Type{<:AbstractArray{T,N} where T}, dims::Dims) where {N} =
@@ -74,16 +77,17 @@ rand(::Type{P}, ::Type{T}, n::Integer) where {P<:Pair,T<:AbstractDict} = rand(GL
 
 rand(::Type{T}, n::Integer) where {T<:AbstractDict} = rand(GLOBAL_RNG, default_sampling(T), T, n)
 
+
 ## sets
 
 default_sampling(::Type{<:AbstractSet}) = Float64
 default_sampling(::Type{<:AbstractSet{T}}) where {T} = T
 
 rand!(A::AbstractSet{T}, X) where {T} = rand!(GLOBAL_RNG, A, X)
-rand!(A::AbstractSet{T}, ::Type{X}=T) where {T,X} = rand!(GLOBAL_RNG, A, X)
+rand!(A::AbstractSet{T}, ::Type{X}=default_sampling(A)) where {T,X} = rand!(GLOBAL_RNG, A, X)
 
 rand!(rng::AbstractRNG, A::AbstractSet, X) = rand!(rng, A, Sampler(rng, X))
-rand!(rng::AbstractRNG, A::AbstractSet{T}, ::Type{X}=T) where {T,X} = rand!(rng, A, Sampler(rng, X))
+rand!(rng::AbstractRNG, A::AbstractSet{T}, ::Type{X}=default_sampling(A)) where {T,X} = rand!(rng, A, Sampler(rng, X))
 
 _rand0!(rng::AbstractRNG, A::AbstractSet, n::Integer, X) = _rand!(rng, A, n, Sampler(rng, X))
 _rand0!(rng::AbstractRNG, A::AbstractSet, n::Integer, ::Type{X}) where {X} = _rand!(rng, A, n, Sampler(rng, X))
