@@ -1,6 +1,6 @@
 module RandomExtensions
 
-export Combine, Uniform, Normal, Exponential, CloseOpen, Rand, Bernoulli
+export make, Uniform, Normal, Exponential, CloseOpen, Rand, Bernoulli
 
 # re-exports from Random, which don't overlap with new functionality and not from misc.jl
 export rand!, AbstractRNG, MersenneTwister, RandomDevice
@@ -44,9 +44,9 @@ Pick a random element or collection of random elements from the set of values sp
   point numbers;
 * a `Distribution` object, e.g. `Normal()` for a normal distribution (like `randn()`),
   or `CloseOpen(10.0, 20.0)` for uniform `Float64` numbers in the range ``[10.0, 20.0)``;
-* a `Combine` object, which can be e.g. `Combine(Pair, S1, S2)` or `Combine(Complex, S1, S2)`,
+* a `make` object, which can be e.g. `make(Pair, S1, S2)` or `make(Complex, S1, S2)`,
   where `S1` and `S2` are one of the specifications above; `Pair` or `Complex` can optionally be
-  given as concrete types, e.g. `Combine(ComplexF64, 1:3, Int)` to generate `ComplexF64` instead
+  given as concrete types, e.g. `make(ComplexF64, 1:3, Int)` to generate `ComplexF64` instead
   of `Complex{Int}`.
 
 `S` usually defaults to [`Float64`](@ref).
@@ -60,14 +60,14 @@ If `C...` is not specified, `rand` produces a scalar. Otherwise, `C...` can be:
 * `(String, [n=8])...`, which produces a random `String` of length `n`; the generated string consists of `Char`
   taken from a predefined set like `randstring`, and can be specified with the `S` parameter.
 * `(Dict, n)...`, which produces a `Dict` of length `n`; `S` must then specify the type of its elements,
-  e.g. `Combine(Pair, Int, 2:3)`;
+  e.g. `make(Pair, Int, 2:3)`;
 * `(Set, n)...`, which produces a `Set` of length `n`;
 * `(BitArray, dims...)...`, which produces a `BitArray` with the specified dimensions.
 
 For `Array`, `Dict` and `Set`, a less abstract type can be specified, e.g. `Set{Float64}`, to force
 the type of the result regardless of the `S` parameter. In particular, in the absence of `S`, the
 type parameter(s) of the container play the role of `S`; for example, `rand(Dict{Int,Float64}, n)`
-is equivalent to `rand(Combine(Pair, Int, Float64), Dict, n)`.
+is equivalent to `rand(make(Pair, Int, Float64), Dict, n)`.
 
 # Examples
 ```julia-repl

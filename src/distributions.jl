@@ -1,38 +1,62 @@
 # definition of some distribution types
 
 
-## Distribution & Combine
+## Distribution & Make
 
 abstract type Distribution{T} end
 
 Base.eltype(::Type{<:Distribution{T}}) where {T} = T
 
-abstract type Combine{T} <: Distribution{T} end
+abstract type Make{T} <: Distribution{T} end
 
-struct Combine0{T} <: Combine{T} end
+struct Make0{T} <: Make{T} end
 
-Combine(::Type{T}) where {T} = Combine0{T}()
+Make( ::Type{T}) where {T} = Make0{T}()
+Make0(::Type{T}) where {T} = Make0{T}()
+make(::Type{T}) where {T} = Make0{find_type(T)}()
 
-struct Combine1{T,X} <: Combine{T}
+struct Make1{T,X} <: Make{T}
     x::X
 end
 
-Combine1{T}(x::X) where {T,X} = Combine1{T,X}(x)
+Make{T}(x::X)      where {T,X} = Make1{T,X}(      x)
+Make{T}(::Type{X}) where {T,X} = Make1{T,Type{X}}(X)
 
-Combine(::Type{T}, x::X) where {T,X} = Combine1{deduce_type(T,gentype(X)),X}(x)
-Combine(::Type{T}, ::Type{X}) where {T,X} = Combine1{deduce_type(T,X),Type{X}}(X)
+# for expliciteness (allows using Make1 instead of Make)
+Make1{T}(x::X)      where {T,X} = Make1{T,X}(      x)
+Make1{T}(::Type{X}) where {T,X} = Make1{T,Type{X}}(X)
 
-struct Combine2{T,X,Y} <: Combine{T}
+make(::Type{T}, x::X)      where {T,X} = Make{find_type(T,x)}(x)
+make(::Type{T}, ::Type{X}) where {T,X} = Make{find_type(T,X)}(X)
+
+find_deduced_type(::Type{T}, ::X,     ) where {T,X} = deduce_type(T, gentype(X))
+find_deduced_type(::Type{T}, ::Type{X}) where {T,X} = deduce_type(T, X)
+
+struct Make2{T,X,Y} <: Make{T}
     x::X
     y::Y
 end
 
-Combine2{T}(x::X, y::Y) where {T,X,Y} = Combine2{T,X,Y}(x, y)
+Make{T}(x::X,      y::Y)      where {T,X,Y} = Make2{T,X,      Y}(      x, y)
+Make{T}(::Type{X}, y::Y)      where {T,X,Y} = Make2{T,Type{X},Y}(      X, y)
+Make{T}(x::X,      ::Type{Y}) where {T,X,Y} = Make2{T,X,      Type{Y}}(x, Y)
+Make{T}(::Type{X}, ::Type{Y}) where {T,X,Y} = Make2{T,Type{X},Type{Y}}(X, Y)
 
-Combine(::Type{T}, x::X, y::Y) where {T,X,Y} = Combine2{deduce_type(T,gentype(X),gentype(Y)),X,Y}(x, y)
-Combine(::Type{T}, ::Type{X}, y::Y) where {T,X,Y} = Combine2{deduce_type(T,X,gentype(Y)),Type{X},Y}(X, y)
-Combine(::Type{T}, x::X, ::Type{Y}) where {T,X,Y} = Combine2{deduce_type(T,gentype(X),Y),X,Type{Y}}(x, Y)
-Combine(::Type{T}, ::Type{X}, ::Type{Y}) where {T,X,Y} = Combine2{deduce_type(T,X,Y),Type{X},Type{Y}}(X, Y)
+# for expliciteness (allows using Make2 instead of Make)
+Make2{T}(x::X,      y::Y)      where {T,X,Y} = Make2{T,X,      Y}(      x, y)
+Make2{T}(::Type{X}, y::Y)      where {T,X,Y} = Make2{T,Type{X},Y}(      X, y)
+Make2{T}(x::X,      ::Type{Y}) where {T,X,Y} = Make2{T,X,      Type{Y}}(x, Y)
+Make2{T}(::Type{X}, ::Type{Y}) where {T,X,Y} = Make2{T,Type{X},Type{Y}}(X, Y)
+
+make(::Type{T}, x::X,      y::Y)      where {T,X,Y} = Make{find_type(T,x,y)}(x, y)
+make(::Type{T}, ::Type{X}, y::Y)      where {T,X,Y} = Make{find_type(T,X,y)}(X, y)
+make(::Type{T}, x::X,      ::Type{Y}) where {T,X,Y} = Make{find_type(T,x,Y)}(x, Y)
+make(::Type{T}, ::Type{X}, ::Type{Y}) where {T,X,Y} = Make{find_type(T,X,Y)}(X, Y)
+
+find_deduced_type(::Type{T}, ::X,       ::Y)       where {T,X,Y} = deduce_type(T, gentype(X), gentype(Y))
+find_deduced_type(::Type{T}, ::Type{X}, ::Y)       where {T,X,Y} = deduce_type(T, X,          gentype(Y))
+find_deduced_type(::Type{T}, ::X,       ::Type{Y}) where {T,X,Y} = deduce_type(T, gentype(X), Y)
+find_deduced_type(::Type{T}, ::Type{X}, ::Type{Y}) where {T,X,Y} = deduce_type(T, X,          Y)
 
 deduce_type(::Type{T}, ::Type{X}, ::Type{Y}) where {T,X,Y} = _deduce_type(T, Val(isconcretetype(T)), X, Y)
 deduce_type(::Type{T}, ::Type{X}) where {T,X} = _deduce_type(T, Val(isconcretetype(T)), X)

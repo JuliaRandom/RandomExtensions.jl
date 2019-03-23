@@ -12,26 +12,26 @@ using Test
     @test rand(Normal(ComplexF64)) isa ComplexF64
 
     # pairs/complexes
-    @test rand(Combine(Pair, 1:3, Float64)) isa Pair{Int,Float64}
+    @test rand(make(Pair, 1:3, Float64)) isa Pair{Int,Float64}
     @test rand(Pair{Int,Float64}) isa Pair{Int,Float64}
-    z = rand(Combine(Complex, 1:3, 6:9))
+    z = rand(make(Complex, 1:3, 6:9))
     @test z.re ∈ 1:3
     @test z.im ∈ 6:9
     @test z isa Complex{Int}
-    z = rand(Combine(ComplexF64, 1:3, 6:9))
+    z = rand(make(ComplexF64, 1:3, 6:9))
     @test z.re ∈ 1:3
     @test z.im ∈ 6:9
     @test z isa ComplexF64
     for (C, R) in ((Complex, Int), (ComplexF64, Float64), (Complex{Int}, Int))
-        z = rand(Combine(C, 1:3))
+        z = rand(make(C, 1:3))
         @test z.re ∈ 1:3
         @test z.im ∈ 1:3
         @test z isa Complex{R}
     end
     @test rand(ComplexF64) isa ComplexF64
 
-    @test rand(Combine(Complex,Int), 3) isa Vector{Complex{Int}}
-    @test rand(Combine(Complex,1:3), 3) isa Vector{Complex{Int}}
+    @test rand(make(Complex,Int), 3) isa Vector{Complex{Int}}
+    @test rand(make(Complex,1:3), 3) isa Vector{Complex{Int}}
 
     # Uniform
     @test rand(Uniform(Float64)) isa Float64
@@ -82,7 +82,7 @@ const rInt8 = typemin(Int8):typemax(Int8)
     @test rand(rng..., Pair{Int,Float64}, Set{Pair}, 3) isa Set{Pair}
 
     # BitSet
-    s = rand(Combine(BitSet, 1:10, 3))
+    s = rand(make(BitSet, 1:10, 3))
     @test s isa BitSet
     @test length(s) == 3
     @test s <= Set(1:10)
@@ -95,8 +95,8 @@ const rInt8 = typemin(Int8):typemax(Int8)
     end
 
     # Dict
-    for s = (rand(rng..., Combine(Pair, 1:99, 1:99), Dict, 10),
-             rand(rng..., Combine(Pair, 1:99, 1:99), Dict{Int,Int}, 10))
+    for s = (rand(rng..., make(Pair, 1:99, 1:99), Dict, 10),
+             rand(rng..., make(Pair, 1:99, 1:99), Dict{Int,Int}, 10))
         @test s isa Dict{Int,Int}
         @test length(s) == 10
         p = rand(s)
@@ -107,7 +107,7 @@ const rInt8 = typemin(Int8):typemax(Int8)
     @test s === rand!(s)
     @test length(s) == 2
     @test first(s).first ∉ (1, 2) # extremely unlikely
-    rand!(s, Combine(Pair, 3:9, Int))
+    rand!(s, make(Pair, 3:9, Int))
     @test length(s) == 2
     @test first(s).first ∈ 3:9
 
@@ -190,7 +190,7 @@ end
     @test eltype(rand(MersenneTwister(), Random.Sampler(MersenneTwister, UI), .6, 1, 0)) == UInt64
     @test eltype(rand(UI, Set, 3)) == UInt64
     @test eltype(rand(Uniform(UI), 3)) == UInt64
-    a = rand(RandomExtensions.Combine(Pair, Int, UI))
+    a = rand(make(Pair, Int, UI))
     @test fieldtype(typeof(a), 2) == UInt64
 end
 
@@ -225,50 +225,50 @@ end
     @test rand(Tuple{}) === ()
 end
 
-@testset "rand(Combine(Tuple, ...))" begin
+@testset "rand(make(Tuple, ...))" begin
     s = rand([Char, Int, Float64, Bool, 1:3, "abcd", Set([1, 2, 3])], rand(0:10))
-    @test rand(Combine(Tuple, s...)) isa Tuple{Random.gentype.(s)...}
-    t = rand(Combine(Tuple, 1:3, Char, Int))
+    @test rand(make(Tuple, s...)) isa Tuple{Random.gentype.(s)...}
+    t = rand(make(Tuple, 1:3, Char, Int))
     @test t[1] ∈ 1:3
     @test t[2] isa Char
     @test t[3] isa Int && t[3] ∉ 1:3 # extremely unlikely
 end
 
-@testset "rand(Combine(NTuple{N}, x))" begin
+@testset "rand(make(NTuple{N}, x))" begin
     s, N = rand([Char, Int, Float64, Bool, 1:3, "abcd", Set([1, 2, 3])]), rand(0:10)
     T = Random.gentype(s)
-    rand(Combine(NTuple{N}, s)) isa NTuple{N,T}
+    rand(make(NTuple{N}, s)) isa NTuple{N,T}
 end
 
-@testset "rand(Combine(String, ...))" begin
+@testset "rand(make(String, ...))" begin
     b = UInt8['0':'9';'A':'Z';'a':'z']
 
     for (s, c, n) in [(rand(String), b, 8),
-                      (rand(Combine(String, 3)), b, 3),
-                      (rand(Combine(String, "asd")), "asd", 8),
-                      (rand(Combine(String, 3, "asd")), "asd", 3),
-                      (rand(Combine(String, "qwe", 3)), "qwe", 3)]
+                      (rand(make(String, 3)), b, 3),
+                      (rand(make(String, "asd")), "asd", 8),
+                      (rand(make(String, 3, "asd")), "asd", 3),
+                      (rand(make(String, "qwe", 3)), "qwe", 3)]
 
         @test s ⊆ map(Char, c)
         @test length(s) == n
     end
 end
 
-@testset "rand(Combine(BitSet, ...))" begin
+@testset "rand(make(BitSet, ...))" begin
     for (k, l) = ([1:9] => 1:9, [Int8] => rInt8, [] => rInt8)
-        s = rand(Combine(BitSet, k..., 3))
+        s = rand(make(BitSet, k..., 3))
         @test s isa BitSet
         @test length(s) == 3
         @test all(in(l), s)
     end
 end
 
-@testset "rand(Combine(BitArray, ...))" begin
+@testset "rand(make(BitArray, ...))" begin
     for k = ([], [Bool], [Bernoulli(.3)]),
         d = ((3,), 3)
-        s = rand(Combine(BitArray, k..., d))
+        s = rand(make(BitArray, k..., d))
         @test s isa BitArray
         @test length(s) == 3
     end
-    # @test_throws rand(Combine(BitMatrix, 2))
+    # @test_throws rand(make(BitMatrix, 2))
 end

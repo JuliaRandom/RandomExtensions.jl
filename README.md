@@ -18,8 +18,8 @@ This does mainly 3 things:
    to `randn(3)`; other available distributions: `Exponential`,
    `CloseOpen` (for generation of floats in a close-open range),
    `Uniform` (which can wrap an implicit uniform distribution),
-   `Combine` (to "combine" distribution for objects made of multiple
-   scalars, like `Pair`, `Tuple`, or `Complex`);
+   `make` (to combine distribution for objects made of multiple
+   scalars, like `Pair`, `Tuple`, or `Complex`, or for containers);
 
 2) define generation of some containers filled with random values
    (like `Set`, `Dict`, `SparseArray`, `String`, `BitArray`);
@@ -63,31 +63,31 @@ julia> rand(Normal(0.0, 10.0)) # explicit μ and σ parameters
 julia> rand(Uniform(1:3)) # equivalent to rand(1:3)
 2
 
-julia> rand(Combine(Pair, 1:10, Normal())) # random Pair, where both members have distinct distributions
+julia> rand(make(Pair, 1:10, Normal())) # random Pair, where both members have distinct distributions
 5 => 0.674375
 
-julia> rand(Combine(Pair{Number, Any}, 1:10, Normal())) # specify the Pair type
+julia> rand(make(Pair{Number, Any}, 1:10, Normal())) # specify the Pair type
 Pair{Number,Any}(1, -0.131617)
 
-julia> rand(Pair{Float64,Int}) # equivalent to rand(Combine(Pair, Float64, Int))
+julia> rand(Pair{Float64,Int}) # equivalent to rand(make(Pair, Float64, Int))
 0.321676 => -4583276276690463733
 
-julia> rand(Combine(Tuple, 1:10, Normal()))
+julia> rand(make(Tuple, 1:10, Normal()))
 (9, 1.3407309364427373)
 
-julia> rand(Tuple{Float64,Int}) # equivalent to rand(Combine(Tuple, Float64, Int))
+julia> rand(Tuple{Float64,Int}) # equivalent to rand(make(Tuple, Float64, Int))
 (0.9830769470405203, -6048436354564488035)
 
-julia> rand(Combine(NTuple{3}, 1:10)) # produces a 3-tuple with values from 1:10
+julia> rand(make(NTuple{3}, 1:10)) # produces a 3-tuple with values from 1:10
 (5, 9, 6)
 
-julia> rand(Combine(NTuple{3}, Combine(Pair, 1:9, Bool))) # Combine calls can be nested
+julia> rand(make(NTuple{3}, make(Pair, 1:9, Bool))) # make calls can be nested
 (2 => false, 8 => true, 7 => false)
 
-julia> rand(Combine(Complex, Normal())) # each coordinate is drawn from the normal distribution
+julia> rand(make(Complex, Normal())) # each coordinate is drawn from the normal distribution
 1.5112317924121632 + 0.723463453534426im
 
-julia> rand(Combine(Complex, Normal(), 1:10)) # distinct distributions
+julia> rand(make(Complex, Normal(), 1:10)) # distinct distributions
 1.096731587266045 + 8.0im
 
 julia> rand(Normal(ComplexF64)) # equivalent to randn(ComplexF64)
@@ -99,7 +99,7 @@ Set([0.717172, 0.78481, 0.86901])
 julia> rand(1:9, Set, 3)
 Set([3, 5, 8])
 
-julia> rand(Combine(Pair, 1:9, Normal()), Dict, 3)
+julia> rand(make(Pair, 1:9, Normal()), Dict, 3)
 Dict{Int64,Float64} with 3 entries:
   9 => 0.916406
   3 => -2.44958
@@ -125,7 +125,7 @@ julia> rand("123", String, 4) # String considered as a container
 julia> rand(String, Set, 3) # String considered as a scalar
 Set(["0Dfqj6Yr", "ILngfcRz", "HT5IEyK3"])
 
-julia> rand(Combine(String, 3, "123"))
+julia> rand(make(String, 3, "123"))
 "211"
 
 julia> rand(BitArray, 3) # equivalent to bitrand(3)
@@ -147,7 +147,7 @@ julia> julia> rand(Bernoulli(0.2), BitVector, 10) # using the Bernoulli distribu
  false
   true
 
-julia> rand(1:3, NTuple{3}) # NTuple{3} considered as a container, equivalent to rand(Combine(NTuple{3}, 1:3))
+julia> rand(1:3, NTuple{3}) # NTuple{3} considered as a container, equivalent to rand(make(NTuple{3}, 1:3))
 (3, 3, 1)
 
 julia> Set(Iterators.take(Rand(RandomDevice(), 1:10), 3)) # RNG defaults to Random.GLOBAL_RNG
@@ -171,5 +171,5 @@ length `3` (container API), or an array of strings of default length `8` ? Curre
 the first interpretation, partly because it was the first implemented, and also because it may actually be the one
 most useful (and offers the tersest API to compete with `randstring`).
 But as this package is still unstable, this choice may be revisited in the future.
-Note that it's easy to get the result of the second interpretation via either `rand(Combine(String), 3)`,
+Note that it's easy to get the result of the second interpretation via either `rand(make(String), 3)`,
 `rand(String, (3,))` or `rand(String, Vector, 3)`.

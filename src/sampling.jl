@@ -78,7 +78,9 @@ rand(rng::AbstractRNG, sp::SamplerSimple{<:Pair}) =
 
 ### sampler for pairs and complex numbers
 
-function Sampler(RNG::Type{<:AbstractRNG}, u::Combine2{T}, n::Repetition) where T <: Union{Pair,Complex}
+find_type(T::Type{<:Union{Pair,Complex}}, args...) = find_deduced_type(T, args...)
+
+function Sampler(RNG::Type{<:AbstractRNG}, u::Make2{T}, n::Repetition) where T <: Union{Pair,Complex}
     sp1 = Sampler(RNG, u.x, n)
     sp2 = u.x == u.y ? sp1 : Sampler(RNG, u.y, n)
     SamplerTag{Cont{T}}((sp1, sp2))
@@ -90,17 +92,17 @@ rand(rng::AbstractRNG, sp::SamplerTag{Cont{T}}) where {T<:Union{Pair,Complex}} =
 
 #### additional convenience methods
 
-# rand(Pair{A,B}) => rand(Combine(Pair{A,B}, A, B))
+# rand(Pair{A,B}) => rand(make(Pair{A,B}, A, B))
 Sampler(RNG::Type{<:AbstractRNG}, ::Type{Pair{A,B}}, n::Repetition) where {A,B} =
-    Sampler(RNG, Combine(Pair{A,B}, A, B), n)
+    Sampler(RNG, make(Pair{A,B}, A, B), n)
 
-# rand(Combine(Complex, x)) => rand(Combine(Complex, x, x))
-Sampler(RNG::Type{<:AbstractRNG}, u::Combine1{T}, n::Repetition) where {T<:Complex} =
-    Sampler(RNG, Combine(T, u.x, u.x), n)
+# rand(make(Complex, x)) => rand(make(Complex, x, x))
+Sampler(RNG::Type{<:AbstractRNG}, u::Make1{T}, n::Repetition) where {T<:Complex} =
+    Sampler(RNG, make(T, u.x, u.x), n)
 
-# rand(Complex{T}) => rand(Combine(Complex{T}, T, T)) (redundant with implem in Random)
+# rand(Complex{T}) => rand(make(Complex{T}, T, T)) (redundant with implem in Random)
 Sampler(RNG::Type{<:AbstractRNG}, ::Type{Complex{T}}, n::Repetition) where {T<:Real} =
-    Sampler(RNG, Combine(Complex{T}, T, T), n)
+    Sampler(RNG, make(Complex{T}, T, T), n)
 
 
 ### sampler for tuples
@@ -115,7 +117,7 @@ end
     rands = []
     for i = 1:fieldcount(T)
         # if as many fields for S and T, don't try to shortcut, as it's
-        # unnecessary, and even wrong when sp was created from Combine
+        # unnecessary, and even wrong when sp was created from Make
         k = fieldcount(S) == fieldcount(T) ? i : 1
         for j = k:i
             if fieldtype(T, i) == gentype(fieldtype(S, j))
@@ -127,50 +129,50 @@ end
     :(tuple($(rands...)))
 end
 
-#### with Combine
+#### with make
 
-# implement Combine(Tuple, S1, S2...), e.g. for rand(Combine(Tuple, Int, 1:3)),
-# and       Combine(NTuple{N}, S)
+# implement make(Tuple, S1, S2...), e.g. for rand(make(Tuple, Int, 1:3)),
+# and       make(NTuple{N}, S)
 
-@generated function _Combine(::Type{Tuple}, args...)
+@generated function _make(::Type{Tuple}, args...)
     types = [t <: Type ? t.parameters[1] : gentype(t) for t in args]
     T = Tuple{types...}
     samples = [t <: Type ? :(UniformType{$(t.parameters[1])}()) :
                :(args[$i]) for (i, t) in enumerate(args)]
-    :(Combine1{$T}(tuple($(samples...))))
+    :(Make1{$T}(tuple($(samples...))))
 end
 
-Combine(::Type{Tuple}, args...) = _Combine(Tuple, args...)
+make(::Type{Tuple}, args...) = _make(Tuple, args...)
 
-@generated function _Combine(::Type{NTuple{N}}, arg) where {N}
+@generated function _make(::Type{NTuple{N}}, arg) where {N}
     T, a = arg <: Type ?
         (arg.parameters[1], :(Uniform(arg))) :
         (gentype(arg), :arg)
-    :(Combine1{NTuple{N,$T}}($a))
+    :(Make1{NTuple{N,$T}}($a))
 end
 
-Combine(::Type{NTuple{N}}, X) where {N} = _Combine(NTuple{N}, X)
-Combine(::Type{NTuple{N}}, ::Type{X}) where {N,X} = _Combine(NTuple{N}, X)
+make(::Type{NTuple{N}}, X) where {N} = _make(NTuple{N}, X)
+make(::Type{NTuple{N}}, ::Type{X}) where {N,X} = _make(NTuple{N}, X)
 
 # disambiguate
 
-Combine(::Type{Tuple}, X) = _Combine(Tuple, X)
-Combine(::Type{Tuple}, ::Type{X}) where {X} = _Combine(Tuple, X)
+make(::Type{Tuple}, X) = _make(Tuple, X)
+make(::Type{Tuple}, ::Type{X}) where {X} = _make(Tuple, X)
 
-Combine(::Type{Tuple}, X, Y) = _Combine(Tuple, X, Y)
-Combine(::Type{Tuple}, ::Type{X}, Y) where {X} = _Combine(Tuple, X, Y)
-Combine(::Type{Tuple}, X, ::Type{Y}) where {Y} = _Combine(Tuple, X, Y)
-Combine(::Type{Tuple}, ::Type{X}, ::Type{Y}) where {X,Y} = _Combine(Tuple, X, Y)
+make(::Type{Tuple}, X, Y) = _make(Tuple, X, Y)
+make(::Type{Tuple}, ::Type{X}, Y) where {X} = _make(Tuple, X, Y)
+make(::Type{Tuple}, X, ::Type{Y}) where {Y} = _make(Tuple, X, Y)
+make(::Type{Tuple}, ::Type{X}, ::Type{Y}) where {X,Y} = _make(Tuple, X, Y)
 
 
 # Sampler (rand is already implemented above, like for rand(Tuple{...})
 
-@generated function Sampler(RNG::Type{<:AbstractRNG}, c::Combine1{T,X}, n::Repetition) where {T<:Tuple,X<:Tuple}
+@generated function Sampler(RNG::Type{<:AbstractRNG}, c::Make1{T,X}, n::Repetition) where {T<:Tuple,X<:Tuple}
     sps = [:(Sampler(RNG, c.x[$i], n)) for i in 1:length(T.parameters)]
     :(SamplerTag{Cont{T}}(tuple($(sps...))))
 end
 
-Sampler(RNG::Type{<:AbstractRNG}, c::Combine1{T,X}, n::Repetition) where {T<:Tuple,X} =
+Sampler(RNG::Type{<:AbstractRNG}, c::Make1{T,X}, n::Repetition) where {T<:Tuple,X} =
     SamplerTag{Cont{T}}(Sampler(RNG, c.x, n))
 
 @generated function rand(rng::AbstractRNG, sp::SamplerTag{Cont{T},S}) where {T<:NTuple,S<:Sampler}
@@ -185,11 +187,11 @@ end
 
 default_sampling(::Type{BitSet}) = Int8 # almost arbitrary, may change
 
-Combine(::Type{BitSet},            n::Integer)           = Combine2{BitSet}(default_sampling(BitSet), Int(n))
-Combine(::Type{BitSet}, X,         n::Integer)           = Combine2{BitSet}(X, Int(n))
-Combine(::Type{BitSet}, ::Type{X}, n::Integer) where {X} = Combine2{BitSet}(X, Int(n))
+make(::Type{BitSet},            n::Integer)           = Make2{BitSet}(default_sampling(BitSet), Int(n))
+make(::Type{BitSet}, X,         n::Integer)           = Make2{BitSet}(X, Int(n))
+make(::Type{BitSet}, ::Type{X}, n::Integer) where {X} = Make2{BitSet}(X, Int(n))
 
-Sampler(RNG::Type{<:AbstractRNG}, c::Combine{BitSet}, n::Repetition) =
+Sampler(RNG::Type{<:AbstractRNG}, c::Make{BitSet}, n::Repetition) =
     SamplerTag{BitSet}((Sampler(RNG, c.x, n), c.y))
 
 function rand(rng::AbstractRNG, sp::SamplerTag{BitSet})
@@ -202,18 +204,18 @@ end
 
 default_sampling(::Type{<:BitArray}) = Bool
 
-Combine(::Type{BitArray{N}}, X,         dims::Dims{N}) where {N}   = Combine2{BitArray{N}}(X, dims)
-Combine(::Type{BitArray{N}}, ::Type{X}, dims::Dims{N}) where {N,X} = Combine2{BitArray{N}}(X, dims)
-Combine(::Type{BitArray},    X,         dims::Dims{N}) where {N}   = Combine2{BitArray{N}}(X, dims)
-Combine(::Type{BitArray},    ::Type{X}, dims::Dims{N}) where {N,X} = Combine2{BitArray{N}}(X, dims)
+make(::Type{BitArray{N}}, X,         dims::Dims{N}) where {N}   = Make2{BitArray{N}}(X, dims)
+make(::Type{BitArray{N}}, ::Type{X}, dims::Dims{N}) where {N,X} = Make2{BitArray{N}}(X, dims)
+make(::Type{BitArray},    X,         dims::Dims{N}) where {N}   = Make2{BitArray{N}}(X, dims)
+make(::Type{BitArray},    ::Type{X}, dims::Dims{N}) where {N,X} = Make2{BitArray{N}}(X, dims)
 
-Combine(B::Type{<:BitArray},         X, dims::Integer...)           = Combine(B, X, Dims(dims))
-Combine(B::Type{<:BitArray}, ::Type{X}, dims::Integer...) where {X} = Combine(B, X, Dims(dims))
+make(B::Type{<:BitArray},         X, dims::Integer...)           = make(B, X, Dims(dims))
+make(B::Type{<:BitArray}, ::Type{X}, dims::Integer...) where {X} = make(B, X, Dims(dims))
 
-Combine(B::Type{<:BitArray}, dims::Dims)       = Combine(B, default_sampling(B), dims)
-Combine(B::Type{<:BitArray}, dims::Integer...) = Combine(B, default_sampling(B), Dims(dims))
+make(B::Type{<:BitArray}, dims::Dims)       = make(B, default_sampling(B), dims)
+make(B::Type{<:BitArray}, dims::Integer...) = make(B, default_sampling(B), Dims(dims))
 
-Sampler(RNG::Type{<:AbstractRNG}, c::Combine{B}, n::Repetition) where {B<:BitArray} =
+Sampler(RNG::Type{<:AbstractRNG}, c::Make{B}, n::Repetition) where {B<:BitArray} =
     SamplerTag{B}((Sampler(RNG, c.x, n), c.y))
 
 rand(rng::AbstractRNG, sp::SamplerTag{<:BitArray}) = rand!(rng, BitArray(undef, sp.data[2]), sp.data[1])
@@ -224,18 +226,18 @@ rand(rng::AbstractRNG, sp::SamplerTag{<:BitArray}) = rand!(rng, BitArray(undef, 
 let b = UInt8['0':'9';'A':'Z';'a':'z'],
     s = Sampler(MersenneTwister, b, Val(Inf)) # cache for the likely most common case
 
-    global Sampler, rand, Combine
+    global Sampler, rand, make
 
-    Combine(::Type{String}) = Combine2{String}(8, b)
-    Combine(::Type{String}, chars) = Combine2{String}(8, chars)
-    Combine(::Type{String}, n::Integer) = Combine2{String}(Int(n), b)
-    Combine(::Type{String}, chars, n::Integer) = Combine2{String}(Int(n), chars)
-    Combine(::Type{String}, n::Integer, chars) = Combine2{String}(Int(n), chars)
+    make(::Type{String}) = Make2{String}(8, b)
+    make(::Type{String}, chars) = Make2{String}(8, chars)
+    make(::Type{String}, n::Integer) = Make2{String}(Int(n), b)
+    make(::Type{String}, chars, n::Integer) = Make2{String}(Int(n), chars)
+    make(::Type{String}, n::Integer, chars) = Make2{String}(Int(n), chars)
 
     Sampler(RNG::Type{<:AbstractRNG}, ::Type{String}, n::Repetition) =
         SamplerTag{Cont{String}}((RNG === MersenneTwister ? s : Sampler(RNG, b, n)) => 8)
 
-    function Sampler(RNG::Type{<:AbstractRNG}, c::Combine2{String}, n::Repetition)
+    function Sampler(RNG::Type{<:AbstractRNG}, c::Make2{String}, n::Repetition)
         sp = RNG === MersenneTwister && c.y === b ?
             s : Sampler(RNG, c.y, n)
         SamplerTag{Cont{String}}(sp => c.x)

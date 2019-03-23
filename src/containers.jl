@@ -47,11 +47,11 @@ rand(                ::Type{X}, A::Type{<:Array}, dims::Integer...) where {X} = 
 default_sampling(::Type{<:Dict{K,V}}) where {K,V} = Pair{K,V}
 default_sampling(D::Type{<:Dict}) = throw(ArgumentError("under-specified scalar type for $D"))
 
-rand!(A::AbstractDict{K,V}, dist::Union{Type{<:Pair},Distribution{<:Pair}}=Combine(Pair, K, V)) where {K,V} =
+rand!(A::AbstractDict{K,V}, dist::Union{Type{<:Pair},Distribution{<:Pair}}=make(Pair, K, V)) where {K,V} =
     rand!(GLOBAL_RNG, A, dist)
 
 rand!(rng::AbstractRNG, A::AbstractDict{K,V},
-      dist::Union{Type{<:Pair},Distribution{<:Pair}}=Combine(Pair, K, V)) where {K,V} =
+      dist::Union{Type{<:Pair},Distribution{<:Pair}}=make(Pair, K, V)) where {K,V} =
           rand!(rng, A, Sampler(rng, dist))
 
 function _rand!(rng::AbstractRNG, A::Union{AbstractDict,AbstractSet}, n::Integer, sp::Sampler)
@@ -140,11 +140,11 @@ rand(X, p::AbstractFloat, m::Integer, n::Integer) = rand(GLOBAL_RNG, X, p, m, n)
 
 ## String
 
-rand(rng::AbstractRNG, chars, ::Type{String}, n::Integer=8) = rand(rng, Combine(String, chars, n))
-rand(                  chars, ::Type{String}, n::Integer=8) = rand(GLOBAL_RNG, Combine(String, chars, n))
+rand(rng::AbstractRNG, chars, ::Type{String}, n::Integer=8) = rand(rng, make(String, chars, n))
+rand(                  chars, ::Type{String}, n::Integer=8) = rand(GLOBAL_RNG, make(String, chars, n))
 
-rand(rng::AbstractRNG, ::Type{String}, n::Integer=8) = rand(rng, Combine(String, n))
-rand(                  ::Type{String}, n::Integer=8) = rand(GLOBAL_RNG, Combine(String, n))
+rand(rng::AbstractRNG, ::Type{String}, n::Integer=8) = rand(rng, make(String, n))
+rand(                  ::Type{String}, n::Integer=8) = rand(GLOBAL_RNG, make(String, n))
 
 
 ## BitArray
@@ -178,12 +178,12 @@ rand(X, ::Type{T}, dims::Integer...) where {T<:BitArray} =
 
 ## NTuple as a container
 
-rand(r::AbstractRNG, X,         ::Type{NTuple{N}})   where {N}   = rand(r,          Combine(NTuple{N}, X))
-rand(                X,         ::Type{NTuple{N}})   where {N}   = rand(GLOBAL_RNG, Combine(NTuple{N}, X))
-rand(r::AbstractRNG, ::Type{X}, ::Type{NTuple{N}})   where {X,N} = rand(r,          Combine(NTuple{N}, X))
-rand(                ::Type{X}, ::Type{NTuple{N}})   where {X,N} = rand(GLOBAL_RNG, Combine(NTuple{N}, X))
-rand(r::AbstractRNG,            ::Type{NTuple{N,X}}) where {X,N} = rand(r,          Combine(NTuple{N}, X))
-rand(                           ::Type{NTuple{N,X}}) where {X,N} = rand(GLOBAL_RNG, Combine(NTuple{N}, X))
+rand(r::AbstractRNG, X,         ::Type{NTuple{N}})   where {N}   = rand(r,          make(NTuple{N}, X))
+rand(                X,         ::Type{NTuple{N}})   where {N}   = rand(GLOBAL_RNG, make(NTuple{N}, X))
+rand(r::AbstractRNG, ::Type{X}, ::Type{NTuple{N}})   where {X,N} = rand(r,          make(NTuple{N}, X))
+rand(                ::Type{X}, ::Type{NTuple{N}})   where {X,N} = rand(GLOBAL_RNG, make(NTuple{N}, X))
+rand(r::AbstractRNG,            ::Type{NTuple{N,X}}) where {X,N} = rand(r,          make(NTuple{N}, X))
+rand(                           ::Type{NTuple{N,X}}) where {X,N} = rand(GLOBAL_RNG, make(NTuple{N}, X))
 
 ### disambiguate
 
