@@ -204,10 +204,8 @@ end
 
 default_sampling(::Type{<:BitArray}) = Bool
 
-make(::Type{BitArray{N}}, X,         dims::Dims{N}) where {N}   = Make2{BitArray{N}}(X, dims)
-make(::Type{BitArray{N}}, ::Type{X}, dims::Dims{N}) where {N,X} = Make2{BitArray{N}}(X, dims)
-make(::Type{BitArray},    X,         dims::Dims{N}) where {N}   = Make2{BitArray{N}}(X, dims)
-make(::Type{BitArray},    ::Type{X}, dims::Dims{N}) where {N,X} = Make2{BitArray{N}}(X, dims)
+find_type(::Type{BitArray{N}}, _, dims::Dims{N}) where {N} = BitArray{N}
+find_type(::Type{BitArray},    _, dims::Dims{N}) where {N} = BitArray{N}
 
 make(B::Type{<:BitArray},         X, dims::Integer...)           = make(B, X, Dims(dims))
 make(B::Type{<:BitArray}, ::Type{X}, dims::Integer...) where {X} = make(B, X, Dims(dims))
@@ -215,7 +213,7 @@ make(B::Type{<:BitArray}, ::Type{X}, dims::Integer...) where {X} = make(B, X, Di
 make(B::Type{<:BitArray}, dims::Dims)       = make(B, default_sampling(B), dims)
 make(B::Type{<:BitArray}, dims::Integer...) = make(B, default_sampling(B), Dims(dims))
 
-Sampler(RNG::Type{<:AbstractRNG}, c::Make{B}, n::Repetition) where {B<:BitArray} =
+Sampler(RNG::Type{<:AbstractRNG}, c::Make2{B}, n::Repetition) where {B<:BitArray} =
     SamplerTag{B}((Sampler(RNG, c.x, n), c.y))
 
 rand(rng::AbstractRNG, sp::SamplerTag{<:BitArray}) = rand!(rng, BitArray(undef, sp.data[2]), sp.data[1])

@@ -265,10 +265,17 @@ end
 
 @testset "rand(make(BitArray, ...))" begin
     for k = ([], [Bool], [Bernoulli(.3)]),
-        d = ((3,), 3)
-        s = rand(make(BitArray, k..., d))
+        (d, dim) = ([(6,)]              => 1,
+                    [(2,3)]             => 2,
+                    [6]                 => 1,
+                    [2, 3]              => 2,
+                    [Int8(2), Int16(3)] => 2),
+        B = (BitArray, BitArray{dim})
+
+        s = rand(make(B, k..., d...))
         @test s isa BitArray
-        @test length(s) == 3
+        @test length(s) == 6
     end
-    # @test_throws rand(make(BitMatrix, 2))
+    @test_throws MethodError make(BitMatrix, 2)
+    @test_throws MethodError make(BitVector, 2, 3)
 end
