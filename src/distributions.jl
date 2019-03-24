@@ -140,7 +140,7 @@ CloseOpen(a::T, b::T) where {T<:AbstractFloat} = CloseOpenAB{T}(a, b)
 
 ## Bernoulli
 
-struct Bernoulli{T<:Integer} <: Distribution{T}
+struct Bernoulli{T<:Number} <: Distribution{T}
     p::Float64
 
     Bernoulli{T}(p::Real) where {T} = let pf = Float64(p)
@@ -150,4 +150,4 @@ struct Bernoulli{T<:Integer} <: Distribution{T}
 end
 
 Bernoulli(p::Real=0.5) = Bernoulli(Int, p)
-Bernoulli(::Type{T}, p::Real=0.5) where {T<:Integer} = Bernoulli{T}(p)
+Bernoulli(::Type{T}, p::Real=0.5) where {T<:Number} = Bernoulli{T}(p)

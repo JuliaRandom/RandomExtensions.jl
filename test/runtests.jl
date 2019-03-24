@@ -44,7 +44,14 @@ using Test
     @test rand(Bernoulli(1)) == 1
     @test rand(Bernoulli(0)) == 0
     # TODO: do the math to estimate proba of failure:
-    @test 620 < count(rand(Bernoulli(Bool, .7), 1000)) < 780
+    @test 620 < count(rand(Bernoulli(Bool, 0.7), 1000)) < 780
+    for T = (Bool, Int, Float64, ComplexF64)
+        r = rand(Bernoulli(T))
+        @test r isa T
+        @test r ∈ (0, 1)
+        r = rand(Bernoulli(T, 1))
+        @test r == 1
+    end
 end
 
 const rInt8 = typemin(Int8):typemax(Int8)
