@@ -270,19 +270,24 @@ end
     end
 end
 
-@testset "rand(make(BitArray, ...))" begin
-    for k = ([], [Bool], [Bernoulli(.3)]),
+@testset "rand(make(Array/BitArray, ...))" begin
+    for (T, Arr) = (Bool => BitArray, Float64 => Array{Float64}),
+        k = ([], [T], [Bernoulli(T, 0.3)]),
         (d, dim) = ([(6,)]              => 1,
                     [(2,3)]             => 2,
                     [6]                 => 1,
                     [2, 3]              => 2,
                     [Int8(2), Int16(3)] => 2),
-        B = (BitArray, BitArray{dim})
+        A = (T == Bool ?
+             (BitArray, BitArray{dim}) :
+             (Array, Array{Float64}, Array{Float64,dim}, Array{U,dim} where U))
 
-        s = rand(make(B, k..., d...))
-        @test s isa BitArray
+        s = rand(make(A, k..., d...))
+        @test s isa  Arr{dim}
         @test length(s) == 6
     end
+    @test_throws MethodError make(Matrix, 2)
+    @test_throws MethodError make(Vector, 2, 3)
     @test_throws MethodError make(BitMatrix, 2)
     @test_throws MethodError make(BitVector, 2, 3)
 end

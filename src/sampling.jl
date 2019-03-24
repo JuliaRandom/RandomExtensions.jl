@@ -200,23 +200,41 @@ function rand(rng::AbstractRNG, sp::SamplerTag{BitSet})
 end
 
 
-### BitArray
+### AbstractArray
+
+make(A::Type{<:AbstractArray}, X,         dims::Integer...)           = make(A, X, Dims(dims))
+make(A::Type{<:AbstractArray}, ::Type{X}, dims::Integer...) where {X} = make(A, X, Dims(dims))
+
+make(A::Type{<:AbstractArray}, dims::Dims)       = make(A, default_sampling(A), dims)
+make(A::Type{<:AbstractArray}, dims::Integer...) = make(A, default_sampling(A), Dims(dims))
+
+
+Sampler(RNG::Type{<:AbstractRNG}, c::Make2{A}, n::Repetition) where {A<:AbstractArray} =
+    SamplerTag{A}((Sampler(RNG, c.x, n), c.y))
+
+rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:AbstractArray} =
+    rand!(rng, A(undef, sp.data[2]), sp.data[1])
+
+
+#### Array
+
+# TODO: extend that definition to AbstractArray?
+default_sampling(::Type{A}) where {A<:Array} = array_type(A, Float64)
+
+array_dim(::Type{<:Array{T,N} where T}, ::Dims{N}) where {N}   = N
+array_dim(::Type{Array},                ::Dims{N}) where {N}   = N
+array_dim(::Type{Array{T}},             ::Dims{N}) where {T,N} = N
+
+find_type(A::Type{<:Array}, X,         dims::Dims{N}) where {N}   = Array{array_type(A, gentype(X)), array_dim(A, dims)}
+find_type(A::Type{<:Array}, ::Type{X}, dims::Dims{N}) where {X,N} = Array{array_type(A, X),          array_dim(A, dims)}
+
+
+#### BitArray
 
 default_sampling(::Type{<:BitArray}) = Bool
 
-find_type(::Type{BitArray{N}}, _, dims::Dims{N}) where {N} = BitArray{N}
-find_type(::Type{BitArray},    _, dims::Dims{N}) where {N} = BitArray{N}
-
-make(B::Type{<:BitArray},         X, dims::Integer...)           = make(B, X, Dims(dims))
-make(B::Type{<:BitArray}, ::Type{X}, dims::Integer...) where {X} = make(B, X, Dims(dims))
-
-make(B::Type{<:BitArray}, dims::Dims)       = make(B, default_sampling(B), dims)
-make(B::Type{<:BitArray}, dims::Integer...) = make(B, default_sampling(B), Dims(dims))
-
-Sampler(RNG::Type{<:AbstractRNG}, c::Make2{B}, n::Repetition) where {B<:BitArray} =
-    SamplerTag{B}((Sampler(RNG, c.x, n), c.y))
-
-rand(rng::AbstractRNG, sp::SamplerTag{<:BitArray}) = rand!(rng, BitArray(undef, sp.data[2]), sp.data[1])
+find_type(::Type{BitArray{N}}, _, ::Dims{N}) where {N} = BitArray{N}
+find_type(::Type{BitArray},    _, ::Dims{N}) where {N} = BitArray{N}
 
 
 ### String as a scalar

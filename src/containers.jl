@@ -19,7 +19,6 @@ array_type(::Type{Array}, ::Type{X}) where {X} = X
 
 make_array(A::Type{<:Array}, ::Type{X}, dims::Dims) where {X} = Array{array_type(A, X)}(undef, check_dims(A, dims))
 
-default_sampling(::Type{A}) where {A<:Array} = array_type(A, Float64)
 
 rand(r::AbstractRNG, A::Type{<:Array}, dims::Dims) = rand(r, default_sampling(A), A, dims)
 rand(                A::Type{<:Array}, dims::Dims) = rand(GLOBAL_RNG, default_sampling(A), A, dims)
