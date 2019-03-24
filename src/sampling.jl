@@ -202,6 +202,9 @@ end
 
 ### AbstractArray
 
+default_sampling(::Type{<:AbstractArray{T}}) where {T} = T
+default_sampling(::Type{<:AbstractArray})              = Float64
+
 make(A::Type{<:AbstractArray}, X,         dims::Integer...)           = make(A, X, Dims(dims))
 make(A::Type{<:AbstractArray}, ::Type{X}, dims::Integer...) where {X} = make(A, X, Dims(dims))
 
@@ -218,15 +221,15 @@ rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:AbstractArray} =
 
 #### Array
 
-# TODO: extend that definition to AbstractArray?
-default_sampling(::Type{A}) where {A<:Array} = array_type(A, Float64)
+val_gentype(X)                   = gentype(X)
+val_gentype(::Type{X}) where {X} = X
 
-array_dim(::Type{<:Array{T,N} where T}, ::Dims{N}) where {N}   = N
-array_dim(::Type{Array},                ::Dims{N}) where {N}   = N
-array_dim(::Type{Array{T}},             ::Dims{N}) where {T,N} = N
-
-find_type(A::Type{<:Array}, X,         dims::Dims{N}) where {N}   = Array{array_type(A, gentype(X)), array_dim(A, dims)}
-find_type(A::Type{<:Array}, ::Type{X}, dims::Dims{N}) where {X,N} = Array{array_type(A, X),          array_dim(A, dims)}
+# cf. inference bug https://github.com/JuliaLang/julia/issues/28762
+# we have to write out all combinations for getting proper inference
+find_type(A::Type{Array{T}},           _, ::Dims{N}) where {T, N} = Array{T, N}
+find_type(A::Type{Array{T,N}},         _, ::Dims{N}) where {T, N} = Array{T, N}
+find_type(A::Type{Array{T,N} where T}, X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
+find_type(A::Type{Array},              X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
 
 
 #### BitArray

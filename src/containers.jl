@@ -4,39 +4,31 @@
 default_sampling(::Type{X}) where {X} = error("default_sampling($X) not defined")
 default_sampling(x::X) where {X} = default_sampling(X)
 
+
 ## arrays (same as in Random, but with explicit type specification, e.g. rand(Int, Array, 4)
 
-check_dims(A::Type{<:AbstractArray{T,N} where T}, dims::Dims) where {N} =
-    length(dims) == N ? dims : throw(DomainError(dims, "incompatible dimensions for $A"))
-check_dims(::Type{<:AbstractArray}, dims::Dims) = dims
+macro make_array_container(Cont)
+    definitions =
+        [ :(rand(r::AbstractRNG,            T::Type{<:$Cont}, dims::Dims) =                 rand(r,          make(T, dims))),
+          :(rand(                           T::Type{<:$Cont}, dims::Dims) =                 rand(GLOBAL_RNG, make(T, dims))),
+          :(rand(r::AbstractRNG,            T::Type{<:$Cont}, dims::Integer...) =           rand(r,          make(T, Dims(dims)))),
+          :(rand(                           T::Type{<:$Cont}, dims::Integer...) =           rand(GLOBAL_RNG, make(T, Dims(dims)))),
 
-# cf. inference bug https://github.com/JuliaLang/julia/issues/28762
-# we have to write out all combinations for getting proper inference
-array_type(::Type{Array{T}}, ::Type{X}) where {T,X} = T
-array_type(::Type{Array{T,N} where T}, ::Type{X}) where {N,X} = X
-array_type(::Type{Array{T,N}}, ::Type{X}) where {T,N,X} = T
-array_type(::Type{Array}, ::Type{X}) where {X} = X
+          :(rand(r::AbstractRNG, X,         T::Type{<:$Cont}, dims::Dims) =                 rand(r,          make(T, X, dims))),
+          :(rand(                X,         T::Type{<:$Cont}, dims::Dims) =                 rand(GLOBAL_RNG, make(T, X, dims))),
+          :(rand(r::AbstractRNG, X,         T::Type{<:$Cont}, dims::Integer...) =           rand(r,          make(T, X, Dims(dims)))),
+          :(rand(                X,         T::Type{<:$Cont}, dims::Integer...) =           rand(GLOBAL_RNG, make(T, X, Dims(dims)))),
 
-make_array(A::Type{<:Array}, ::Type{X}, dims::Dims) where {X} = Array{array_type(A, X)}(undef, check_dims(A, dims))
+          :(rand(r::AbstractRNG, ::Type{X}, T::Type{<:$Cont}, dims::Dims)       where {X} = rand(r,          make(T, X, dims))),
+          :(rand(                ::Type{X}, T::Type{<:$Cont}, dims::Dims)       where {X} = rand(GLOBAL_RNG, make(T, X, dims))),
+          :(rand(r::AbstractRNG, ::Type{X}, T::Type{<:$Cont}, dims::Integer...) where {X} = rand(r,          make(T, X, Dims(dims)))),
+          :(rand(                ::Type{X}, T::Type{<:$Cont}, dims::Integer...) where {X} = rand(GLOBAL_RNG, make(T, X, Dims(dims)))),
+        ]
+    esc(Expr(:block, definitions...))
+end
 
-
-rand(r::AbstractRNG, A::Type{<:Array}, dims::Dims) = rand(r, default_sampling(A), A, dims)
-rand(                A::Type{<:Array}, dims::Dims) = rand(GLOBAL_RNG, default_sampling(A), A, dims)
-
-rand(r::AbstractRNG, A::Type{<:Array}, dims::Integer...) = rand(r, default_sampling(A), A, Dims(dims))
-rand(                A::Type{<:Array}, dims::Integer...) = rand(GLOBAL_RNG, default_sampling(A), A, Dims(dims))
-
-rand(r::AbstractRNG, X, A::Type{<:Array}, dims::Dims) = rand!(r, make_array(A, gentype(X), dims), X)
-rand(                X, A::Type{<:Array}, dims::Dims) = rand(GLOBAL_RNG, X, A, dims)
-
-rand(r::AbstractRNG, X, A::Type{<:Array}, dims::Integer...) = rand(r, X, A, Dims(dims))
-rand(                X, A::Type{<:Array}, dims::Integer...) = rand(GLOBAL_RNG, X, A, Dims(dims))
-
-rand(r::AbstractRNG, ::Type{X}, A::Type{<:Array}, dims::Dims) where {X} = rand!(r, make_array(A, X, dims), X)
-rand(                ::Type{X}, A::Type{<:Array}, dims::Dims) where {X} = rand(GLOBAL_RNG, X, A, dims)
-
-rand(r::AbstractRNG, ::Type{X}, A::Type{<:Array}, dims::Integer...) where {X} = rand(r, X, A, Dims(dims))
-rand(                ::Type{X}, A::Type{<:Array}, dims::Integer...) where {X} = rand(GLOBAL_RNG, X, A, Dims(dims))
+@make_array_container(Array)
+@make_array_container(BitArray)
 
 
 ## dicts
@@ -144,35 +136,6 @@ rand(                  chars, ::Type{String}, n::Integer=8) = rand(GLOBAL_RNG, m
 
 rand(rng::AbstractRNG, ::Type{String}, n::Integer=8) = rand(rng, make(String, n))
 rand(                  ::Type{String}, n::Integer=8) = rand(GLOBAL_RNG, make(String, n))
-
-
-## BitArray
-
-rand(r::AbstractRNG, ::Type{T}, dims::Dims) where {T<:BitArray} =
-    rand!(r, T(undef, dims))
-
-rand(r::AbstractRNG, ::Type{T}, dims::Integer...) where {T<:BitArray} =
-    rand!(r, T(undef, convert(Dims, dims)))
-
-rand(::Type{T}, dims::Dims) where {T<:BitArray} =
-    rand!(T(undef, dims))
-
-rand(::Type{T}, dims::Integer...) where {T<:BitArray} =
-    rand!(T(undef, convert(Dims, dims)))
-
-### with sample information
-
-rand(r::AbstractRNG, X, ::Type{T}, dims::Dims) where {T<:BitArray} =
-    rand!(r, T(undef, dims), X)
-
-rand(r::AbstractRNG, X, ::Type{T}, dims::Integer...) where {T<:BitArray} =
-    rand!(r, T(undef, Dims(dims)), X)
-
-rand(X, ::Type{T}, dims::Dims) where {T<:BitArray} =
-    rand!(T(undef, dims), X)
-
-rand(X, ::Type{T}, dims::Integer...) where {T<:BitArray} =
-    rand!(T(undef, convert(Dims, dims)), X)
 
 
 ## NTuple as a container
