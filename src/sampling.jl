@@ -302,11 +302,14 @@ let b = UInt8['0':'9';'A':'Z';'a':'z'],
 
     global Sampler, rand, make
 
-    make(::Type{String}) = Make2{String}(8, b)
-    make(::Type{String}, chars) = Make2{String}(8, chars)
-    make(::Type{String}, n::Integer) = Make2{String}(Int(n), b)
-    make(::Type{String}, chars, n::Integer) = Make2{String}(Int(n), chars)
-    make(::Type{String}, n::Integer, chars) = Make2{String}(Int(n), chars)
+    make(::Type{String})                                   = Make2{String}(8, b)
+    make(::Type{String}, chars)                            = Make2{String}(8, chars)
+    make(::Type{String}, ::Type{C}) where C                = Make2{String}(8, C)
+    make(::Type{String}, n::Integer)                       = Make2{String}(Int(n), b)
+    make(::Type{String}, chars,      n::Integer)           = Make2{String}(Int(n), chars)
+    make(::Type{String}, ::Type{C},  n::Integer) where {C} = Make2{String}(Int(n), C)
+    make(::Type{String}, n::Integer, chars)                = Make2{String}(Int(n), chars)
+    make(::Type{String}, n::Integer, ::Type{C}) where {C}  = Make2{String}(Int(n), C)
 
     Sampler(RNG::Type{<:AbstractRNG}, ::Type{String}, n::Repetition) =
         SamplerTag{Cont{String}}((RNG === MersenneTwister ? s : Sampler(RNG, b, n)) => 8)

@@ -277,6 +277,8 @@ end
         @test s ⊆ map(Char, c)
         @test length(s) == n
     end
+    @test rand(make(String, Char)) isa String
+    @test rand(make(String, 3, Char)) isa String
     @test rand(make(String, Sampler(MersenneTwister, ['a', 'b', 'c']), 10)) isa String
 end
 
