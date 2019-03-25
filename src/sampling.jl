@@ -1,6 +1,12 @@
 # definition of samplers and random generation
 
 
+# allows to call `Sampler` only when the the arg isn't a Sampler itself
+sampler(RNG::Type{<:AbstractRNG}, X,          n::Repetition)           = Sampler(RNG, X, n)
+sampler(RNG::Type{<:AbstractRNG}, ::Type{X},  n::Repetition) where {X} = Sampler(RNG, X, n)
+sampler(RNG::Type{<:AbstractRNG}, X::Sampler, n::Repetition)           = X
+
+
 ## Uniform
 
 Sampler(RNG::Type{<:AbstractRNG}, d::Union{UniformWrap,UniformType}, n::Repetition) =
@@ -90,8 +96,8 @@ find_type(::Type{Complex},    x, y) = Complex{promote_type(val_gentype(x), val_g
 find_type(T::Type{<:Complex}, _, _) = T
 
 function Sampler(RNG::Type{<:AbstractRNG}, u::Make2{T}, n::Repetition) where T <: Union{Pair,Complex}
-    sp1 = Sampler(RNG, u.x, n)
-    sp2 = u.x == u.y ? sp1 : Sampler(RNG, u.y, n)
+    sp1 = sampler(RNG, u.x, n)
+    sp2 = u.x == u.y ? sp1 : sampler(RNG, u.y, n)
     SamplerTag{Cont{T}}((sp1, sp2))
 end
 
@@ -198,12 +204,12 @@ make(::Type{T}, ::Type{X}, ::Type{Y}, ::Type{Z}) where {T<:Tuple,X,Y,Z} = _make(
 
 @generated function Sampler(RNG::Type{<:AbstractRNG}, c::Make1{T,X}, n::Repetition) where {T<:Tuple,X<:Tuple}
     @assert fieldcount(T) == fieldcount(X)
-    sps = [:(Sampler(RNG, c.x[$i], n)) for i in 1:length(T.parameters)]
+    sps = [:(sampler(RNG, c.x[$i], n)) for i in 1:length(T.parameters)]
     :(SamplerTag{Cont{T}}(tuple($(sps...))))
 end
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make1{T,X}, n::Repetition) where {T<:Tuple,X} =
-    SamplerTag{Cont{T}}(Sampler(RNG, c.x, n))
+    SamplerTag{Cont{T}}(sampler(RNG, c.x, n))
 
 @generated function rand(rng::AbstractRNG, sp::SamplerTag{Cont{T},S}) where {T<:NTuple,S<:Sampler}
     rands = fill(:(rand(rng, sp.data)), fieldcount(T))
@@ -222,7 +228,7 @@ make(::Type{BitSet}, X,         n::Integer)           = Make2{BitSet}(X, Int(n))
 make(::Type{BitSet}, ::Type{X}, n::Integer) where {X} = Make2{BitSet}(X, Int(n))
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make{BitSet}, n::Repetition) =
-    SamplerTag{BitSet}((Sampler(RNG, c.x, n), c.y))
+    SamplerTag{BitSet}((sampler(RNG, c.x, n), c.y))
 
 function rand(rng::AbstractRNG, sp::SamplerTag{BitSet})
     s = sizehint!(BitSet(), sp.data[2])
@@ -243,7 +249,7 @@ make(A::Type{<:AbstractArray}, dims::Integer...) = make(A, default_sampling(A), 
 
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make2{A}, n::Repetition) where {A<:AbstractArray} =
-    SamplerTag{A}((Sampler(RNG, c.x, n), c.y))
+    SamplerTag{A}((sampler(RNG, c.x, n), c.y))
 
 rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:AbstractArray} =
     rand!(rng, A(undef, sp.data[2]), sp.data[1])
@@ -280,7 +286,7 @@ make(p::AbstractFloat, dims::Dims)          = make(p, Float64, dims)
 make(p::AbstractFloat, dims::Integer...)    = make(p, Float64, Dims(dims))
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make3{A}, n::Repetition) where {A<:AbstractSparseArray} =
-    SamplerTag{A}((Sampler(RNG, c.x, n), c.y, c.z))
+    SamplerTag{A}((sampler(RNG, c.x, n), c.y, c.z))
 
 rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:SparseVector} =
     sprand(rng, sp.data[2][1], sp.data[3], (r, n)->rand(r, sp.data[1], n))
@@ -307,7 +313,7 @@ let b = UInt8['0':'9';'A':'Z';'a':'z'],
 
     function Sampler(RNG::Type{<:AbstractRNG}, c::Make2{String}, n::Repetition)
         sp = RNG === MersenneTwister && c.y === b ?
-            s : Sampler(RNG, c.y, n)
+            s : sampler(RNG, c.y, n)
         SamplerTag{Cont{String}}(sp => c.x)
     end
 

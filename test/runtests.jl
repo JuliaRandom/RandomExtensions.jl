@@ -1,4 +1,5 @@
 using RandomExtensions, Random, SparseArrays
+using Random: Sampler
 using Test
 
 @testset "Distributions" begin
@@ -61,6 +62,7 @@ using Test
 end
 
 const rInt8 = typemin(Int8):typemax(Int8)
+const spString = Sampler(MersenneTwister, String)
 
 @testset "Containers" for rng in ([], [MersenneTwister(0)], [RandomDevice()])
     # Array
@@ -252,12 +254,15 @@ end
     @test t[3] isa Int128 && t[3] ∈ rInt8
     @test_throws ArgumentError make(Tuple{Int}, 1:3, 1:3)
     @test_throws ArgumentError make(Tuple{Int,Int}, 1:3)
+
+    @test rand(make(Tuple, spString, String)) isa Tuple{String,String}
 end
 
 @testset "rand(make(NTuple{N}, x))" begin
     s, N = rand([Char, Int, Float64, Bool, 1:3, "abcd", Set([1, 2, 3])]), rand(0:10)
     T = Random.gentype(s)
     rand(make(NTuple{N}, s)) isa NTuple{N,T}
+    @test rand(make(NTuple{3}, spString)) isa NTuple{3,String}
 end
 
 @testset "rand(make(String, ...))" begin
@@ -272,6 +277,7 @@ end
         @test s ⊆ map(Char, c)
         @test length(s) == n
     end
+    @test rand(make(String, Sampler(MersenneTwister, ['a', 'b', 'c']), 10)) isa String
 end
 
 @testset "rand(make(BitSet, ...))" begin
@@ -281,6 +287,7 @@ end
         @test length(s) == 3
         @test all(in(l), s)
     end
+    rand(make(BitSet, Sampler(MersenneTwister, 1:99), 9)) isa BitSet
 end
 
 @testset "rand(make(Array/BitArray, ...))" begin
@@ -303,6 +310,9 @@ end
     @test_throws MethodError make(Vector, 2, 3)
     @test_throws MethodError make(BitMatrix, 2)
     @test_throws MethodError make(BitVector, 2, 3)
+
+    @test rand(make(Array, spString, 9)) isa Array{String}
+    @test rand(make(BitArray, Sampler(MersenneTwister, [0, 0, 0, 1]), 9)) isa BitArray
 end
 
 @testset "rand(make(Sparse...))" begin
@@ -318,4 +328,5 @@ end
                                 SparseMatrixCSC{Float64,Int})
         @test length(s) == 6
     end
+    @test rand(make(0.3, spString, 9)) isa SparseVector{String}
 end
