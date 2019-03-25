@@ -58,6 +58,44 @@ find_deduced_type(::Type{T}, ::Type{X}, ::Y)       where {T,X,Y} = deduce_type(T
 find_deduced_type(::Type{T}, ::X,       ::Type{Y}) where {T,X,Y} = deduce_type(T, gentype(X), Y)
 find_deduced_type(::Type{T}, ::Type{X}, ::Type{Y}) where {T,X,Y} = deduce_type(T, X,          Y)
 
+struct Make3{T,X,Y,Z} <: Make{T}
+    x::X
+    y::Y
+    z::Z
+end
+
+Make{T}(x::X,      y::Y,      z::Z)      where {T,X,Y,Z} = Make3{T,X,      Y,      Z      }(x, y, z)
+Make{T}(::Type{X}, y::Y,      z::Z)      where {T,X,Y,Z} = Make3{T,Type{X},Y,      Z      }(X, y, z)
+Make{T}(x::X,      ::Type{Y}, z::Z)      where {T,X,Y,Z} = Make3{T,X,      Type{Y},Z      }(x, Y, z)
+Make{T}(::Type{X}, ::Type{Y}, z::Z)      where {T,X,Y,Z} = Make3{T,Type{X},Type{Y},Z      }(X, Y, z)
+Make{T}(x::X,      y::Y,      ::Type{Z}) where {T,X,Y,Z} = Make3{T,X,      Y,      Type{Z}}(x, y, Z)
+Make{T}(::Type{X}, y::Y,      ::Type{Z}) where {T,X,Y,Z} = Make3{T,Type{X},Y,      Type{Z}}(X, y, Z)
+Make{T}(x::X,      ::Type{Y}, ::Type{Z}) where {T,X,Y,Z} = Make3{T,X,      Type{Y},Type{Z}}(x, Y, Z)
+Make{T}(::Type{X}, ::Type{Y}, ::Type{Z}) where {T,X,Y,Z} = Make3{T,Type{X},Type{Y},Type{Z}}(X, Y, Z)
+
+# for expliciteness (allows using Make3 instead of Make)
+Make3{T}(x::X,      y::Y,      z::Z)      where {T,X,Y,Z} = Make3{T,X,      Y,      Z      }(x, y, z)
+Make3{T}(::Type{X}, y::Y,      z::Z)      where {T,X,Y,Z} = Make3{T,Type{X},Y,      Z      }(X, y, z)
+Make3{T}(x::X,      ::Type{Y}, z::Z)      where {T,X,Y,Z} = Make3{T,X,      Type{Y},Z      }(x, Y, z)
+Make3{T}(::Type{X}, ::Type{Y}, z::Z)      where {T,X,Y,Z} = Make3{T,Type{X},Type{Y},Z      }(X, Y, z)
+Make3{T}(x::X,      y::Y,      ::Type{Z}) where {T,X,Y,Z} = Make3{T,X,      Y,      Type{Z}}(x, y, Z)
+Make3{T}(::Type{X}, y::Y,      ::Type{Z}) where {T,X,Y,Z} = Make3{T,Type{X},Y,      Type{Z}}(X, y, Z)
+Make3{T}(x::X,      ::Type{Y}, ::Type{Z}) where {T,X,Y,Z} = Make3{T,X,      Type{Y},Type{Z}}(x, Y, Z)
+Make3{T}(::Type{X}, ::Type{Y}, ::Type{Z}) where {T,X,Y,Z} = Make3{T,Type{X},Type{Y},Type{Z}}(X, Y, Z)
+
+
+make(::Type{T}, x::X,      y::Y,      z::Z)      where {T,X,Y,Z} = Make3{find_type(T, x, y, z)}(x, y, z)
+make(::Type{T}, ::Type{X}, y::Y,      z::Z)      where {T,X,Y,Z} = Make3{find_type(T, X, y, z)}(X, y, z)
+make(::Type{T}, x::X,      ::Type{Y}, z::Z)      where {T,X,Y,Z} = Make3{find_type(T, x, Y, z)}(x, Y, z)
+make(::Type{T}, ::Type{X}, ::Type{Y}, z::Z)      where {T,X,Y,Z} = Make3{find_type(T, X, Y, z)}(X, Y, z)
+make(::Type{T}, x::X,      y::Y,      ::Type{Z}) where {T,X,Y,Z} = Make3{find_type(T, x, y, Z)}(x, y, Z)
+make(::Type{T}, ::Type{X}, y::Y,      ::Type{Z}) where {T,X,Y,Z} = Make3{find_type(T, X, y, Z)}(X, y, Z)
+make(::Type{T}, x::X,      ::Type{Y}, ::Type{Z}) where {T,X,Y,Z} = Make3{find_type(T, x, Y, Z)}(x, Y, Z)
+make(::Type{T}, ::Type{X}, ::Type{Y}, ::Type{Z}) where {T,X,Y,Z} = Make3{find_type(T, X, Y, Z)}(X, Y, Z)
+
+
+# deduce_type
+
 deduce_type(::Type{T}, ::Type{X}, ::Type{Y}) where {T,X,Y} = _deduce_type(T, Val(isconcretetype(T)), X, Y)
 deduce_type(::Type{T}, ::Type{X}) where {T,X} = _deduce_type(T, Val(isconcretetype(T)), X)
 

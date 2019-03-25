@@ -156,14 +156,22 @@ make(::Type{NTuple{N}}, ::Type{X}) where {N,X} = _make(NTuple{N}, X)
 
 # disambiguate
 
-make(::Type{Tuple}, X) = _make(Tuple, X)
+make(::Type{Tuple}, X) =                   _make(Tuple, X)
 make(::Type{Tuple}, ::Type{X}) where {X} = _make(Tuple, X)
 
-make(::Type{Tuple}, X, Y) = _make(Tuple, X, Y)
-make(::Type{Tuple}, ::Type{X}, Y) where {X} = _make(Tuple, X, Y)
-make(::Type{Tuple}, X, ::Type{Y}) where {Y} = _make(Tuple, X, Y)
+make(::Type{Tuple}, X,         Y)                     = _make(Tuple, X, Y)
+make(::Type{Tuple}, ::Type{X}, Y)         where {X}   = _make(Tuple, X, Y)
+make(::Type{Tuple}, X,         ::Type{Y}) where {Y}   = _make(Tuple, X, Y)
 make(::Type{Tuple}, ::Type{X}, ::Type{Y}) where {X,Y} = _make(Tuple, X, Y)
 
+make(::Type{Tuple}, X,         Y,         Z)                       = _make(Tuple, X, Y, Z)
+make(::Type{Tuple}, ::Type{X}, Y,         Z)         where {X}     = _make(Tuple, X, Y, Z)
+make(::Type{Tuple}, X,         ::Type{Y}, Z)         where {Y}     = _make(Tuple, X, Y, Z)
+make(::Type{Tuple}, ::Type{X}, ::Type{Y}, Z)         where {X,Y}   = _make(Tuple, X, Y, Z)
+make(::Type{Tuple}, X,         Y,         ::Type{Z}) where {Z}     = _make(Tuple, X, Y, Z)
+make(::Type{Tuple}, ::Type{X}, Y,         ::Type{Z}) where {X,Z}   = _make(Tuple, X, Y, Z)
+make(::Type{Tuple}, X,         ::Type{Y}, ::Type{Z}) where {Y,Z}   = _make(Tuple, X, Y, Z)
+make(::Type{Tuple}, ::Type{X}, ::Type{Y}, ::Type{Z}) where {X,Y,Z} = _make(Tuple, X, Y, Z)
 
 # Sampler (rand is already implemented above, like for rand(Tuple{...})
 
