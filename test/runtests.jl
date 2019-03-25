@@ -13,7 +13,11 @@ using Test
 
     # pairs/complexes
     @test rand(make(Pair, 1:3, Float64)) isa Pair{Int,Float64}
+    @test rand(make(Pair{Int8}, 1:3, Float64)) isa Pair{Int8,Float64}
+    @test rand(make(Pair{Int8,Float32}, 1:3, Float64)) isa Pair{Int8,Float32}
+    @test rand(make(Pair{X,Float32} where X, 1:3, Float64)) isa Pair{Int,Float32}
     @test rand(Pair{Int,Float64}) isa Pair{Int,Float64}
+
     z = rand(make(Complex, 1:3, 6:9))
     @test z.re ∈ 1:3
     @test z.im ∈ 6:9
