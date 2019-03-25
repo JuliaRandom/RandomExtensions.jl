@@ -291,3 +291,18 @@ end
     @test_throws MethodError make(BitMatrix, 2)
     @test_throws MethodError make(BitVector, 2, 3)
 end
+
+@testset "rand(make(Sparse...))" begin
+    for k = ([], [Float64], [Bernoulli(Float64, 0.3)]),
+        (d, dim) = ([(6,)]              => 1,
+                    [(2,3)]             => 2,
+                    [6]                 => 1,
+                    [2, 3]              => 2,
+                    [Int8(2), Int16(3)] => 2)
+
+        s = rand(make(0.3, k..., d...))
+        @test s isa (dim == 1 ? SparseVector{Float64,Int} :
+                                SparseMatrixCSC{Float64,Int})
+        @test length(s) == 6
+    end
+end

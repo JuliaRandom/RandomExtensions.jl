@@ -248,6 +248,25 @@ find_type(::Type{BitArray{N}}, _, ::Dims{N}) where {N} = BitArray{N}
 find_type(::Type{BitArray},    _, ::Dims{N}) where {N} = BitArray{N}
 
 
+### sparse vectors & matrices
+
+make(p::AbstractFloat, X, dims::Dims{1}) = Make3{SparseVector{   val_gentype(X), Int}}(X, dims, p)
+make(p::AbstractFloat, X, dims::Dims{2}) = Make3{SparseMatrixCSC{val_gentype(X), Int}}(X, dims, p)
+
+make(p::AbstractFloat, X, dims::Integer...) = make(p, X, Dims(dims))
+make(p::AbstractFloat, dims::Dims)          = make(p, Float64, dims)
+make(p::AbstractFloat, dims::Integer...)    = make(p, Float64, Dims(dims))
+
+Sampler(RNG::Type{<:AbstractRNG}, c::Make3{A}, n::Repetition) where {A<:AbstractSparseArray} =
+    SamplerTag{A}((Sampler(RNG, c.x, n), c.y, c.z))
+
+rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:SparseVector} =
+    sprand(rng, sp.data[2][1], sp.data[3], (r, n)->rand(r, sp.data[1], n))
+
+rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:SparseMatrixCSC} =
+    sprand(rng, sp.data[2][1], sp.data[2][2], sp.data[3], (r, n)->rand(r, sp.data[1], n), gentype(sp.data[1]))
+
+
 ### String as a scalar
 
 let b = UInt8['0':'9';'A':'Z';'a':'z'],

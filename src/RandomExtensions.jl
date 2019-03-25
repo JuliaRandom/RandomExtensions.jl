@@ -10,7 +10,7 @@ import Random: Sampler, rand, rand!, gentype
 using Random
 using Random: GLOBAL_RNG, SamplerTrivial, SamplerSimple, SamplerTag, Repetition
 
-using SparseArrays: sprand, sprandn
+using SparseArrays: sprand, sprandn, AbstractSparseArray, SparseVector, SparseMatrixCSC
 
 
 ## a dummy container type to take advangage of SamplerTag constructor
