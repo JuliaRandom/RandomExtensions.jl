@@ -4,25 +4,83 @@
 default_sampling(::Type{X}) where {X} = error("default_sampling($X) not defined")
 default_sampling(x::X) where {X} = default_sampling(X)
 
+function make_argument(param)
+    if param isa Symbol
+        param
+    else
+        param::Expr
+        @assert param.head == :(::)
+        if param.args[1] isa Symbol
+            param.args[1]
+        else
+            @assert param.args[1].head == :curly
+            @assert param.args[1].args[1] == :Type
+            @assert param.args[1].args[2] isa Symbol
+            param.args[1].args[2]
+        end
+    end
+end
+
+# arg names must not be "rng" nor "X", already in use
+# (this is for nicer output of methods, to avoid cryptic names with gensym)
+macro make_container(args...)
+    definitions = []
+    argss = []
+    for a in args
+        push!(argss, a isa Expr && a.head == :vect ? # optional
+                       [nothing, a.args[1]] :
+                       [a])
+
+    end
+    pushfirst!(argss, [(), :X, :(::Type{X}) => :X]) # for Sampler
+
+    for as0 in Iterators.product(argss...)
+        as1 = filter(!=(nothing), collect(Any, as0))
+        curlys = []
+        replace!(as1) do a
+            if a isa Pair
+                push!(curlys, a[2])
+                a.first
+            else
+                a
+            end
+        end
+        for def in (:(rand(rng::AbstractRNG) where {} = rand(rng, make())),
+                    :(rand() where {} = rand(GLOBAL_RNG, make())))
+            append!(def.args[1].args[1].args, filter(!=(()), as1))
+            as2 = copy(as1)
+            as2[1], as2[2] = as2[2], as2[1]
+            filter!(!=(()), as2)
+            append!(def.args[2].args[2].args[3].args, map(make_argument, as2))
+            append!(def.args[1].args, curlys)
+            push!(definitions, def)
+        end
+    end
+    esc(Expr(:block, definitions...))
+end
+
+@make_container(::Type{String}, [n::Integer])
+# sparse vectors & matrices
+@make_container(p::AbstractFloat, m::Integer, [n::Integer])
 
 ## arrays (same as in Random, but with explicit type specification, e.g. rand(Int, Array, 4)
 
 macro make_array_container(Cont)
     definitions =
-        [ :(rand(r::AbstractRNG,            T::Type{<:$Cont}, dims::Dims) =                 rand(r,          make(T, dims))),
-          :(rand(                           T::Type{<:$Cont}, dims::Dims) =                 rand(GLOBAL_RNG, make(T, dims))),
-          :(rand(r::AbstractRNG,            T::Type{<:$Cont}, dims::Integer...) =           rand(r,          make(T, Dims(dims)))),
-          :(rand(                           T::Type{<:$Cont}, dims::Integer...) =           rand(GLOBAL_RNG, make(T, Dims(dims)))),
+        [ :(rand(rng::AbstractRNG,            T::Type{<:$Cont}, dims::Dims) =                 rand(rng,        make(T, dims))),
+          :(rand(                             T::Type{<:$Cont}, dims::Dims) =                 rand(GLOBAL_RNG, make(T, dims))),
+          :(rand(rng::AbstractRNG,            T::Type{<:$Cont}, dims::Integer...) =           rand(rng,        make(T, Dims(dims)))),
+          :(rand(                             T::Type{<:$Cont}, dims::Integer...) =           rand(GLOBAL_RNG, make(T, Dims(dims)))),
 
-          :(rand(r::AbstractRNG, X,         T::Type{<:$Cont}, dims::Dims) =                 rand(r,          make(T, X, dims))),
-          :(rand(                X,         T::Type{<:$Cont}, dims::Dims) =                 rand(GLOBAL_RNG, make(T, X, dims))),
-          :(rand(r::AbstractRNG, X,         T::Type{<:$Cont}, dims::Integer...) =           rand(r,          make(T, X, Dims(dims)))),
-          :(rand(                X,         T::Type{<:$Cont}, dims::Integer...) =           rand(GLOBAL_RNG, make(T, X, Dims(dims)))),
+          :(rand(rng::AbstractRNG, X,         T::Type{<:$Cont}, dims::Dims) =                 rand(rng,        make(T, X, dims))),
+          :(rand(                  X,         T::Type{<:$Cont}, dims::Dims) =                 rand(GLOBAL_RNG, make(T, X, dims))),
+          :(rand(rng::AbstractRNG, X,         T::Type{<:$Cont}, dims::Integer...) =           rand(rng,        make(T, X, Dims(dims)))),
+          :(rand(                  X,         T::Type{<:$Cont}, dims::Integer...) =           rand(GLOBAL_RNG, make(T, X, Dims(dims)))),
 
-          :(rand(r::AbstractRNG, ::Type{X}, T::Type{<:$Cont}, dims::Dims)       where {X} = rand(r,          make(T, X, dims))),
-          :(rand(                ::Type{X}, T::Type{<:$Cont}, dims::Dims)       where {X} = rand(GLOBAL_RNG, make(T, X, dims))),
-          :(rand(r::AbstractRNG, ::Type{X}, T::Type{<:$Cont}, dims::Integer...) where {X} = rand(r,          make(T, X, Dims(dims)))),
-          :(rand(                ::Type{X}, T::Type{<:$Cont}, dims::Integer...) where {X} = rand(GLOBAL_RNG, make(T, X, Dims(dims)))),
+          :(rand(rng::AbstractRNG, ::Type{X}, T::Type{<:$Cont}, dims::Dims)       where {X} = rand(rng,        make(T, X, dims))),
+          :(rand(                  ::Type{X}, T::Type{<:$Cont}, dims::Dims)       where {X} = rand(GLOBAL_RNG, make(T, X, dims))),
+          :(rand(rng::AbstractRNG, ::Type{X}, T::Type{<:$Cont}, dims::Integer...) where {X} = rand(rng,        make(T, X, Dims(dims)))),
+          :(rand(                  ::Type{X}, T::Type{<:$Cont}, dims::Integer...) where {X} = rand(GLOBAL_RNG, make(T, X, Dims(dims)))),
         ]
     esc(Expr(:block, definitions...))
 end
@@ -95,47 +153,6 @@ rand(                X, ::Type{T}, n::Integer) where {T<:AbstractSet} = rand(GLO
 
 rand(r::AbstractRNG, ::Type{X}, ::Type{T}, n::Integer) where {X,T<:AbstractSet} = _rand0!(r, deduce_type(T, X)(), n, X)
 rand(                ::Type{X}, ::Type{T}, n::Integer) where {X,T<:AbstractSet} = rand(GLOBAL_RNG, X, T, n)
-
-
-## sparse vectors & matrices
-
-# TODO: implement default_sampling
-
-rand(r::AbstractRNG, p::AbstractFloat, m::Integer) = sprand(r, m, p)
-rand(                p::AbstractFloat, m::Integer) = sprand(GLOBAL_RNG, m, p)
-rand(r::AbstractRNG, p::AbstractFloat, m::Integer, n::Integer) = sprand(r, m, n, p)
-rand(                p::AbstractFloat, m::Integer, n::Integer) = sprand(GLOBAL_RNG, m, n, p)
-
-rand(r::AbstractRNG, X::Sampler, p::AbstractFloat, m::Integer) =
-    sprand(r, m, p, (r, n)->rand(r, X, n))
-
-rand(r::AbstractRNG, X, p::AbstractFloat, m::Integer) =
-    rand(r, Sampler(r, X), p, m)
-
-rand(r::AbstractRNG, ::Type{X}, p::AbstractFloat, m::Integer) where {X} =
-    rand(r, Sampler(r, X), p, m)
-
-rand(X, p::AbstractFloat, m::Integer) = rand(GLOBAL_RNG, X, p, m)
-
-rand(r::AbstractRNG, X::Sampler, p::AbstractFloat, m::Integer, n::Integer) =
-    sprand(r, m, n, p, (r, n)->rand(r, X, n), gentype(X))
-
-rand(r::AbstractRNG, X, p::AbstractFloat, m::Integer, n::Integer) =
-    rand(r, Sampler(r, X), p, m, n)
-
-rand(r::AbstractRNG, ::Type{X}, p::AbstractFloat, m::Integer, n::Integer) where {X} =
-    rand(r, Sampler(r, X), p, m, n)
-
-rand(X, p::AbstractFloat, m::Integer, n::Integer) = rand(GLOBAL_RNG, X, p, m, n)
-
-
-## String
-
-rand(rng::AbstractRNG, chars, ::Type{String}, n::Integer=8) = rand(rng, make(String, chars, n))
-rand(                  chars, ::Type{String}, n::Integer=8) = rand(GLOBAL_RNG, make(String, chars, n))
-
-rand(rng::AbstractRNG, ::Type{String}, n::Integer=8) = rand(rng, make(String, n))
-rand(                  ::Type{String}, n::Integer=8) = rand(GLOBAL_RNG, make(String, n))
 
 
 ## NTuple as a container
