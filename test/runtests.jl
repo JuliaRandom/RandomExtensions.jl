@@ -32,6 +32,8 @@ using Test
         @test z.im ∈ 1:3
         @test z isa Complex{R}
     end
+    @test rand(make(Complex, 1:3, Float64)) isa Complex{Float64} # promote_type should be used
+
     @test rand(ComplexF64) isa ComplexF64
 
     @test rand(make(Complex,Int), 3) isa Vector{Complex{Int}}

@@ -79,11 +79,15 @@ rand(rng::AbstractRNG, sp::SamplerSimple{<:Pair}) =
 ### sampler for pairs and complex numbers
 
 find_type(::Type{Pair},              x, y)             = Pair{val_gentype(x), val_gentype(y)}
-find_type(::Type{Pair{X}},           x, y) where {X}   = Pair{X, val_gentype(y)}
-find_type(::Type{Pair{X,Y} where X}, x, y) where {Y}   = Pair{val_gentype(x), Y}
-find_type(::Type{Pair{X,Y}},         x, y) where {X,Y} = Pair{X,Y}
+find_type(::Type{Pair{X}},           _, y) where {X}   = Pair{X, val_gentype(y)}
+find_type(::Type{Pair{X,Y} where X}, x, _) where {Y}   = Pair{val_gentype(x), Y}
+find_type(::Type{Pair{X,Y}},         _, _) where {X,Y} = Pair{X,Y}
 
-find_type(T::Type{<:Complex}, args...) = find_deduced_type(T, args...)
+find_type(::Type{Complex},    x) = Complex{val_gentype(x)}
+find_type(T::Type{<:Complex}, _) = T
+
+find_type(::Type{Complex},    x, y) = Complex{promote_type(val_gentype(x), val_gentype(y))}
+find_type(T::Type{<:Complex}, _, _) = T
 
 function Sampler(RNG::Type{<:AbstractRNG}, u::Make2{T}, n::Repetition) where T <: Union{Pair,Complex}
     sp1 = Sampler(RNG, u.x, n)
