@@ -108,23 +108,29 @@ Sampler(RNG::Type{<:AbstractRNG}, ::Type{Complex{T}}, n::Repetition) where {T<:R
 ### sampler for tuples
 
 @generated function Sampler(RNG::Type{<:AbstractRNG}, ::Type{T}, n::Repetition) where {T<:Tuple}
-    U = unique(T.parameters)
-    sps = [:(Sampler(RNG, $(U[i]), n)) for i in 1:length(U)]
+    d = Dict{DataType,Int}()
+    sps = []
+    for t in T.parameters
+        i = get(d, t, nothing)
+        if i === nothing
+            push!(sps, :(Sampler(RNG, $t, n)))
+            d[t] = length(sps)
+        else
+            push!(sps, Val(i))
+        end
+    end
     :(SamplerTag{Cont{T}}(tuple($(sps...))))
 end
 
 @generated function rand(rng::AbstractRNG, sp::SamplerTag{Cont{T},S}) where {T<:Tuple,S<:Tuple}
+    @assert fieldcount(T) == fieldcount(S)
     rands = []
     for i = 1:fieldcount(T)
-        # if as many fields for S and T, don't try to shortcut, as it's
-        # unnecessary, and even wrong when sp was created from Make
-        k = fieldcount(S) == fieldcount(T) ? i : 1
-        for j = k:i
-            if fieldtype(T, i) == gentype(fieldtype(S, j))
-                push!(rands, :(rand(rng, sp.data[$j])))
-                break
-            end
-        end
+        j = fieldtype(S, i) <: Val ?
+              fieldtype(S, i).parameters[1] :
+              i
+        push!(rands, :(convert($(fieldtype(T, i)),
+                               rand(rng, sp.data[$j]))))
     end
     :(tuple($(rands...)))
 end
@@ -134,15 +140,21 @@ end
 # implement make(Tuple, S1, S2...), e.g. for rand(make(Tuple, Int, 1:3)),
 # and       make(NTuple{N}, S)
 
-@generated function _make(::Type{Tuple}, args...)
+@generated function _make(::Type{T}, args...) where T <: Tuple
     types = [t <: Type ? t.parameters[1] : gentype(t) for t in args]
-    T = Tuple{types...}
+    TT = T === Tuple ? Tuple{types...} : T
     samples = [t <: Type ? :(UniformType{$(t.parameters[1])}()) :
                :(args[$i]) for (i, t) in enumerate(args)]
-    :(Make1{$T}(tuple($(samples...))))
+    quote
+        if T !== Tuple && fieldcount(T) != length(args)
+            throw(ArgumentError("wrong number of provided argument with $T (should be $(fieldcount(T)))"))
+        else
+            Make1{$TT}(tuple($(samples...)))
+        end
+    end
 end
 
-make(::Type{Tuple}, args...) = _make(Tuple, args...)
+make(T::Type{<:Tuple}, args...) = _make(T, args...)
 
 @generated function _make(::Type{NTuple{N}}, arg) where {N}
     T, a = arg <: Type ?
@@ -156,26 +168,27 @@ make(::Type{NTuple{N}}, ::Type{X}) where {N,X} = _make(NTuple{N}, X)
 
 # disambiguate
 
-make(::Type{Tuple}, X) =                   _make(Tuple, X)
-make(::Type{Tuple}, ::Type{X}) where {X} = _make(Tuple, X)
+make(::Type{T}, X)         where {T<:Tuple}   = _make(T, X)
+make(::Type{T}, ::Type{X}) where {T<:Tuple,X} = _make(T, X)
 
-make(::Type{Tuple}, X,         Y)                     = _make(Tuple, X, Y)
-make(::Type{Tuple}, ::Type{X}, Y)         where {X}   = _make(Tuple, X, Y)
-make(::Type{Tuple}, X,         ::Type{Y}) where {Y}   = _make(Tuple, X, Y)
-make(::Type{Tuple}, ::Type{X}, ::Type{Y}) where {X,Y} = _make(Tuple, X, Y)
+make(::Type{T}, X,         Y)         where {T<:Tuple}     = _make(T, X, Y)
+make(::Type{T}, ::Type{X}, Y)         where {T<:Tuple,X}   = _make(T, X, Y)
+make(::Type{T}, X,         ::Type{Y}) where {T<:Tuple,Y}   = _make(T, X, Y)
+make(::Type{T}, ::Type{X}, ::Type{Y}) where {T<:Tuple,X,Y} = _make(T, X, Y)
 
-make(::Type{Tuple}, X,         Y,         Z)                       = _make(Tuple, X, Y, Z)
-make(::Type{Tuple}, ::Type{X}, Y,         Z)         where {X}     = _make(Tuple, X, Y, Z)
-make(::Type{Tuple}, X,         ::Type{Y}, Z)         where {Y}     = _make(Tuple, X, Y, Z)
-make(::Type{Tuple}, ::Type{X}, ::Type{Y}, Z)         where {X,Y}   = _make(Tuple, X, Y, Z)
-make(::Type{Tuple}, X,         Y,         ::Type{Z}) where {Z}     = _make(Tuple, X, Y, Z)
-make(::Type{Tuple}, ::Type{X}, Y,         ::Type{Z}) where {X,Z}   = _make(Tuple, X, Y, Z)
-make(::Type{Tuple}, X,         ::Type{Y}, ::Type{Z}) where {Y,Z}   = _make(Tuple, X, Y, Z)
-make(::Type{Tuple}, ::Type{X}, ::Type{Y}, ::Type{Z}) where {X,Y,Z} = _make(Tuple, X, Y, Z)
+make(::Type{T}, X,         Y,         Z)         where {T<:Tuple}       = _make(T, X, Y, Z)
+make(::Type{T}, ::Type{X}, Y,         Z)         where {T<:Tuple,X}     = _make(T, X, Y, Z)
+make(::Type{T}, X,         ::Type{Y}, Z)         where {T<:Tuple,Y}     = _make(T, X, Y, Z)
+make(::Type{T}, ::Type{X}, ::Type{Y}, Z)         where {T<:Tuple,X,Y}   = _make(T, X, Y, Z)
+make(::Type{T}, X,         Y,         ::Type{Z}) where {T<:Tuple,Z}     = _make(T, X, Y, Z)
+make(::Type{T}, ::Type{X}, Y,         ::Type{Z}) where {T<:Tuple,X,Z}   = _make(T, X, Y, Z)
+make(::Type{T}, X,         ::Type{Y}, ::Type{Z}) where {T<:Tuple,Y,Z}   = _make(T, X, Y, Z)
+make(::Type{T}, ::Type{X}, ::Type{Y}, ::Type{Z}) where {T<:Tuple,X,Y,Z} = _make(T, X, Y, Z)
 
 # Sampler (rand is already implemented above, like for rand(Tuple{...})
 
 @generated function Sampler(RNG::Type{<:AbstractRNG}, c::Make1{T,X}, n::Repetition) where {T<:Tuple,X<:Tuple}
+    @assert fieldcount(T) == fieldcount(X)
     sps = [:(Sampler(RNG, c.x[$i], n)) for i in 1:length(T.parameters)]
     :(SamplerTag{Cont{T}}(tuple($(sps...))))
 end

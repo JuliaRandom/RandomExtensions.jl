@@ -239,6 +239,13 @@ end
     @test t[1] ∈ 1:3
     @test t[2] isa Char
     @test t[3] isa Int && t[3] ∉ 1:3 # extremely unlikely
+
+    t = rand(make(Tuple{Int8,Char,Int128}, 1:3, Char, Int8))
+    @test t[1] isa Int8 && t[1] ∈ 1:3
+    @test t[2] isa Char
+    @test t[3] isa Int128 && t[3] ∈ rInt8
+    @test_throws ArgumentError make(Tuple{Int}, 1:3, 1:3)
+    @test_throws ArgumentError make(Tuple{Int,Int}, 1:3)
 end
 
 @testset "rand(make(NTuple{N}, x))" begin
