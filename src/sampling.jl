@@ -182,8 +182,14 @@ end
 
 make(T::Type{<:Tuple}, args...) = _make(T, args...)
 
+# make(Tuple, X, n::Integer)
+
+default_sampling(::Type{Tuple}) = Float64
+
 make(::Type{Tuple}, X,         n::Integer)           = make(NTuple{Int(n)}, X)
 make(::Type{Tuple}, ::Type{X}, n::Integer) where {X} = make(NTuple{Int(n)}, X)
+
+make(::Type{Tuple}, n::Integer) = make(Tuple, default_sampling(Tuple), Int(n))
 
 # disambiguate
 
