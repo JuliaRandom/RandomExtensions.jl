@@ -157,7 +157,13 @@ end
 # and       make(NTuple{N}, S)
 
 @generated function _make(::Type{T}, args...) where T <: Tuple
-    isempty(args) && return :(Make0{$(T === Tuple ? Tuple{} : T)}())
+    if isempty(args)
+        TT = T === Tuple ? Tuple{} :
+            T === NTuple ? Tuple{} :
+            T isa UnionAll && Type{T} <: Type{NTuple{N}} where N ? T{default_sampling(Tuple)} :
+            T
+        return :(Make0{$TT}())
+    end
     isNT = length(args) == 1 && T !== Tuple && (
         T <: NTuple || !isa(T, UnionAll)) # !isa(Tuple, UnionAll) !!
 

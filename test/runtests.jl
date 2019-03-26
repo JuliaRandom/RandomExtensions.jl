@@ -188,6 +188,9 @@ const spString = Sampler(MersenneTwister, String)
     @test all(in(1:3), s)
     s = rand(rng..., Tuple, 4)
     @test s isa NTuple{4,Float64}
+
+    s = rand(rng..., NTuple{3})
+    @test s isa NTuple{3,Float64}
 end
 
 @testset "Rand" for rng in ([], [MersenneTwister(0)], [RandomDevice()])
@@ -303,6 +306,9 @@ end
     r = rand(make(Tuple{AbstractFloat,Integer}, 1:3))
     @test r isa Tuple{Float64,Int64}
     @test all(in(1:3), r)
+
+    r = rand(make(NTuple{3}))
+    @test r isa NTuple{3,Float64}
 end
 
 @testset "rand(make(String, ...))" begin
