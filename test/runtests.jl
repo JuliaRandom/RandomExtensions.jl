@@ -252,6 +252,10 @@ end
 @testset "rand(make(Tuple, ...))" begin
     s = rand([Char, Int, Float64, Bool, 1:3, "abcd", Set([1, 2, 3])], rand(0:10))
     @test rand(make(Tuple, s...)) isa Tuple{Random.gentype.(s)...}
+    # explicit test for corner case:
+    @test rand(make(Tuple)) == ()
+    @test rand(make(Tuple{})) == ()
+
     t = rand(make(Tuple, 1:3, Char, Int))
     @test t[1] ∈ 1:3
     @test t[2] isa Char
