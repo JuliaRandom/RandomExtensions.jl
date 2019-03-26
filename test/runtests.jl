@@ -164,7 +164,7 @@ const spString = Sampler(MersenneTwister, String)
     @test length(s) == 8
     @test Set(s) <= Set("asd")
 
-    # NTuple
+    # Tuple
     s = rand(rng..., Int, NTuple{3})
     @test s isa NTuple{3,Int}
     s = rand(rng..., 1:3, NTuple{3})
@@ -176,7 +176,12 @@ const spString = Sampler(MersenneTwister, String)
 
     s = rand(rng..., NTuple{3, Int8})
     @test s isa NTuple{3,Int8}
-    @test all(in(rInt8), s)
+
+    s = rand(rng..., Tuple{Int8, UInt8})
+    @test s isa Tuple{Int8, UInt8}
+    s = rand(rng..., 1:3, Tuple{Int8, UInt8})
+    @test s isa Tuple{Int8, UInt8}
+    @test all(in(1:3), s)
 end
 
 @testset "Rand" for rng in ([], [MersenneTwister(0)], [RandomDevice()])
@@ -265,7 +270,7 @@ end
     @test rand(make(Tuple{Int8,UInt})) isa Tuple{Int8,UInt}
 end
 
-@testset "rand(make(NTuple{N}, x))" begin
+@testset "rand(make(NTuple{N}/Tuple{...}, x))" begin
     s, N = rand([Char, Int, Float64, Bool, 1:3, "abcd", Set([1, 2, 3])]), rand(0:10)
     T = Random.gentype(s)
     rand(make(NTuple{N}, s)) isa NTuple{N,T}
@@ -275,6 +280,10 @@ end
     r = rand(make(Tuple{AbstractFloat,AbstractFloat}, 1:3))
     @test r isa Tuple{Float64,Float64}
     @test all(∈(1.0:3.0), r)
+
+    r = rand(make(Tuple{AbstractFloat,Integer}, 1:3))
+    @test r isa Tuple{Float64,Int64}
+    @test all(in(1:3), r)
 end
 
 @testset "rand(make(String, ...))" begin

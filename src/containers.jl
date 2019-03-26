@@ -62,15 +62,9 @@ end
 @make_container(::Type{String}, [n::Integer])
 # sparse vectors & matrices
 @make_container(p::AbstractFloat, m::Integer, [n::Integer])
+# Tuple as a container
+@make_container(T::Type{<:Tuple})
 
-## NTuple as a container
-
-@make_container(T::Type{<:NTuple})
-
-### disambiguate
-
-rand(::AbstractRNG, ::Type{Tuple{}}) = ()
-rand(               ::Type{Tuple{}}) = ()
 
 ## arrays (same as in Random, but with explicit type specification, e.g. rand(Int, Array, 4)
 

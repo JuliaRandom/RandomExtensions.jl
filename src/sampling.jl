@@ -158,13 +158,11 @@ end
 @generated function _make(::Type{T}, args...) where T <: Tuple
     isempty(args) && return :(Make0{$T}())
     isNT = length(args) == 1 && T !== Tuple && (
-        T <: NTuple ||
-        !(T isa UnionAll) &&
-        length(unique(T.parameters)) == 1) # similar to T <: NTuple but works with abstract parameters
+        T <: NTuple || !isa(T, UnionAll)) # !isa(Tuple, UnionAll) !!
 
     types = [t <: Type ? t.parameters[1] : gentype(t) for t in args]
     TT = T === Tuple ? Tuple{types...} :
-        isNT ? ((T isa UnionAll) ? Tuple{fill(types[1], fieldcount(T))...} : T ) :
+        isNT ? (T isa UnionAll ? Tuple{fill(types[1], fieldcount(T))...} : T ) :
         T
     samples = [t <: Type ? :(UniformType{$(t.parameters[1])}()) :
                :(args[$i]) for (i, t) in enumerate(args)]
@@ -213,13 +211,15 @@ end
 Sampler(RNG::Type{<:AbstractRNG}, ::Make0{T}, n::Repetition) where {T<:Tuple} =
     Sampler(RNG, T, n)
 
-##### for NTuple-like, i.e. should catch Tuple{Integer,Integer} which is not NTuple
+##### for "NTuple-like"
+
+# should catch Tuple{Integer,Integer} which is not NTuple, or even Tuple{Int,UInt}, when only one sampler was passed
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make1{T,X}, n::Repetition) where {T<:Tuple,X} =
     SamplerTag{Cont{T}}(sampler(RNG, c.x, n))
 
 @generated function rand(rng::AbstractRNG, sp::SamplerTag{Cont{T},S}) where {T<:Tuple,S<:Sampler}
-    rands = fill(:(convert($(T.parameters[1]), rand(rng, sp.data))), fieldcount(T))
+    rands = [:(convert($(T.parameters[i]), rand(rng, sp.data))) for i in 1:fieldcount(T)]
     :(tuple($(rands...)))
 end
 
