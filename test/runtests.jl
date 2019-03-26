@@ -360,6 +360,18 @@ end
     end
 end
 
+@testset "rand(make(Dict, ...))" begin
+    for (D, S) = (Dict{Int16,Int16}     => [],
+                Dict{Int16}           => [Pair{Int8,Int16}],
+                Dict{K,Int16} where K => [Pair{Int16,Int8}],
+                Dict                  => [Pair{Int16,Int16}])
+
+        d = rand(make(D, S..., 3))
+        @test d isa Dict{Int16,Int16}
+        @test length(d) == 3
+    end
+end
+
 @testset "rand(make(Array/BitArray, ...))" begin
     for (T, Arr) = (Bool => BitArray, Float64 => Array{Float64}),
         k = ([], [T], [Bernoulli(T, 0.3)]),

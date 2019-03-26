@@ -96,21 +96,9 @@ end
 @make_array_container(BitArray)
 
 
-## dicts
+## sets/dicts
 
-# again same inference bug
-# TODO: extend to AbstractDict ? (needs to work-around the inderence bug)
-default_sampling(::Type{<:Dict{K,V}}) where {K,V} = Pair{K,V}
-default_sampling(D::Type{<:Dict}) = throw(ArgumentError("under-specified scalar type for $D"))
-
-rand!(A::AbstractDict{K,V}, dist::Union{Type{<:Pair},Distribution{<:Pair}}=make(Pair, K, V)) where {K,V} =
-    rand!(GLOBAL_RNG, A, dist)
-
-rand!(rng::AbstractRNG, A::AbstractDict{K,V},
-      dist::Union{Type{<:Pair},Distribution{<:Pair}}=make(Pair, K, V)) where {K,V} =
-          rand!(rng, A, Sampler(rng, dist))
-
-function _rand!(rng::AbstractRNG, A::Union{AbstractDict,AbstractSet}, n::Integer, sp::Sampler)
+function _rand!(rng::AbstractRNG, A::SetDict, n::Integer, sp::Sampler)
     empty!(A)
     while length(A) < n
         push!(A, rand(rng, sp))
@@ -118,27 +106,9 @@ function _rand!(rng::AbstractRNG, A::Union{AbstractDict,AbstractSet}, n::Integer
     A
 end
 
-rand!(rng::AbstractRNG, A::AbstractDict{K,V}, sp::Sampler) where {K,V} = _rand!(rng, A, length(A), sp)
+rand!(                  A::SetDict, X)                                       = rand!(GLOBAL_RNG, A, X)
+rand!(rng::AbstractRNG, A::SetDict, X)                                       = _rand!(rng, A, length(A), sampler(rng, X))
+rand!(                  A::SetDict, ::Type{X}=default_sampling(A)) where {X} = rand!(GLOBAL_RNG, A, X)
+rand!(rng::AbstractRNG, A::SetDict, ::Type{X}=default_sampling(A)) where {X} = rand!(rng, A, Sampler(rng, X))
 
-rand(rng::AbstractRNG, dist::Distribution{P}, ::Type{T}, n::Integer) where {P<:Pair,T<:AbstractDict} =
-    _rand!(rng, deduce_type(T, fieldtype(P, 1), fieldtype(P, 2))(), n, Sampler(rng, dist))
-
-rand(rng::AbstractRNG, ::Type{P}, ::Type{T}, n::Integer) where {P<:Pair,T<:AbstractDict} = rand(rng, Uniform(P), T, n)
-
-rand(rng::AbstractRNG, ::Type{T}, n::Integer) where {T<:AbstractDict} = rand(rng, default_sampling(T), T, n)
-
-rand(u::Distribution{<:Pair}, ::Type{T}, n::Integer) where {T<:AbstractDict} = rand(GLOBAL_RNG, u, T, n)
-
-rand(::Type{P}, ::Type{T}, n::Integer) where {P<:Pair,T<:AbstractDict} = rand(GLOBAL_RNG, Uniform(P), T, n)
-
-rand(::Type{T}, n::Integer) where {T<:AbstractDict} = rand(GLOBAL_RNG, default_sampling(T), T, n)
-
-
-## sets
-
-rand!(                  A::AbstractSet{T}, X)                             where {T}   = rand!(GLOBAL_RNG, A, X)
-rand!(rng::AbstractRNG, A::AbstractSet,    X)                                         = _rand!(rng, A, length(A), sampler(rng, X))
-rand!(                  A::AbstractSet{T}, ::Type{X}=default_sampling(A)) where {T,X} = rand!(GLOBAL_RNG, A, X)
-rand!(rng::AbstractRNG, A::AbstractSet{T}, ::Type{X}=default_sampling(A)) where {T,X} = rand!(rng, A, Sampler(rng, X))
-
-@make_container(T::Type{<:AbstractSet}, n::Integer)
+@make_container(T::Type{<:SetDict}, n::Integer)

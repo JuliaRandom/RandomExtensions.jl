@@ -247,24 +247,27 @@ end
 
 ## collections
 
+### sets/dicts
+
+const SetDict = Union{AbstractSet,AbstractDict}
+
+make(T::Type{<:SetDict}, X,         n::Integer)           = Make2{find_type(T, X, n)}(X , Int(n))
+make(T::Type{<:SetDict}, ::Type{X}, n::Integer) where {X} = Make2{find_type(T, X, n)}(X , Int(n))
+make(T::Type{<:SetDict},            n::Integer)           = make(T, default_sampling(T), Int(n))
+
+Sampler(RNG::Type{<:AbstractRNG}, c::Make2{T}, n::Repetition) where {T<:SetDict} =
+    SamplerTag{Cont{T}}((sampler(RNG, c.x, n), c.y))
+
+function rand(rng::AbstractRNG, sp::SamplerTag{Cont{S}}) where {S<:SetDict}
+    # assuming S() creates an empty set/dict
+    s = sizehint!(S(), sp.data[2])
+    _rand!(rng, s, sp.data[2], sp.data[1])
+end
+
 ### sets
 
 default_sampling(::Type{<:AbstractSet}) = Float64
 default_sampling(::Type{<:AbstractSet{T}}) where {T} = T
-
-make(T::Type{<:AbstractSet},            n::Integer)           = make(T, default_sampling(T), Int(n))
-
-make(T::Type{<:AbstractSet}, X,         n::Integer)           = Make2{find_type(T, X, n)}(X , Int(n))
-make(T::Type{<:AbstractSet}, ::Type{X}, n::Integer) where {X} = Make2{find_type(T, X, n)}(X , Int(n))
-
-Sampler(RNG::Type{<:AbstractRNG}, c::Make2{T}, n::Repetition) where {T<:AbstractSet} =
-    SamplerTag{Cont{T}}((sampler(RNG, c.x, n), c.y))
-
-function rand(rng::AbstractRNG, sp::SamplerTag{Cont{S}}) where {S<:AbstractSet}
-    # assuming S() creates an empty set
-    s = sizehint!(S(), sp.data[2])
-    _rand!(rng, s, sp.data[2], sp.data[1])
-end
 
 #### Set
 
@@ -276,6 +279,23 @@ find_type(::Type{Set{T}}, _, _) where {T} = Set{T}
 default_sampling(::Type{BitSet}) = Int8 # almost arbitrary, may change
 
 find_type(::Type{BitSet}, _, _) = BitSet
+
+
+### dicts
+
+# again same inference bug
+# TODO: extend to AbstractDict ? (needs to work-around the inderence bug)
+default_sampling(::Type{Dict{K,V}}) where {K,V} = Pair{K,V}
+default_sampling(D::Type{<:Dict})               = throw(ArgumentError("under-specified scalar type for $D"))
+
+find_type(D::Type{<:AbstractDict{K,V}}, _,      ::Integer) where {K,V} = D
+find_type(D::Type{<:AbstractDict{K,V}}, ::Type, ::Integer) where {K,V} = D
+
+#### Dict
+
+find_type(::Type{Dict{K}},           X, ::Integer) where {K} = Dict{K,fieldtype(val_gentype(X), 2)}
+find_type(::Type{Dict{K,V} where K}, X, ::Integer) where {V} = Dict{fieldtype(val_gentype(X), 1),V}
+find_type(::Type{Dict},              X, ::Integer)           = Dict{fieldtype(val_gentype(X), 1),fieldtype(val_gentype(X), 2)}
 
 
 ### AbstractArray
