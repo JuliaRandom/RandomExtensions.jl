@@ -253,7 +253,7 @@ end
     @test t[2] isa Char
     @test t[3] isa Int128 && t[3] ∈ rInt8
     @test_throws ArgumentError make(Tuple{Int}, 1:3, 1:3)
-    @test_throws ArgumentError make(Tuple{Int,Int}, 1:3)
+    @test_throws ArgumentError make(Tuple{Int,Int,Int}, 1:3, 2:4)
 
     @test rand(make(Tuple, spString, String)) isa Tuple{String,String}
 end
@@ -263,6 +263,11 @@ end
     T = Random.gentype(s)
     rand(make(NTuple{N}, s)) isa NTuple{N,T}
     @test rand(make(NTuple{3}, spString)) isa NTuple{3,String}
+    @test rand(make(NTuple{3,UInt8}, 1:3)) isa NTuple{3,UInt8}
+    @test rand(make(Tuple{Integer,Integer}, 1:3)) isa Tuple{Int,Int}
+    r = rand(make(Tuple{AbstractFloat,AbstractFloat}, 1:3))
+    @test r isa Tuple{Float64,Float64}
+    @test all(∈(1.0:3.0), r)
 end
 
 @testset "rand(make(String, ...))" begin

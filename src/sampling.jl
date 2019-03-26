@@ -156,30 +156,31 @@ end
 # and       make(NTuple{N}, S)
 
 @generated function _make(::Type{T}, args...) where T <: Tuple
+    isNT = length(args) == 1 && T !== Tuple && (
+        T <: NTuple ||
+        !(T isa UnionAll) &&
+        length(unique(T.parameters)) == 1) # similar to T <: NTuple but works with abstract parameters
+
     types = [t <: Type ? t.parameters[1] : gentype(t) for t in args]
-    TT = T === Tuple ? Tuple{types...} : T
+    TT = T === Tuple ? Tuple{types...} :
+        isNT ? ((T isa UnionAll) ? Tuple{fill(types[1], fieldcount(T))...} : T ) :
+        T
     samples = [t <: Type ? :(UniformType{$(t.parameters[1])}()) :
                :(args[$i]) for (i, t) in enumerate(args)]
-    quote
-        if T !== Tuple && fieldcount(T) != length(args)
-            throw(ArgumentError("wrong number of provided argument with $T (should be $(fieldcount(T)))"))
-        else
-            Make1{$TT}(tuple($(samples...)))
+    if isNT
+        :(Make1{$TT}($(samples[1])))
+    else
+        quote
+            if T !== Tuple && fieldcount(T) != length(args)
+                throw(ArgumentError("wrong number of provided argument with $T (should be $(fieldcount(T)))"))
+            else
+                Make1{$TT}(tuple($(samples...)))
+            end
         end
     end
 end
 
 make(T::Type{<:Tuple}, args...) = _make(T, args...)
-
-@generated function _make(::Type{NTuple{N}}, arg) where {N}
-    T, a = arg <: Type ?
-        (arg.parameters[1], :(Uniform(arg))) :
-        (gentype(arg), :arg)
-    :(Make1{NTuple{N,$T}}($a))
-end
-
-make(::Type{NTuple{N}}, X) where {N} = _make(NTuple{N}, X)
-make(::Type{NTuple{N}}, ::Type{X}) where {N,X} = _make(NTuple{N}, X)
 
 # disambiguate
 
@@ -200,7 +201,7 @@ make(::Type{T}, ::Type{X}, Y,         ::Type{Z}) where {T<:Tuple,X,Z}   = _make(
 make(::Type{T}, X,         ::Type{Y}, ::Type{Z}) where {T<:Tuple,Y,Z}   = _make(T, X, Y, Z)
 make(::Type{T}, ::Type{X}, ::Type{Y}, ::Type{Z}) where {T<:Tuple,X,Y,Z} = _make(T, X, Y, Z)
 
-# Sampler (rand is already implemented above, like for rand(Tuple{...})
+##### Sampler for general tuples (rand is already implemented above, like for rand(Tuple{...})
 
 @generated function Sampler(RNG::Type{<:AbstractRNG}, c::Make1{T,X}, n::Repetition) where {T<:Tuple,X<:Tuple}
     @assert fieldcount(T) == fieldcount(X)
@@ -208,11 +209,14 @@ make(::Type{T}, ::Type{X}, ::Type{Y}, ::Type{Z}) where {T<:Tuple,X,Y,Z} = _make(
     :(SamplerTag{Cont{T}}(tuple($(sps...))))
 end
 
+
+##### for NTuple-like, i.e. should catch Tuple{Integer,Integer} which is not NTuple
+
 Sampler(RNG::Type{<:AbstractRNG}, c::Make1{T,X}, n::Repetition) where {T<:Tuple,X} =
     SamplerTag{Cont{T}}(sampler(RNG, c.x, n))
 
-@generated function rand(rng::AbstractRNG, sp::SamplerTag{Cont{T},S}) where {T<:NTuple,S<:Sampler}
-    rands = fill(:(rand(rng, sp.data)), fieldcount(T))
+@generated function rand(rng::AbstractRNG, sp::SamplerTag{Cont{T},S}) where {T<:Tuple,S<:Sampler}
+    rands = fill(:(convert($(T.parameters[1]), rand(rng, sp.data))), fieldcount(T))
     :(tuple($(rands...)))
 end
 
