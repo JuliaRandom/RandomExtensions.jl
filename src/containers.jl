@@ -64,7 +64,7 @@ end
 @make_container(p::AbstractFloat, m::Integer, [n::Integer])
 # Tuple as a container
 @make_container(T::Type{<:Tuple})
-
+@make_container(::Type{Tuple}, n::Integer)
 
 ## arrays (same as in Random, but with explicit type specification, e.g. rand(Int, Array, 4)
 

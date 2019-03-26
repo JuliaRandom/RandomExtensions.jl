@@ -182,6 +182,9 @@ end
 
 make(T::Type{<:Tuple}, args...) = _make(T, args...)
 
+make(::Type{Tuple}, X,         n::Integer)           = make(NTuple{Int(n)}, X)
+make(::Type{Tuple}, ::Type{X}, n::Integer) where {X} = make(NTuple{Int(n)}, X)
+
 # disambiguate
 
 make(::Type{T}, X)         where {T<:Tuple}   = _make(T, X)
