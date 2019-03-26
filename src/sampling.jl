@@ -197,6 +197,11 @@ make(::Type{Tuple}, ::Type{X}, n::Integer) where {X} = make(NTuple{Int(n)}, X)
 
 make(::Type{Tuple}, n::Integer) = make(Tuple, default_sampling(Tuple), Int(n))
 
+# NTuple{N,T} where N
+make(::Type{NTuple{N,T} where N},            n::Integer) where {T}   = make(NTuple{Int(n),T})
+make(::Type{NTuple{N,T} where N}, X,         n::Integer) where {T}   = make(NTuple{Int(n),T}, X)
+make(::Type{NTuple{N,T} where N}, ::Type{X}, n::Integer) where {T,X} = make(NTuple{Int(n),T}, X)
+
 # disambiguate
 
 make(::Type{T}, X)         where {T<:Tuple}   = _make(T, X)

@@ -27,9 +27,12 @@ macro make_container(margs...)
     definitions = []
     argss = []
     for a in margs
-        push!(argss, a isa Expr && a.head == :vect ? # optional
-                       [nothing, a.args[1]] :
-                       [a])
+        push!(argss,
+              a isa Expr && a.head == :vect ? # optional
+                [nothing, a.args[1]] :
+              a isa Expr && a.head == :call && a.args[1] == :(=>) ? # curly
+                [a.args[2] => a.args[3]] :
+              [a])
 
     end
     pushfirst!(argss, [(), :X, :(::Type{X}) => :X]) # for Sampler
@@ -65,6 +68,7 @@ end
 # Tuple as a container
 @make_container(T::Type{<:Tuple})
 @make_container(::Type{Tuple}, n::Integer)
+@make_container(T::Type{NTuple{N,TT} where N} => TT, n::Integer)
 
 ## arrays (same as in Random, but with explicit type specification, e.g. rand(Int, Array, 4)
 
