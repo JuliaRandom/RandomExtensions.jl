@@ -2,10 +2,11 @@
 
 
 # allows to call `Sampler` only when the the arg isn't a Sampler itself
-sampler(RNG::Type{<:AbstractRNG}, X,          n::Repetition)           = Sampler(RNG, X, n)
-sampler(RNG::Type{<:AbstractRNG}, ::Type{X},  n::Repetition) where {X} = Sampler(RNG, X, n)
-sampler(RNG::Type{<:AbstractRNG}, X::Sampler, n::Repetition)           = X
+sampler(RNG::Type{<:AbstractRNG}, X,          n::Repetition=Val(Inf))           = Sampler(RNG, X, n)
+sampler(RNG::Type{<:AbstractRNG}, ::Type{X},  n::Repetition=Val(Inf)) where {X} = Sampler(RNG, X, n)
+sampler(RNG::Type{<:AbstractRNG}, X::Sampler, n::Repetition=Val(Inf))           = X
 
+sampler(rng::AbstractRNG, X, n::Repetition=Val(Inf)) = sampler(typeof(rng), X, n)
 
 ## Uniform
 
@@ -226,21 +227,35 @@ end
 
 ## collections
 
+### sets
+
+default_sampling(::Type{<:AbstractSet}) = Float64
+default_sampling(::Type{<:AbstractSet{T}}) where {T} = T
+
+make(T::Type{<:AbstractSet},            n::Integer)           = make(T, default_sampling(T), Int(n))
+
+make(T::Type{<:AbstractSet}, X,         n::Integer)           = Make2{find_type(T, X, n)}(X , Int(n))
+make(T::Type{<:AbstractSet}, ::Type{X}, n::Integer) where {X} = Make2{find_type(T, X, n)}(X , Int(n))
+
+Sampler(RNG::Type{<:AbstractRNG}, c::Make2{T}, n::Repetition) where {T<:AbstractSet} =
+    SamplerTag{Cont{T}}((sampler(RNG, c.x, n), c.y))
+
+function rand(rng::AbstractRNG, sp::SamplerTag{Cont{S}}) where {S<:AbstractSet}
+    # assuming S() creates an empty set
+    s = sizehint!(S(), sp.data[2])
+    _rand!(rng, s, sp.data[2], sp.data[1])
+end
+
+#### Set
+
+find_type(::Type{Set},    X, _)           = Set{val_gentype(X)}
+find_type(::Type{Set{T}}, _, _) where {T} = Set{T}
+
 ### BitSet
 
 default_sampling(::Type{BitSet}) = Int8 # almost arbitrary, may change
 
-make(::Type{BitSet},            n::Integer)           = Make2{BitSet}(default_sampling(BitSet), Int(n))
-make(::Type{BitSet}, X,         n::Integer)           = Make2{BitSet}(X, Int(n))
-make(::Type{BitSet}, ::Type{X}, n::Integer) where {X} = Make2{BitSet}(X, Int(n))
-
-Sampler(RNG::Type{<:AbstractRNG}, c::Make{BitSet}, n::Repetition) =
-    SamplerTag{BitSet}((sampler(RNG, c.x, n), c.y))
-
-function rand(rng::AbstractRNG, sp::SamplerTag{BitSet})
-    s = sizehint!(BitSet(), sp.data[2])
-    _rand!(rng, s, sp.data[2], sp.data[1])
-end
+find_type(::Type{BitSet}, _, _) = BitSet
 
 
 ### AbstractArray

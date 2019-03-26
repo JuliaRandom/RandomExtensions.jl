@@ -303,14 +303,22 @@ end
     @test rand(make(String, Sampler(MersenneTwister, ['a', 'b', 'c']), 10)) isa String
 end
 
-@testset "rand(make(BitSet, ...))" begin
-    for (k, l) = ([1:9] => 1:9, [Int8] => rInt8, [] => rInt8)
-        s = rand(make(BitSet, k..., 3))
-        @test s isa BitSet
-        @test length(s) == 3
-        @test all(in(l), s)
+@testset "rand(make(Set/BitSet, ...))" begin
+    for (S, SS, (low, high)) = ((Set{Int}, Set{Int}, (typemin(Int), typemax(Int))),
+                                (Set,      Set,      (0, 1)),
+                                (BitSet,   BitSet,   (typemin(Int8), typemax(Int8))))
+        for (k, l) = ([1:9] => 1:9, [Int8] => rInt8, [] => ())
+            s = rand(make(S, k..., 3))
+            @test s isa (SS === Set ? (l == () ? Set{Float64} : Set{eltype(l)}) : SS)
+            @test length(s) == 3
+            if l == ()
+                @test all(x -> low <= x <= high, s)
+            else
+                @test all(in(l), s)
+            end
+        end
+        rand(make(S, Sampler(MersenneTwister, 1:99), 9)) isa Union{BitSet, Set{Int}}
     end
-    rand(make(BitSet, Sampler(MersenneTwister, 1:99), 9)) isa BitSet
 end
 
 @testset "rand(make(Array/BitArray, ...))" begin
