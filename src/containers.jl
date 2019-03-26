@@ -23,10 +23,10 @@ end
 
 # arg names must not be "rng" nor "X", already in use
 # (this is for nicer output of methods, to avoid cryptic names with gensym)
-macro make_container(args...)
+macro make_container(margs...)
     definitions = []
     argss = []
-    for a in args
+    for a in margs
         push!(argss, a isa Expr && a.head == :vect ? # optional
                        [nothing, a.args[1]] :
                        [a])
@@ -62,6 +62,15 @@ end
 @make_container(::Type{String}, [n::Integer])
 # sparse vectors & matrices
 @make_container(p::AbstractFloat, m::Integer, [n::Integer])
+
+## NTuple as a container
+
+@make_container(T::Type{<:NTuple})
+
+### disambiguate
+
+rand(::AbstractRNG, ::Type{Tuple{}}) = ()
+rand(               ::Type{Tuple{}}) = ()
 
 ## arrays (same as in Random, but with explicit type specification, e.g. rand(Int, Array, 4)
 
@@ -153,18 +162,3 @@ rand(                X, ::Type{T}, n::Integer) where {T<:AbstractSet} = rand(GLO
 
 rand(r::AbstractRNG, ::Type{X}, ::Type{T}, n::Integer) where {X,T<:AbstractSet} = _rand0!(r, deduce_type(T, X)(), n, X)
 rand(                ::Type{X}, ::Type{T}, n::Integer) where {X,T<:AbstractSet} = rand(GLOBAL_RNG, X, T, n)
-
-
-## NTuple as a container
-
-rand(r::AbstractRNG, X,         ::Type{NTuple{N}})   where {N}   = rand(r,          make(NTuple{N}, X))
-rand(                X,         ::Type{NTuple{N}})   where {N}   = rand(GLOBAL_RNG, make(NTuple{N}, X))
-rand(r::AbstractRNG, ::Type{X}, ::Type{NTuple{N}})   where {X,N} = rand(r,          make(NTuple{N}, X))
-rand(                ::Type{X}, ::Type{NTuple{N}})   where {X,N} = rand(GLOBAL_RNG, make(NTuple{N}, X))
-rand(r::AbstractRNG,            ::Type{NTuple{N,X}}) where {X,N} = rand(r,          make(NTuple{N}, X))
-rand(                           ::Type{NTuple{N,X}}) where {X,N} = rand(GLOBAL_RNG, make(NTuple{N}, X))
-
-### disambiguate
-
-rand(::AbstractRNG, ::Type{Tuple{}}) = ()
-rand(               ::Type{Tuple{}}) = ()

@@ -156,6 +156,7 @@ end
 # and       make(NTuple{N}, S)
 
 @generated function _make(::Type{T}, args...) where T <: Tuple
+    isempty(args) && return :(Make0{$T}())
     isNT = length(args) == 1 && T !== Tuple && (
         T <: NTuple ||
         !(T isa UnionAll) &&
@@ -209,6 +210,8 @@ make(::Type{T}, ::Type{X}, ::Type{Y}, ::Type{Z}) where {T<:Tuple,X,Y,Z} = _make(
     :(SamplerTag{Cont{T}}(tuple($(sps...))))
 end
 
+Sampler(RNG::Type{<:AbstractRNG}, ::Make0{T}, n::Repetition) where {T<:Tuple} =
+    Sampler(RNG, T, n)
 
 ##### for NTuple-like, i.e. should catch Tuple{Integer,Integer} which is not NTuple
 

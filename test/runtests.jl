@@ -170,6 +170,10 @@ const spString = Sampler(MersenneTwister, String)
     s = rand(rng..., 1:3, NTuple{3})
     @test s isa NTuple{3,Int}
     @test all(in(1:3), s)
+    s = rand(rng..., 1:3, NTuple{3,Int8})
+    @test s isa NTuple{3,Int8}
+    @test all(in(1:3), s)
+
     s = rand(rng..., NTuple{3, Int8})
     @test s isa NTuple{3,Int8}
     @test all(in(rInt8), s)
@@ -256,6 +260,9 @@ end
     @test_throws ArgumentError make(Tuple{Int,Int,Int}, 1:3, 2:4)
 
     @test rand(make(Tuple, spString, String)) isa Tuple{String,String}
+
+    @test rand(make(Tuple{Int8,Int8})) isa Tuple{Int8,Int8}
+    @test rand(make(Tuple{Int8,UInt})) isa Tuple{Int8,UInt}
 end
 
 @testset "rand(make(NTuple{N}, x))" begin
