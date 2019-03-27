@@ -52,6 +52,17 @@ rand(r::AbstractRNG, sp::SamplerSimple{OpenOpen01{T}}) where {T} =
         x != zero(T) && return x
     end
 
+# optimizations (TODO: optimize for BigFloat too)
+
+rand(r::AbstractRNG, sp::SamplerSimple{OpenOpen01{Float64}}) =
+    reinterpret(Float64, reinterpret(UInt64, rand(r, sp.data)) | 0x0000000000000001)
+
+rand(r::AbstractRNG, sp::SamplerSimple{OpenOpen01{Float32}}) =
+    reinterpret(Float32, reinterpret(UInt32, rand(r, sp.data)) | 0x00000001)
+
+rand(r::AbstractRNG, sp::SamplerSimple{OpenOpen01{Float16}}) =
+    reinterpret(Float16, reinterpret(UInt16, rand(r, sp.data)) | 0x0001)
+
 # prevfloat(T(2)) - 1 for IEEEFloat
 upper01(::Type{Float64}) = 0.9999999999999998
 upper01(::Type{Float32}) = 0.9999999f0
