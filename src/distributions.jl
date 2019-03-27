@@ -219,17 +219,17 @@ OpenOpen(a::T, b::T) where {T<:AbstractFloat} = OpenOpenAB{T}(a, b)
 
 # convenience functions
 
-CloseOpen(a, b) = CloseOpen(AbstractFloat(a), AbstractFloat(b))
-CloseOpen(a::AbstractFloat, b::AbstractFloat) = CloseOpen(promote(a, b)...)
+CloseOpen(a, b) = CloseOpen(promote(a, b)...)
+CloseOpen(a::T, b::T) where {T} = CloseOpen(AbstractFloat(a), AbstractFloat(b))
 
-OpenClose(a, b) = OpenClose(AbstractFloat(a), AbstractFloat(b))
-OpenClose(a::AbstractFloat, b::AbstractFloat) = OpenClose(promote(a, b)...)
+OpenClose(a, b) = OpenClose(promote(a, b)...)
+OpenClose(a::T, b::T) where {T} = OpenClose(AbstractFloat(a), AbstractFloat(b))
 
-CloseClose(a, b) = CloseClose(AbstractFloat(a), AbstractFloat(b))
-CloseClose(a::AbstractFloat, b::AbstractFloat) = CloseClose(promote(a, b)...)
+CloseClose(a, b) = CloseClose(promote(a, b)...)
+CloseClose(a::T, b::T) where {T} = CloseClose(AbstractFloat(a), AbstractFloat(b))
 
-OpenOpen(a, b) = OpenOpen(AbstractFloat(a), AbstractFloat(b))
-OpenOpen(a::AbstractFloat, b::AbstractFloat) = OpenOpen(promote(a, b)...)
+OpenOpen(a, b) = OpenOpen(promote(a, b)...)
+OpenOpen(a::T, b::T) where {T} = OpenOpen(AbstractFloat(a), AbstractFloat(b))
 
 ## Bernoulli
 

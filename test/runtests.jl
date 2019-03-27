@@ -269,6 +269,9 @@ end
     for CO in (CloseOpen, CloseClose, OpenOpen, OpenClose)
         @test_throws ArgumentError CO(1, 1)
         @test_throws ArgumentError CO(2, 1)
+
+        @test CO(Float16(1), 2) isa CO{Float16}
+        @test CO(1, Float32(2)) isa CO{Float32}
     end
 end
 
