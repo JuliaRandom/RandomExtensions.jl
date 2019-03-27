@@ -138,21 +138,33 @@ const spString = Sampler(MersenneTwister, String)
     # sparse
     @test rand(rng..., Float64, .5, 10) isa SparseVector{Float64}
     @test rand(rng..., Float64, .5, (10,)) isa SparseVector{Float64}
+    @test rand(rng..., Float64, SparseVector, .5, 10) isa SparseVector{Float64}
+    @test rand(rng..., Float64, SparseVector, .5, (10,)) isa SparseVector{Float64}
 
     @test rand(rng..., .5, 10) isa SparseVector{Float64}
     @test rand(rng..., .5, (10,)) isa SparseVector{Float64}
+    @test rand(rng..., SparseVector, .5, 10) isa SparseVector{Float64}
+    @test rand(rng..., SparseVector, .5, (10,)) isa SparseVector{Float64}
 
     @test rand(rng..., Int, .5, 10) isa SparseVector{Int}
     @test rand(rng..., Int, .5, (10,)) isa SparseVector{Int}
+    @test rand(rng..., Int, SparseVector, .5, 10) isa SparseVector{Int}
+    @test rand(rng..., Int, SparseVector, .5, (10,)) isa SparseVector{Int}
 
     @test rand(rng..., Float64, .5, 10, 3) isa SparseMatrixCSC{Float64}
     @test rand(rng..., Float64, .5, (10, 3)) isa SparseMatrixCSC{Float64}
+    @test rand(rng..., Float64, SparseMatrixCSC, .5, 10, 3) isa SparseMatrixCSC{Float64}
+    @test rand(rng..., Float64, SparseMatrixCSC, .5, (10, 3)) isa SparseMatrixCSC{Float64}
 
     @test rand(rng..., .5, 10, 3) isa SparseMatrixCSC{Float64}
     @test rand(rng..., .5, (10, 3)) isa SparseMatrixCSC{Float64}
+    @test rand(rng..., SparseMatrixCSC, .5, 10, 3) isa SparseMatrixCSC{Float64}
+    @test rand(rng..., SparseMatrixCSC, .5, (10, 3)) isa SparseMatrixCSC{Float64}
 
     @test rand(rng..., Int, .5, 10, 3) isa SparseMatrixCSC{Int}
     @test rand(rng..., Int, .5, (10, 3)) isa SparseMatrixCSC{Int}
+    @test rand(rng..., Int, SparseMatrixCSC, .5, 10, 3) isa SparseMatrixCSC{Int}
+    @test rand(rng..., Int, SparseMatrixCSC, .5, (10, 3)) isa SparseMatrixCSC{Int}
 
     # BitArray
     for S = ([], [Bool], [Bernoulli()])

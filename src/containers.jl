@@ -60,7 +60,13 @@ macro make_container(margs...)
 end
 
 @make_container(::Type{String}, [n::Integer])
+
 # sparse vectors & matrices
+@make_container(::Type{SparseVector},    p::AbstractFloat, m::Integer)
+@make_container(::Type{SparseVector},    p::AbstractFloat, d::Dims{1})
+@make_container(::Type{SparseMatrixCSC}, p::AbstractFloat, m::Integer, n::Integer)
+@make_container(::Type{SparseMatrixCSC}, p::AbstractFloat, d::Dims{2})
+
 # Tuple as a container
 @make_container(T::Type{<:Tuple})
 @make_container(::Type{Tuple}, n::Integer)
