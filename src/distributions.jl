@@ -171,22 +171,32 @@ struct OpenOpen01{  T<:AbstractFloat} <: OpenOpen{T}   end # interval (0,1)
 struct CloseOpenAB{T<:AbstractFloat} <: CloseOpen{T} # interval [a,b)
     a::T
     b::T
+
+    CloseOpenAB{T}(a::T, b::T) where {T} = (check_interval(a, b); new{T}(a, b))
 end
 
 struct OpenCloseAB{T<:AbstractFloat} <: OpenClose{T} # interval (a,b]
     a::T
     b::T
+
+    OpenCloseAB{T}(a::T, b::T) where {T} = (check_interval(a, b); new{T}(a, b))
 end
 
 struct CloseCloseAB{T<:AbstractFloat} <: CloseClose{T} # interval [a,b]
     a::T
     b::T
+
+    CloseCloseAB{T}(a::T, b::T) where {T} = (check_interval(a, b); new{T}(a, b))
 end
 
 struct OpenOpenAB{T<:AbstractFloat} <: OpenOpen{T} # interval (a,b)
     a::T
     b::T
+
+    OpenOpenAB{T}(a::T, b::T) where {T} = (check_interval(a, b); new{T}(a, b))
 end
+
+check_interval(a, b) = a >= b && throw(ArgumentError("invalid interval specification"))
 
 const FloatInterval_64 = FloatInterval{Float64}
 const CloseOpen01_64   = CloseOpen01{Float64}

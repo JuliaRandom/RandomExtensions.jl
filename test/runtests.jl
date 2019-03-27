@@ -265,6 +265,11 @@ end
     @test CloseOpen(1,   2.0)        === CloseOpen(1.0, 2.0)
     @test CloseOpen(1.0, Float32(2)) === CloseOpen(1.0, 2.0)
     @test CloseOpen(big(1), 2) isa CloseOpen{BigFloat}
+
+    for CO in (CloseOpen, CloseClose, OpenOpen, OpenClose)
+        @test_throws ArgumentError CO(1, 1)
+        @test_throws ArgumentError CO(2, 1)
+    end
 end
 
 @testset "rand(::Type{<:Tuple})" begin
