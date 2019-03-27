@@ -61,7 +61,6 @@ end
 
 @make_container(::Type{String}, [n::Integer])
 # sparse vectors & matrices
-@make_container(p::AbstractFloat, m::Integer, [n::Integer])
 # Tuple as a container
 @make_container(T::Type{<:Tuple})
 @make_container(::Type{Tuple}, n::Integer)
@@ -71,26 +70,27 @@ end
 
 macro make_array_container(Cont)
     definitions =
-        [ :(rand(rng::AbstractRNG,            T::Type{<:$Cont}, dims::Dims) =                 rand(rng,        make(T, dims))),
-          :(rand(                             T::Type{<:$Cont}, dims::Dims) =                 rand(GLOBAL_RNG, make(T, dims))),
-          :(rand(rng::AbstractRNG,            T::Type{<:$Cont}, dims::Integer...) =           rand(rng,        make(T, Dims(dims)))),
-          :(rand(                             T::Type{<:$Cont}, dims::Integer...) =           rand(GLOBAL_RNG, make(T, Dims(dims)))),
+        [ :(rand(rng::AbstractRNG,            $Cont, dims::Dims) =                 rand(rng,        make(t, dims))),
+          :(rand(                             $Cont, dims::Dims) =                 rand(GLOBAL_RNG, make(t, dims))),
+          :(rand(rng::AbstractRNG,            $Cont, dims::Integer...) =           rand(rng,        make(t, Dims(dims)))),
+          :(rand(                             $Cont, dims::Integer...) =           rand(GLOBAL_RNG, make(t, Dims(dims)))),
 
-          :(rand(rng::AbstractRNG, X,         T::Type{<:$Cont}, dims::Dims) =                 rand(rng,        make(T, X, dims))),
-          :(rand(                  X,         T::Type{<:$Cont}, dims::Dims) =                 rand(GLOBAL_RNG, make(T, X, dims))),
-          :(rand(rng::AbstractRNG, X,         T::Type{<:$Cont}, dims::Integer...) =           rand(rng,        make(T, X, Dims(dims)))),
-          :(rand(                  X,         T::Type{<:$Cont}, dims::Integer...) =           rand(GLOBAL_RNG, make(T, X, Dims(dims)))),
+          :(rand(rng::AbstractRNG, X,         $Cont, dims::Dims) =                 rand(rng,        make(t, X, dims))),
+          :(rand(                  X,         $Cont, dims::Dims) =                 rand(GLOBAL_RNG, make(t, X, dims))),
+          :(rand(rng::AbstractRNG, X,         $Cont, dims::Integer...) =           rand(rng,        make(t, X, Dims(dims)))),
+          :(rand(                  X,         $Cont, dims::Integer...) =           rand(GLOBAL_RNG, make(t, X, Dims(dims)))),
 
-          :(rand(rng::AbstractRNG, ::Type{X}, T::Type{<:$Cont}, dims::Dims)       where {X} = rand(rng,        make(T, X, dims))),
-          :(rand(                  ::Type{X}, T::Type{<:$Cont}, dims::Dims)       where {X} = rand(GLOBAL_RNG, make(T, X, dims))),
-          :(rand(rng::AbstractRNG, ::Type{X}, T::Type{<:$Cont}, dims::Integer...) where {X} = rand(rng,        make(T, X, Dims(dims)))),
-          :(rand(                  ::Type{X}, T::Type{<:$Cont}, dims::Integer...) where {X} = rand(GLOBAL_RNG, make(T, X, Dims(dims)))),
+          :(rand(rng::AbstractRNG, ::Type{X}, $Cont, dims::Dims)       where {X} = rand(rng,        make(t, X, dims))),
+          :(rand(                  ::Type{X}, $Cont, dims::Dims)       where {X} = rand(GLOBAL_RNG, make(t, X, dims))),
+          :(rand(rng::AbstractRNG, ::Type{X}, $Cont, dims::Integer...) where {X} = rand(rng,        make(t, X, Dims(dims)))),
+          :(rand(                  ::Type{X}, $Cont, dims::Integer...) where {X} = rand(GLOBAL_RNG, make(t, X, Dims(dims)))),
         ]
     esc(Expr(:block, definitions...))
 end
 
-@make_array_container(Array)
-@make_array_container(BitArray)
+@make_array_container(t::Type{<:Array})
+@make_array_container(t::Type{<:BitArray})
+@make_array_container(t::AbstractFloat)
 
 
 ## sets/dicts

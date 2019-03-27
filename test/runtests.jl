@@ -137,11 +137,22 @@ const spString = Sampler(MersenneTwister, String)
 
     # sparse
     @test rand(rng..., Float64, .5, 10) isa SparseVector{Float64}
+    @test rand(rng..., Float64, .5, (10,)) isa SparseVector{Float64}
+
     @test rand(rng..., .5, 10) isa SparseVector{Float64}
+    @test rand(rng..., .5, (10,)) isa SparseVector{Float64}
+
     @test rand(rng..., Int, .5, 10) isa SparseVector{Int}
+    @test rand(rng..., Int, .5, (10,)) isa SparseVector{Int}
+
     @test rand(rng..., Float64, .5, 10, 3) isa SparseMatrixCSC{Float64}
+    @test rand(rng..., Float64, .5, (10, 3)) isa SparseMatrixCSC{Float64}
+
     @test rand(rng..., .5, 10, 3) isa SparseMatrixCSC{Float64}
+    @test rand(rng..., .5, (10, 3)) isa SparseMatrixCSC{Float64}
+
     @test rand(rng..., Int, .5, 10, 3) isa SparseMatrixCSC{Int}
+    @test rand(rng..., Int, .5, (10, 3)) isa SparseMatrixCSC{Int}
 
     # BitArray
     for S = ([], [Bool], [Bernoulli()])
@@ -447,16 +458,12 @@ end
                     [Int8(2), Int16(3)] => 2),
         form = ([], [dim == 1 ? SparseVector : SparseMatrixCSC])
 
-        if form == []
-            s = rand(make(0.3, k..., d...))
-        else
-            s = rand(make(form..., k..., 0.3, d...))
-        end
+        s = rand(make(form..., k..., 0.3, d...))
         @test s isa (dim == 1 ? SparseVector{Float64,Int} :
                                 SparseMatrixCSC{Float64,Int})
         @test length(s) == 6
     end
-    @test rand(make(0.3, spString, 9)) isa SparseVector{String}
+    @test rand(make(spString, 0.3, 9)) isa SparseVector{String}
 end
 
 @testset "rand(make(default))" begin
