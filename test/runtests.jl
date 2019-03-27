@@ -444,9 +444,14 @@ end
                     [(2,3)]             => 2,
                     [6]                 => 1,
                     [2, 3]              => 2,
-                    [Int8(2), Int16(3)] => 2)
+                    [Int8(2), Int16(3)] => 2),
+        form = ([], [dim == 1 ? SparseVector : SparseMatrixCSC])
 
-        s = rand(make(0.3, k..., d...))
+        if form == []
+            s = rand(make(0.3, k..., d...))
+        else
+            s = rand(make(form..., k..., 0.3, d...))
+        end
         @test s isa (dim == 1 ? SparseVector{Float64,Int} :
                                 SparseMatrixCSC{Float64,Int})
         @test length(s) == 6

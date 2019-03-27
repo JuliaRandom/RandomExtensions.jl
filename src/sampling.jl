@@ -419,21 +419,41 @@ find_type(::Type{BitArray},    _, ::Dims{N}) where {N} = BitArray{N}
 
 ### sparse vectors & matrices
 
-make(p::AbstractFloat, X, dims::Dims{1}) = Make3{SparseVector{   val_gentype(X), Int}}(X, dims, p)
-make(p::AbstractFloat, X, dims::Dims{2}) = Make3{SparseMatrixCSC{val_gentype(X), Int}}(X, dims, p)
+find_type(::Type{SparseVector},    X, p::AbstractFloat, dims::Dims{1}) = SparseVector{   val_gentype(X), Int}
+find_type(::Type{SparseMatrixCSC}, X, p::AbstractFloat, dims::Dims{2}) = SparseMatrixCSC{val_gentype(X), Int}
 
-make(p::AbstractFloat, X, dims::Integer...) = make(p, X, Dims(dims))
-make(p::AbstractFloat, dims::Dims)          = make(p, Float64, dims)
-make(p::AbstractFloat, dims::Integer...)    = make(p, Float64, Dims(dims))
+find_type(::Type{SparseVector{X}},    _, p::AbstractFloat, dims::Dims{1}) where {X} = SparseVector{   X, Int}
+find_type(::Type{SparseMatrixCSC{X}}, _, p::AbstractFloat, dims::Dims{2}) where {X} = SparseMatrixCSC{X, Int}
+
+# need to be explicit and split these defs in 2 (or 4) to avoid ambiguities
+make(T::Type{SparseVector},    X,         p::AbstractFloat, d1::Integer)                        = make(T, X, p, Dims((d1,)))
+make(T::Type{SparseVector},    ::Type{X}, p::AbstractFloat, d1::Integer)              where {X} = make(T, X, p, Dims((d1,)))
+make(T::Type{SparseMatrixCSC}, X,         p::AbstractFloat, d1::Integer, d2::Integer)           = make(T, X, p, Dims((d1, d2)))
+make(T::Type{SparseMatrixCSC}, ::Type{X}, p::AbstractFloat, d1::Integer, d2::Integer) where {X} = make(T, X, p, Dims((d1, d2)))
+
+make(T::Type{SparseVector},    p::AbstractFloat, d1::Integer)              = make(T, default_sampling(T), p, Dims((d1,)))
+make(T::Type{SparseMatrixCSC}, p::AbstractFloat, d1::Integer, d2::Integer) = make(T, default_sampling(T), p, Dims((d1, d2)))
+
+make(T::Type{SparseVector},    p::AbstractFloat, dims::Dims{1}) = make(T, default_sampling(T), p, dims)
+make(T::Type{SparseMatrixCSC}, p::AbstractFloat, dims::Dims{2}) = make(T, default_sampling(T), p, dims)
+
+make(p::AbstractFloat, X, dims::Dims{1}) = make(SparseVector, X, p, dims)
+make(p::AbstractFloat, X, dims::Dims{2}) = make(SparseMatrixCSC, X, p, dims)
+
+make(p::AbstractFloat, X, dims::Integer...) = make(p, X,                               Dims(dims))
+make(p::AbstractFloat,    dims::Dims)       = make(p, default_sampling(AbstractArray), dims)
+make(p::AbstractFloat,    dims::Integer...) = make(p, default_sampling(AbstractArray), Dims(dims))
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make3{A}, n::Repetition) where {A<:AbstractSparseArray} =
-    SamplerTag{A}((sampler(RNG, c.x, n), c.y, c.z))
+    SamplerTag{A}((sp = sampler(RNG, c.x, n),
+                   p = c.y,
+                   dims = c.z))
 
 rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:SparseVector} =
-    sprand(rng, sp.data[2][1], sp.data[3], (r, n)->rand(r, sp.data[1], n))
+    sprand(rng, sp.data.dims[1], sp.data.p, (r, n)->rand(r, sp.data.sp, n))
 
 rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:SparseMatrixCSC} =
-    sprand(rng, sp.data[2][1], sp.data[2][2], sp.data[3], (r, n)->rand(r, sp.data[1], n), gentype(sp.data[1]))
+    sprand(rng, sp.data.dims[1], sp.data.dims[2], sp.data.p, (r, n)->rand(r, sp.data.sp, n), gentype(sp.data.sp))
 
 
 ### String as a scalar
