@@ -204,7 +204,7 @@ end
     if isempty(args)
         TT = T === Tuple ? Tuple{} :
             T === NTuple ? Tuple{} :
-            T isa UnionAll && Type{T} <: Type{NTuple{N}} where N ? T{default_sampling(Tuple)} :
+            T isa UnionAll && Type{T} <: Type{NTuple{N}} where N ? T{default_gentype(Tuple)} :
             T
         return :(Make0{$TT}())
     end
@@ -234,7 +234,7 @@ make(T::Type{<:Tuple}, args...) = _make(T, args...)
 
 # make(Tuple, X, n::Integer)
 
-default_sampling(::Type{Tuple}) = Float64
+default_sampling(::Type{Tuple}) = Uniform(Float64)
 
 make(::Type{Tuple}, X,         n::Integer)           = make(NTuple{Int(n)}, X)
 make(::Type{Tuple}, ::Type{X}, n::Integer) where {X} = make(NTuple{Int(n)}, X)
@@ -310,8 +310,8 @@ end
 
 ### sets
 
-default_sampling(::Type{<:AbstractSet}) = Float64
-default_sampling(::Type{<:AbstractSet{T}}) where {T} = T
+default_sampling(::Type{<:AbstractSet}) = Uniform(Float64)
+default_sampling(::Type{<:AbstractSet{T}}) where {T} = Uniform(T)
 
 #### Set
 
@@ -320,7 +320,7 @@ find_type(::Type{Set{T}}, _, _) where {T} = Set{T}
 
 ### BitSet
 
-default_sampling(::Type{BitSet}) = Int8 # almost arbitrary, may change
+default_sampling(::Type{BitSet}) = Uniform(Int8) # almost arbitrary, may change
 
 find_type(::Type{BitSet}, _, _) = BitSet
 
@@ -329,7 +329,7 @@ find_type(::Type{BitSet}, _, _) = BitSet
 
 # again same inference bug
 # TODO: extend to AbstractDict ? (needs to work-around the inderence bug)
-default_sampling(::Type{Dict{K,V}}) where {K,V} = Pair{K,V}
+default_sampling(::Type{Dict{K,V}}) where {K,V} = Uniform(Pair{K,V})
 default_sampling(D::Type{<:Dict})               = throw(ArgumentError("under-specified scalar type for $D"))
 
 find_type(D::Type{<:AbstractDict{K,V}}, _,      ::Integer) where {K,V} = D
@@ -344,8 +344,8 @@ find_type(::Type{Dict},              X, ::Integer)           = Dict{fieldtype(va
 
 ### AbstractArray
 
-default_sampling(::Type{<:AbstractArray{T}}) where {T} = T
-default_sampling(::Type{<:AbstractArray})              = Float64
+default_sampling(::Type{<:AbstractArray{T}}) where {T} = Uniform(T)
+default_sampling(::Type{<:AbstractArray})              = Uniform(Float64)
 
 make(A::Type{<:AbstractArray}, X,         dims::Integer...)           = make(A, X, Dims(dims))
 make(A::Type{<:AbstractArray}, ::Type{X}, dims::Integer...) where {X} = make(A, X, Dims(dims))
@@ -363,9 +363,6 @@ rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:AbstractArray} =
 
 #### Array
 
-val_gentype(X)                   = gentype(X)
-val_gentype(::Type{X}) where {X} = X
-
 # cf. inference bug https://github.com/JuliaLang/julia/issues/28762
 # we have to write out all combinations for getting proper inference
 find_type(A::Type{Array{T}},           _, ::Dims{N}) where {T, N} = Array{T, N}
@@ -376,7 +373,7 @@ find_type(A::Type{Array},              X, ::Dims{N}) where {N}    = Array{val_ge
 
 #### BitArray
 
-default_sampling(::Type{<:BitArray}) = Bool
+default_sampling(::Type{<:BitArray}) = Uniform(Bool)
 
 find_type(::Type{BitArray{N}}, _, ::Dims{N}) where {N} = BitArray{N}
 find_type(::Type{BitArray},    _, ::Dims{N}) where {N} = BitArray{N}

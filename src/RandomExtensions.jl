@@ -20,6 +20,18 @@ struct Cont{T} end
 Base.eltype(::Type{Cont{T}}) where {T} = T
 
 
+## some helper functions, not to be overloaded, except default_sampling
+
+default_sampling(::Type{X}) where {X} = error("default_sampling($X) not defined")
+default_sampling(::X)       where {X} = default_sampling(X)
+
+default_gentype(::Type{T}) where {T} = val_gentype(default_sampling(T))
+default_gentype(::X)       where {X} = default_gentype(X)
+
+val_gentype(X)                   = gentype(X)
+val_gentype(::Type{X}) where {X} = X
+
+
 ## includes
 
 include("distributions.jl")

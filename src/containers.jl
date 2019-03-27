@@ -1,9 +1,6 @@
 # generation of some containers filled with random values
 
 
-default_sampling(::Type{X}) where {X} = error("default_sampling($X) not defined")
-default_sampling(x::X) where {X} = default_sampling(X)
-
 function make_argument(param)
     if param isa Symbol
         param
@@ -106,9 +103,9 @@ function _rand!(rng::AbstractRNG, A::SetDict, n::Integer, sp::Sampler)
     A
 end
 
-rand!(                  A::SetDict, X)                                       = rand!(GLOBAL_RNG, A, X)
-rand!(rng::AbstractRNG, A::SetDict, X)                                       = _rand!(rng, A, length(A), sampler(rng, X))
-rand!(                  A::SetDict, ::Type{X}=default_sampling(A)) where {X} = rand!(GLOBAL_RNG, A, X)
-rand!(rng::AbstractRNG, A::SetDict, ::Type{X}=default_sampling(A)) where {X} = rand!(rng, A, Sampler(rng, X))
+rand!(                  A::SetDict, X=default_sampling(A)) = rand!(GLOBAL_RNG, A, X)
+rand!(rng::AbstractRNG, A::SetDict, X=default_sampling(A)) = _rand!(rng, A, length(A), sampler(rng, X))
+rand!(                  A::SetDict, ::Type{X}) where {X}  = rand!(GLOBAL_RNG, A, X)
+rand!(rng::AbstractRNG, A::SetDict, ::Type{X}) where {X}  = rand!(rng, A, Sampler(rng, X))
 
 @make_container(T::Type{<:SetDict}, n::Integer)
