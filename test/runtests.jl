@@ -252,6 +252,11 @@ end
         @test rand(m, sp) isa F
         @test 1 <= rand(m, sp) < 2
     end
+    @test CloseOpen(1,   2)          === CloseOpen(1.0, 2.0)
+    @test CloseOpen(1.0, 2)          === CloseOpen(1.0, 2.0)
+    @test CloseOpen(1,   2.0)        === CloseOpen(1.0, 2.0)
+    @test CloseOpen(1.0, Float32(2)) === CloseOpen(1.0, 2.0)
+    @test CloseOpen(big(1), 2) isa CloseOpen{BigFloat}
 end
 
 @testset "rand(::Type{<:Tuple})" begin

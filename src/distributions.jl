@@ -175,6 +175,9 @@ CloseOpen12(::Type{T}=Float64) where {T<:AbstractFloat} = CloseOpen12{T}()
 CloseOpen(::Type{T}=Float64) where {T<:AbstractFloat} = CloseOpen01{T}()
 CloseOpen(a::T, b::T) where {T<:AbstractFloat} = CloseOpenAB{T}(a, b)
 
+# convenience functions
+CloseOpen(a, b) = CloseOpen(AbstractFloat(a), AbstractFloat(b))
+CloseOpen(a::AbstractFloat, b::AbstractFloat) = CloseOpen(promote(a, b)...)
 
 ## Bernoulli
 
