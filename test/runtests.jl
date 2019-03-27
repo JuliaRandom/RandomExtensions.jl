@@ -416,6 +416,26 @@ end
 
     @test rand(make(Array, spString, 9)) isa Array{String}
     @test rand(make(BitArray, Sampler(MersenneTwister, [0, 0, 0, 1]), 9)) isa BitArray
+
+    for dims = ((), (2, 3), (0x2, 3), (2,), (0x2,)),
+        s    = ([], [Int], [1:3])
+
+        T = s == [] ? Float64 : Int
+        if dims != ()
+            a = rand(make(s..., dims...))
+            @test a isa Array{T,length(dims)}
+            if s == [1:3]
+                @test all(in(1:3), a)
+            end
+        end
+        if s != [] && dims isa Dims
+            a = rand(make(s..., dims))
+            @test a isa Array{T,length(dims)}
+            if s == [1:3]
+                @test all(in(1:3), a)
+            end
+        end
+    end
 end
 
 @testset "rand(make(Sparse...))" begin

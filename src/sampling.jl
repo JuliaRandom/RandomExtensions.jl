@@ -370,6 +370,16 @@ find_type(A::Type{Array{T,N}},         _, ::Dims{N}) where {T, N} = Array{T, N}
 find_type(A::Type{Array{T,N} where T}, X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
 find_type(A::Type{Array},              X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
 
+# special shortcut
+
+make(X,         dims::Dims)                              = make(Array, X,                       dims)
+make(X,         d1::Integer, dims::Integer...)           = make(Array, X,                       Dims(tuple(d1, dims...)))
+make(::Type{X}, dims::Dims)           where {X}          = make(Array, X,                       dims)
+make(::Type{X}, d1::Integer, dims::Integer...) where {X} = make(Array, X,                       Dims(tuple(d1, dims...)))
+make(           dims::Integer...)                        = make(Array, default_sampling(Array), Dims(dims))
+
+# omitted: make(dims::Dims)
+# for the same reason that rand(dims::Dims) doesn't produce an array, i.e. it produces a scalar picked from the tuple
 
 #### BitArray
 
