@@ -52,8 +52,14 @@ rand(r::AbstractRNG, sp::SamplerSimple{OpenOpen01{T}}) where {T} =
         x != zero(T) && return x
     end
 
+# prevfloat(T(2)) - 1 for IEEEFloat
+upper01(::Type{Float64}) = 0.9999999999999998
+upper01(::Type{Float32}) = 0.9999999f0
+upper01(::Type{Float16}) = Float16(0.999)
+upper01(::Type{BigFloat}) = prevfloat(one(BigFloat))
+
 rand(r::AbstractRNG, sp::SamplerSimple{CloseClose01{T}}) where {T} =
-    rand(r, sp.data) / prevfloat(one(T))
+    rand(r, sp.data) / upper01(T)
 
 ### CloseOpenAB
 
