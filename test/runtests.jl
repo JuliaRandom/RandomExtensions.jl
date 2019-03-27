@@ -247,6 +247,14 @@ end
         sp = Random.Sampler(MersenneTwister, RandomExtensions.CloseOpen01(F))
         @test rand(m, sp) isa F
         @test 0 <= rand(m, sp) < 1
+        for (CO, (l, r)) = (CloseOpen  => (<=, <),
+                            CloseClose => (<=, <=),
+                            OpenOpen   => (<,  <),
+                            OpenClose  => (<,  <=))
+            f = rand(CO(F))
+            @test f isa F
+            @test l(0, f) && r(f, 1)
+        end
         F ∈ (Float64, BigFloat) || continue # only types implemented in Random
         sp = Random.Sampler(MersenneTwister, RandomExtensions.CloseOpen12(F))
         @test rand(m, sp) isa F

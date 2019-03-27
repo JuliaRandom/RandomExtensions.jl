@@ -27,20 +27,47 @@ for CO in (:CloseOpen01, :CloseOpen12)
 end
 
 ### fall-back on Random definitions
+
 rand(r::AbstractRNG, ::SamplerTrivial{CloseOpen01{T}}) where {T} =
     rand(r, SamplerTrivial(Random.CloseOpen01{T}()))
 
 rand(r::AbstractRNG, ::SamplerTrivial{CloseOpen12{T}}) where {T} =
     rand(r, SamplerTrivial(Random.CloseOpen12{T}()))
 
+### new intervals 01
+
+# TODO: optimize for BigFloat
+
+for CO = (:OpenClose01, :OpenOpen01, :CloseClose01)
+    @eval Sampler(RNG::Type{<:AbstractRNG}, I::$CO{T}, n::Repetition) where {T} =
+              SamplerSimple(I, CloseOpen01(T))
+end
+
+rand(r::AbstractRNG, sp::SamplerSimple{OpenClose01{T}}) where {T} =
+    one(T) - rand(r, sp.data)
+
+rand(r::AbstractRNG, sp::SamplerSimple{OpenOpen01{T}}) where {T} =
+    while true
+        x = rand(r, sp.data)
+        x != zero(T) && return x
+    end
+
+rand(r::AbstractRNG, sp::SamplerSimple{CloseClose01{T}}) where {T} =
+    rand(r, sp.data) / prevfloat(one(T))
+
 ### CloseOpenAB
 
-Sampler(RNG::Type{<:AbstractRNG}, d::CloseOpenAB{T}, n::Repetition) where {T} =
-    SamplerTag{CloseOpenAB{T}}((a=d.a, d=d.b - d.a, sp=Sampler(RNG, CloseOpen01{T}(), n)))
+for (CO, CO01) = (CloseOpenAB => CloseOpen01,
+                  OpenCloseAB => OpenClose01,
+                  CloseCloseAB => CloseClose01,
+                  OpenOpenAB => OpenOpen01)
 
-rand(rng::AbstractRNG, sp::SamplerTag{CloseOpenAB{T}}) where {T} =
-    sp.data.a + sp.data.d  * rand(rng, sp.data.sp)
+    @eval Sampler(RNG::Type{<:AbstractRNG}, d::$CO{T}, n::Repetition) where {T} =
+        SamplerTag{$CO{T}}((a=d.a, d=d.b - d.a, sp=Sampler(RNG, $CO01{T}(), n)))
 
+    @eval rand(rng::AbstractRNG, sp::SamplerTag{$CO{T}}) where {T} =
+        sp.data.a + sp.data.d  * rand(rng, sp.data.sp)
+end
 
 ## Normal & Exponential
 

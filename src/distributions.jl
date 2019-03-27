@@ -155,12 +155,35 @@ Exponential(θ::T) where {T<:AbstractFloat} = Exponentialθ(θ)
 ## floats
 
 abstract type FloatInterval{T<:AbstractFloat} <: Uniform{T} end
-abstract type CloseOpen{T<:AbstractFloat} <: FloatInterval{T} end
 
-struct CloseOpen01{T<:AbstractFloat} <: CloseOpen{T} end # interval [0,1)
+abstract type CloseOpen{ T<:AbstractFloat} <: FloatInterval{T} end
+abstract type OpenClose{ T<:AbstractFloat} <: FloatInterval{T} end
+abstract type CloseClose{T<:AbstractFloat} <: FloatInterval{T} end
+abstract type OpenOpen{  T<:AbstractFloat} <: FloatInterval{T} end
+
 struct CloseOpen12{T<:AbstractFloat} <: CloseOpen{T} end # interval [1,2)
 
+struct CloseOpen01{ T<:AbstractFloat} <: CloseOpen{T}  end # interval [0,1)
+struct OpenClose01{ T<:AbstractFloat} <: OpenClose{T}  end # interval (0,1]
+struct CloseClose01{T<:AbstractFloat} <: CloseClose{T} end # interval [0,1]
+struct OpenOpen01{  T<:AbstractFloat} <: OpenOpen{T}   end # interval (0,1)
+
 struct CloseOpenAB{T<:AbstractFloat} <: CloseOpen{T} # interval [a,b)
+    a::T
+    b::T
+end
+
+struct OpenCloseAB{T<:AbstractFloat} <: OpenClose{T} # interval (a,b]
+    a::T
+    b::T
+end
+
+struct CloseCloseAB{T<:AbstractFloat} <: CloseClose{T} # interval [a,b]
+    a::T
+    b::T
+end
+
+struct OpenOpenAB{T<:AbstractFloat} <: OpenOpen{T} # interval (a,b)
     a::T
     b::T
 end
@@ -175,9 +198,28 @@ CloseOpen12(::Type{T}=Float64) where {T<:AbstractFloat} = CloseOpen12{T}()
 CloseOpen(::Type{T}=Float64) where {T<:AbstractFloat} = CloseOpen01{T}()
 CloseOpen(a::T, b::T) where {T<:AbstractFloat} = CloseOpenAB{T}(a, b)
 
+OpenClose(::Type{T}=Float64) where {T<:AbstractFloat} = OpenClose01{T}()
+OpenClose(a::T, b::T) where {T<:AbstractFloat} = OpenCloseAB{T}(a, b)
+
+CloseClose(::Type{T}=Float64) where {T<:AbstractFloat} = CloseClose01{T}()
+CloseClose(a::T, b::T) where {T<:AbstractFloat} = CloseCloseAB{T}(a, b)
+
+OpenOpen(::Type{T}=Float64) where {T<:AbstractFloat} = OpenOpen01{T}()
+OpenOpen(a::T, b::T) where {T<:AbstractFloat} = OpenOpenAB{T}(a, b)
+
 # convenience functions
+
 CloseOpen(a, b) = CloseOpen(AbstractFloat(a), AbstractFloat(b))
 CloseOpen(a::AbstractFloat, b::AbstractFloat) = CloseOpen(promote(a, b)...)
+
+OpenClose(a, b) = OpenClose(AbstractFloat(a), AbstractFloat(b))
+OpenClose(a::AbstractFloat, b::AbstractFloat) = OpenClose(promote(a, b)...)
+
+CloseClose(a, b) = CloseClose(AbstractFloat(a), AbstractFloat(b))
+CloseClose(a::AbstractFloat, b::AbstractFloat) = CloseClose(promote(a, b)...)
+
+OpenOpen(a, b) = OpenOpen(AbstractFloat(a), AbstractFloat(b))
+OpenOpen(a::AbstractFloat, b::AbstractFloat) = OpenOpen(promote(a, b)...)
 
 ## Bernoulli
 
