@@ -8,6 +8,34 @@ sampler(RNG::Type{<:AbstractRNG}, X::Sampler, n::Repetition=Val(Inf))           
 
 sampler(rng::AbstractRNG, X, n::Repetition=Val(Inf)) = sampler(typeof(rng), X, n)
 
+
+## defaults
+
+### 0-arg
+
+make() = make(Float64)
+
+### type
+
+find_type(::Type{X}) where{X} = X
+
+Sampler(RNG::Type{<:AbstractRNG}, ::Make0{X}, n::Repetition) where {X} =
+    Sampler(RNG, X, n)
+
+### object
+
+# like Make1
+struct MakeWrap{T,X} <: Make{T}
+    x::X
+end
+
+# make(::Type) is intercepted in distribution.jl
+make(x) = MakeWrap{gentype(x),typeof(x)}(x)
+
+Sampler(RNG::Type{<:AbstractRNG}, x::MakeWrap, n::Repetition) =
+    Sampler(RNG, x.x, n)
+
+
 ## Uniform
 
 Sampler(RNG::Type{<:AbstractRNG}, d::Union{UniformWrap,UniformType}, n::Repetition) =

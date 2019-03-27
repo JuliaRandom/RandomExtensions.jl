@@ -453,3 +453,10 @@ end
     end
     @test rand(make(0.3, spString, 9)) isa SparseVector{String}
 end
+
+@testset "rand(make(default))" begin
+    @test rand(make()) isa Float64
+    @test rand(make(1:3)) isa Int
+    @test rand(make(1:3)) ∈ 1:3
+    @test rand(make(Float64)) isa Float64
+end
