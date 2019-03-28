@@ -457,11 +457,16 @@ make(::Type{X}, p::AbstractFloat, dims::Dims{1}) where {X} = make(SparseVector, 
 make(X,         p::AbstractFloat, dims::Dims{2})           = make(SparseMatrixCSC, X, p, dims)
 make(::Type{X}, p::AbstractFloat, dims::Dims{2}) where {X} = make(SparseMatrixCSC, X, p, dims)
 
-make(X,         p::AbstractFloat, dims::Integer...)           = make(X,                               p, Dims(dims))
-make(::Type{X}, p::AbstractFloat, dims::Integer...) where {X} = make(X,                               p, Dims(dims))
-make(           p::AbstractFloat, dims::Dims)                 = make(default_sampling(AbstractArray), p, dims)
-make(           p::AbstractFloat, dims::Integer...)           = make(default_sampling(AbstractArray), p, Dims(dims))
+make(X,         p::AbstractFloat, d1::Integer)                        = make(X,                               p, Dims(d1))
+make(X,         p::AbstractFloat, d1::Integer, d2::Integer)           = make(X,                               p, Dims((d1, d2)))
+make(::Type{X}, p::AbstractFloat, d1::Integer) where {X}              = make(X,                               p, Dims(d1))
+make(::Type{X}, p::AbstractFloat, d1::Integer, d2::Integer) where {X} = make(X,                               p, Dims((d1, d2)))
+make(           p::AbstractFloat, dims::Dims)                         = make(default_sampling(AbstractArray), p, dims)
+make(           p::AbstractFloat, d1::Integer)                        = make(default_sampling(AbstractArray), p, Dims(d1))
+make(           p::AbstractFloat, d1::Integer, d2::Integer)           = make(default_sampling(AbstractArray), p, Dims((d1, d2)))
 
+# disambiguate (away from make(String, chars, n::Integer))
+make(::Type{String}, p::AbstractFloat, d1::Integer) = make(String, p, Dims(d1))
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make3{A}, n::Repetition) where {A<:AbstractSparseArray} =
     SamplerTag{A}((sp = sampler(RNG, c.x, n),

@@ -477,6 +477,7 @@ end
         @test length(s) == 6
     end
     @test rand(make(spString, 0.3, 9)) isa SparseVector{String}
+    @test rand(make(String, 0.9, 2)) isa SparseVector{String} # can be ambiguous with make(String, chars, n)
 end
 
 @testset "rand(make(default))" begin
