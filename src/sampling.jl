@@ -385,11 +385,11 @@ rand(rng::AbstractRNG, sp::SamplerTag{Cont{S}}) where {S<:Base.ImmutableDict} =
 default_sampling(::Type{<:AbstractArray{T}}) where {T} = Uniform(T)
 default_sampling(::Type{<:AbstractArray})              = Uniform(Float64)
 
-make(A::Type{<:AbstractArray}, X,         dims::Integer...)           = make(A, X, Dims(dims))
-make(A::Type{<:AbstractArray}, ::Type{X}, dims::Integer...) where {X} = make(A, X, Dims(dims))
+make(A::Type{<:AbstractArray}, X,         d1::Integer, dims::Integer...)           = make(A, X, Dims((d1, dims...)))
+make(A::Type{<:AbstractArray}, ::Type{X}, d1::Integer, dims::Integer...) where {X} = make(A, X, Dims((d1, dims...)))
 
-make(A::Type{<:AbstractArray}, dims::Dims)       = make(A, default_sampling(A), dims)
-make(A::Type{<:AbstractArray}, dims::Integer...) = make(A, default_sampling(A), Dims(dims))
+make(A::Type{<:AbstractArray}, dims::Dims)                    = make(A, default_sampling(A), dims)
+make(A::Type{<:AbstractArray}, d1::Integer, dims::Integer...) = make(A, default_sampling(A), Dims((d1, dims...)))
 
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make2{A}, n::Repetition) where {A<:AbstractArray} =
@@ -411,9 +411,9 @@ find_type(A::Type{Array},              X, ::Dims{N}) where {N}    = Array{val_ge
 # special shortcut
 
 make(X,         dims::Dims)                              = make(Array, X,                       dims)
-make(X,         d1::Integer, dims::Integer...)           = make(Array, X,                       Dims(tuple(d1, dims...)))
+make(X,         d1::Integer, dims::Integer...)           = make(Array, X,                       Dims((d1, dims...)))
 make(::Type{X}, dims::Dims)           where {X}          = make(Array, X,                       dims)
-make(::Type{X}, d1::Integer, dims::Integer...) where {X} = make(Array, X,                       Dims(tuple(d1, dims...)))
+make(::Type{X}, d1::Integer, dims::Integer...) where {X} = make(Array, X,                       Dims((d1, dims...)))
 make(           dims::Integer...)                        = make(Array, default_sampling(Array), Dims(dims))
 
 # omitted: make(dims::Dims)
@@ -427,7 +427,7 @@ find_type(::Type{BitArray{N}}, _, ::Dims{N}) where {N} = BitArray{N}
 find_type(::Type{BitArray},    _, ::Dims{N}) where {N} = BitArray{N}
 
 
-### sparse vectors & matrices
+#### sparse vectors & matrices
 
 find_type(::Type{SparseVector},    X, p::AbstractFloat, dims::Dims{1}) = SparseVector{   val_gentype(X), Int}
 find_type(::Type{SparseMatrixCSC}, X, p::AbstractFloat, dims::Dims{2}) = SparseMatrixCSC{val_gentype(X), Int}
@@ -468,6 +468,27 @@ rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:SparseVector} =
 
 rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:SparseMatrixCSC} =
     sprand(rng, sp.data.dims[1], sp.data.dims[2], sp.data.p, (r, n)->rand(r, sp.data.sp, n), gentype(sp.data.sp))
+
+
+#### StaticArrays
+
+function random_staticarrays()
+    @eval using StaticArrays: tuple_length, tuple_prod, SArray, MArray
+    for Arr = (:SArray, :MArray)
+        @eval begin
+            find_type(::Type{<:$Arr{S}}  , X) where {S<:Tuple}   = $Arr{S,val_gentype(X),tuple_length(S),tuple_prod(S)}
+            find_type(::Type{<:$Arr{S,T}}, _) where {S<:Tuple,T} = $Arr{S,T,tuple_length(S),tuple_prod(S)}
+
+            Sampler(RNG::Type{<:AbstractRNG}, c::Make1{A}, n::Repetition) where {A<:$Arr} =
+                SamplerTag{Cont{A}}(Sampler(RNG, c.x, n))
+
+            rand(rng::AbstractRNG, sp::SamplerTag{Cont{$Arr{S,T,N,L}}}) where {S,T,N,L} =
+                $Arr{S,T,N,L}(rand(rng, make(NTuple{L}, sp.data)))
+
+            @make_container(T::Type{<:$Arr})
+        end
+    end
+end
 
 
 ### String as a scalar
