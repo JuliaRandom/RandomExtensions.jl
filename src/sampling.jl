@@ -447,8 +447,6 @@ make(::Type{X}, p::AbstractFloat, dims::Integer...) where {X} = make(X,         
 make(           p::AbstractFloat, dims::Dims)                 = make(default_sampling(AbstractArray), p, dims)
 make(           p::AbstractFloat, dims::Integer...)           = make(default_sampling(AbstractArray), p, Dims(dims))
 
-# to make @make_array_container work:
-make(p::AbstractFloat, X, dims::Dims) = make(X, p, dims)
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make3{A}, n::Repetition) where {A<:AbstractSparseArray} =
     SamplerTag{A}((sp = sampler(RNG, c.x, n),

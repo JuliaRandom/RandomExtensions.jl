@@ -76,28 +76,30 @@ end
 
 macro make_array_container(Cont)
     definitions =
-        [ :(rand(rng::AbstractRNG,            $Cont, dims::Dims) =                 rand(rng,        make(t, dims))),
-          :(rand(                             $Cont, dims::Dims) =                 rand(GLOBAL_RNG, make(t, dims))),
-          :(rand(rng::AbstractRNG,            $Cont, dims::Integer...) =           rand(rng,        make(t, Dims(dims)))),
-          :(rand(                             $Cont, dims::Integer...) =           rand(GLOBAL_RNG, make(t, Dims(dims)))),
+        [ :(rand(rng::AbstractRNG,            $Cont, dims::Dims) =                 rand(rng,        _make_cont(t, dims))),
+          :(rand(                             $Cont, dims::Dims) =                 rand(GLOBAL_RNG, _make_cont(t, dims))),
+          :(rand(rng::AbstractRNG,            $Cont, dims::Integer...) =           rand(rng,        _make_cont(t, Dims(dims)))),
+          :(rand(                             $Cont, dims::Integer...) =           rand(GLOBAL_RNG, _make_cont(t, Dims(dims)))),
 
-          :(rand(rng::AbstractRNG, X,         $Cont, dims::Dims) =                 rand(rng,        make(t, X, dims))),
-          :(rand(                  X,         $Cont, dims::Dims) =                 rand(GLOBAL_RNG, make(t, X, dims))),
-          :(rand(rng::AbstractRNG, X,         $Cont, dims::Integer...) =           rand(rng,        make(t, X, Dims(dims)))),
-          :(rand(                  X,         $Cont, dims::Integer...) =           rand(GLOBAL_RNG, make(t, X, Dims(dims)))),
+          :(rand(rng::AbstractRNG, X,         $Cont, dims::Dims) =                 rand(rng,        _make_cont(t, X, dims))),
+          :(rand(                  X,         $Cont, dims::Dims) =                 rand(GLOBAL_RNG, _make_cont(t, X, dims))),
+          :(rand(rng::AbstractRNG, X,         $Cont, dims::Integer...) =           rand(rng,        _make_cont(t, X, Dims(dims)))),
+          :(rand(                  X,         $Cont, dims::Integer...) =           rand(GLOBAL_RNG, _make_cont(t, X, Dims(dims)))),
 
-          :(rand(rng::AbstractRNG, ::Type{X}, $Cont, dims::Dims)       where {X} = rand(rng,        make(t, X, dims))),
-          :(rand(                  ::Type{X}, $Cont, dims::Dims)       where {X} = rand(GLOBAL_RNG, make(t, X, dims))),
-          :(rand(rng::AbstractRNG, ::Type{X}, $Cont, dims::Integer...) where {X} = rand(rng,        make(t, X, Dims(dims)))),
-          :(rand(                  ::Type{X}, $Cont, dims::Integer...) where {X} = rand(GLOBAL_RNG, make(t, X, Dims(dims)))),
+          :(rand(rng::AbstractRNG, ::Type{X}, $Cont, dims::Dims)       where {X} = rand(rng,        _make_cont(t, X, dims))),
+          :(rand(                  ::Type{X}, $Cont, dims::Dims)       where {X} = rand(GLOBAL_RNG, _make_cont(t, X, dims))),
+          :(rand(rng::AbstractRNG, ::Type{X}, $Cont, dims::Integer...) where {X} = rand(rng,        _make_cont(t, X, Dims(dims)))),
+          :(rand(                  ::Type{X}, $Cont, dims::Integer...) where {X} = rand(GLOBAL_RNG, _make_cont(t, X, Dims(dims)))),
         ]
     esc(Expr(:block, definitions...))
 end
 
+_make_cont(args...) = make(args...)
+
 @make_array_container(t::Type{<:Array})
 @make_array_container(t::Type{<:BitArray})
 @make_array_container(t::AbstractFloat)
-
+_make_cont(t::AbstractFloat, x, dims::Dims) = make(x, t, dims)
 
 ## sets/dicts
 
