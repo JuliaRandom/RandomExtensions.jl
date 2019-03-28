@@ -391,6 +391,11 @@ make(A::Type{<:AbstractArray}, ::Type{X}, d1::Integer, dims::Integer...) where {
 make(A::Type{<:AbstractArray}, dims::Dims)                    = make(A, default_sampling(A), dims)
 make(A::Type{<:AbstractArray}, d1::Integer, dims::Integer...) = make(A, default_sampling(A), Dims((d1, dims...)))
 
+if VERSION < v"1.1.0"
+     # to resolve ambiguity
+    make(A::Type{<:AbstractArray}, X, d1::Integer)              = make(A, X, Dims((d1,)))
+    make(A::Type{<:AbstractArray}, X, d1::Integer, d2::Integer) = make(A, X, Dims((d1, d2)))
+end
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make2{A}, n::Repetition) where {A<:AbstractArray} =
     SamplerTag{A}((sampler(RNG, c.x, n), c.y))
