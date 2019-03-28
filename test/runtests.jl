@@ -478,6 +478,7 @@ end
     end
     @test rand(make(spString, 0.3, 9)) isa SparseVector{String}
     @test rand(make(String, 0.9, 2)) isa SparseVector{String} # can be ambiguous with make(String, chars, n)
+    @test rand(make(make(1:9, 0.3, 2, 3), .1, 4)) isa SparseVector{SparseMatrixCSC{Int64,Int64},Int64}
 end
 
 @testset "rand(make(default))" begin

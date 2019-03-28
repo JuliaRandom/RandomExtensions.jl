@@ -469,14 +469,14 @@ make(           p::AbstractFloat, d1::Integer, d2::Integer)           = make(def
 make(::Type{String}, p::AbstractFloat, d1::Integer) = make(String, p, Dims(d1))
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make3{A}, n::Repetition) where {A<:AbstractSparseArray} =
-    SamplerTag{A}((sp = sampler(RNG, c.x, n),
-                   p = c.y,
-                   dims = c.z))
+    SamplerTag{Cont{A}}((sp = sampler(RNG, c.x, n),
+                         p = c.y,
+                         dims = c.z))
 
-rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:SparseVector} =
+rand(rng::AbstractRNG, sp::SamplerTag{Cont{A}}) where {A<:SparseVector} =
     sprand(rng, sp.data.dims[1], sp.data.p, (r, n)->rand(r, sp.data.sp, n))
 
-rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:SparseMatrixCSC} =
+rand(rng::AbstractRNG, sp::SamplerTag{Cont{A}}) where {A<:SparseMatrixCSC} =
     sprand(rng, sp.data.dims[1], sp.data.dims[2], sp.data.p, (r, n)->rand(r, sp.data.sp, n), gentype(sp.data.sp))
 
 
