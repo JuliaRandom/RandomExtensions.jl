@@ -328,12 +328,13 @@ make(T::Type{<:SetDict}, ::Type{X}, n::Integer) where {X} = Make2{find_type(T, X
 make(T::Type{<:SetDict},            n::Integer)           = make(T, default_sampling(T), Int(n))
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make2{T}, n::Repetition) where {T<:SetDict} =
-    SamplerTag{Cont{T}}((sampler(RNG, c.x, n), c.y))
+    SamplerTag{Cont{T}}((sp = sampler(RNG, c.x, n),
+                         len = c.y))
 
 function rand(rng::AbstractRNG, sp::SamplerTag{Cont{S}}) where {S<:SetDict}
     # assuming S() creates an empty set/dict
     s = sizehint!(S(), sp.data[2])
-    _rand!(rng, s, sp.data[2], sp.data[1])
+    _rand!(rng, s, sp.data.len, sp.data.sp)
 end
 
 ### sets
@@ -355,19 +356,28 @@ find_type(::Type{BitSet}, _, _) = BitSet
 
 ### dicts
 
-# again same inference bug
-# TODO: extend to AbstractDict ? (needs to work-around the inderence bug)
-default_sampling(::Type{Dict{K,V}}) where {K,V} = Uniform(Pair{K,V})
-default_sampling(D::Type{<:Dict})               = throw(ArgumentError("under-specified scalar type for $D"))
-
 find_type(D::Type{<:AbstractDict{K,V}}, _,      ::Integer) where {K,V} = D
 find_type(D::Type{<:AbstractDict{K,V}}, ::Type, ::Integer) where {K,V} = D
 
-#### Dict
+#### Dict/ImmutableDict
 
-find_type(::Type{Dict{K}},           X, ::Integer) where {K} = Dict{K,fieldtype(val_gentype(X), 2)}
-find_type(::Type{Dict{K,V} where K}, X, ::Integer) where {V} = Dict{fieldtype(val_gentype(X), 1),V}
-find_type(::Type{Dict},              X, ::Integer)           = Dict{fieldtype(val_gentype(X), 1),fieldtype(val_gentype(X), 2)}
+for D in (Dict, Base.ImmutableDict)
+    @eval begin
+        # again same inference bug
+        # TODO: extend to AbstractDict ? (needs to work-around the inderence bug)
+        default_sampling(::Type{$D{K,V}}) where {K,V} = Uniform(Pair{K,V})
+        default_sampling(D::Type{<:$D})               = throw(ArgumentError("under-specified scalar type for $D"))
+
+        find_type(::Type{$D{K}},           X, ::Integer) where {K} = $D{K,fieldtype(val_gentype(X), 2)}
+        find_type(::Type{$D{K,V} where K}, X, ::Integer) where {V} = $D{fieldtype(val_gentype(X), 1),V}
+        find_type(::Type{$D},              X, ::Integer)           = $D{fieldtype(val_gentype(X), 1),fieldtype(val_gentype(X), 2)}
+    end
+end
+
+rand(rng::AbstractRNG, sp::SamplerTag{Cont{S}}) where {S<:Base.ImmutableDict} =
+    foldl((d, _) -> Base.ImmutableDict(d, rand(rng, sp.data.sp)),
+          1:sp.data.len,
+          init=S())
 
 
 ### AbstractArray
