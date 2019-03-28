@@ -1,6 +1,10 @@
 # generation of some containers filled with random values
 
 
+if VERSION < v"1.2.0-DEV.257"
+    Base.:(!=)(x) = Base.Fix2(!=, x)
+end
+
 function make_argument(param)
     if param isa Symbol
         param
