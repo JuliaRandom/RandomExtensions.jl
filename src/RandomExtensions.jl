@@ -63,18 +63,18 @@ Pick a random element or collection of random elements from the set of values sp
 
 `S` usually defaults to [`Float64`](@ref).
 
-If `C...` is not specified, `rand` produces a scalar. Otherwise, `C...` can be:
+If `C...` is not specified, `rand` produces a scalar. Otherwise, `C` can be:
 
 * a set of integers, or a tuple of `Int`, which specify the dimensions of an `Array` to generate;
-* `(Array, dims...)`: same as above, but with `Array` specified explicitely
-* `(p::AbstractFloat, m::Integer, [n::Integer])...`, which produces a sparse array of dimensions `(m, n)`,
-  in which the probability of any element being nonzero is independently given by `p`
-* `(String, [n=8])...`, which produces a random `String` of length `n`; the generated string consists of `Char`
-  taken from a predefined set like `randstring`, and can be specified with the `S` parameter.
-* `(Dict, n)...`, which produces a `Dict` of length `n`; `S` must then specify the type of its elements,
-  e.g. `make(Pair, Int, 2:3)`;
-* `(Set, n)...`, which produces a `Set` of length `n`;
-* `(BitArray, dims...)...`, which produces a `BitArray` with the specified dimensions.
+* `(Array, dims...)`: same as above, but with `Array` specified explicitely;
+* `(p::AbstractFloat, m::Integer, [n::Integer])`, which produces a sparse array of dimensions `(m, n)`,
+  in which the probability of any element being nonzero is independently given by `p`;
+* `(String, [n=8])`, which produces a random `String` of length `n`; the generated string consists of `Char`
+  taken from a predefined set like `randstring`, and can be specified with the `S` parameter;
+* `(Dict, n)`, which produces a `Dict` of length `n`; if `Dict` is given without type parameters,
+  then `S` must be specified;
+* `(Set, n)` or `(BitSet, n)`, which produces a set of length `n`;
+* `(BitArray, dims...)`, which produces a `BitArray` with the specified dimensions.
 
 For `Array`, `Dict` and `Set`, a less abstract type can be specified, e.g. `Set{Float64}`, to force
 the type of the result regardless of the `S` parameter. In particular, in the absence of `S`, the
