@@ -137,8 +137,12 @@ struct Normalμσ{T} <: Normal{T}
     σ::T
 end
 
-Normal(::Type{T}=Float64) where {T} = Normal01{T}()
-Normal(μ::T, σ::T) where {T} = Normalμσ(μ, σ)
+const NormalTypes = Union{AbstractFloat,Complex{<:AbstractFloat}}
+
+Normal(::Type{T}=Float64) where {T<:NormalTypes} = Normal01{T}()
+Normal(μ::T, σ::T) where {T<:NormalTypes} = Normalμσ(μ, σ)
+Normal(μ::T, σ::T) where {T<:Real} = Normalμσ(AbstractFloat(μ), AbstractFloat(σ))
+Normal(μ, σ) = Normal(promote(μ, σ)...)
 
 abstract type Exponential{T} <: Distribution{T} end
 
@@ -150,6 +154,7 @@ end
 
 Exponential(::Type{T}=Float64) where {T<:AbstractFloat} = Exponential1{T}()
 Exponential(θ::T) where {T<:AbstractFloat} = Exponentialθ(θ)
+Exponential(θ::Real) = Exponentialθ(AbstractFloat(θ))
 
 
 ## floats
