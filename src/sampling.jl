@@ -195,35 +195,12 @@ Sampler(RNG::Type{<:AbstractRNG}, ::Type{Complex{T}}, n::Repetition) where {T<:R
 
 ### sampler for tuples
 
-@generated function Sampler(RNG::Type{<:AbstractRNG}, ::Type{T}, n::Repetition) where {T<:Tuple}
-    d = Dict{DataType,Int}()
-    sps = []
-    for t in T.parameters
-        i = get(d, t, nothing)
-        if i === nothing
-            push!(sps, :(Sampler(RNG, $t, n)))
-            d[t] = length(sps)
-        else
-            push!(sps, Val(i))
-        end
-    end
-    :(SamplerTag{Cont{T}}(tuple($(sps...))))
-end
+#### "simple scalar" (non-make) version
 
-@generated function rand(rng::AbstractRNG, sp::SamplerTag{Cont{T},S}) where {T<:Tuple,S<:Tuple}
-    @assert fieldcount(T) == fieldcount(S)
-    rands = []
-    for i = 1:fieldcount(T)
-        j = fieldtype(S, i) <: Val ?
-              fieldtype(S, i).parameters[1] :
-              i
-        push!(rands, :(convert($(fieldtype(T, i)),
-                               rand(rng, sp.data[$j]))))
-    end
-    :(tuple($(rands...)))
-end
+Sampler(RNG::Type{<:AbstractRNG}, ::Type{T}, n::Repetition) where {T<:Tuple} =
+    Sampler(RNG, make(T), n)
 
-#### with make
+#### make
 
 # implement make(Tuple, S1, S2...), e.g. for rand(make(Tuple, Int, 1:3)),
 # and       make(NTuple{N}, S)
@@ -293,7 +270,7 @@ make(::Type{T}, ::Type{X}, Y,         ::Type{Z}) where {T<:Tuple,X,Z}   = _make(
 make(::Type{T}, X,         ::Type{Y}, ::Type{Z}) where {T<:Tuple,Y,Z}   = _make(T, X, Y, Z)
 make(::Type{T}, ::Type{X}, ::Type{Y}, ::Type{Z}) where {T<:Tuple,X,Y,Z} = _make(T, X, Y, Z)
 
-##### Sampler for general tuples (rand is already implemented above, like for rand(Tuple{...})
+#### Sampler for general tuples
 
 @generated function Sampler(RNG::Type{<:AbstractRNG}, c::Make1{T,X}, n::Repetition) where {T<:Tuple,X<:Tuple}
     @assert fieldcount(T) == fieldcount(X)
@@ -301,10 +278,35 @@ make(::Type{T}, ::Type{X}, ::Type{Y}, ::Type{Z}) where {T<:Tuple,X,Y,Z} = _make(
     :(SamplerTag{Cont{T}}(tuple($(sps...))))
 end
 
-Sampler(RNG::Type{<:AbstractRNG}, ::Make0{T}, n::Repetition) where {T<:Tuple} =
-    Sampler(RNG, T, n)
+@generated function Sampler(RNG::Type{<:AbstractRNG}, ::Make0{T}, n::Repetition) where {T<:Tuple}
+    d = Dict{DataType,Int}()
+    sps = []
+    for t in T.parameters
+        i = get(d, t, nothing)
+        if i === nothing
+            push!(sps, :(Sampler(RNG, $t, n)))
+            d[t] = length(sps)
+        else
+            push!(sps, Val(i))
+        end
+    end
+    :(SamplerTag{Cont{T}}(tuple($(sps...))))
+end
 
-##### for "NTuple-like"
+@generated function rand(rng::AbstractRNG, sp::SamplerTag{Cont{T},S}) where {T<:Tuple,S<:Tuple}
+    @assert fieldcount(T) == fieldcount(S)
+    rands = []
+    for i = 1:fieldcount(T)
+        j = fieldtype(S, i) <: Val ?
+              fieldtype(S, i).parameters[1] :
+              i
+        push!(rands, :(convert($(fieldtype(T, i)),
+                               rand(rng, sp.data[$j]))))
+    end
+    :(tuple($(rands...)))
+end
+
+#### for "NTuple-like"
 
 # should catch Tuple{Integer,Integer} which is not NTuple, or even Tuple{Int,UInt}, when only one sampler was passed
 

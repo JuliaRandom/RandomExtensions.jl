@@ -1,5 +1,5 @@
 using RandomExtensions, Random, SparseArrays
-using Random: Sampler
+using Random: Sampler, gentype
 using Test
 
 @testset "Distributions" begin
@@ -309,6 +309,15 @@ end
         @test rand(T) isa Tuple{tlist...}
     end
     @test rand(Tuple{}) === ()
+    sp = Sampler(MersenneTwister, Tuple)
+    @test gentype(sp) == Tuple{}
+    @test rand(sp) == ()
+    sp = Sampler(MersenneTwister, NTuple{3})
+    @test gentype(sp) == NTuple{3,Float64}
+    @test rand(sp) isa NTuple{3,Float64}
+    sp = Sampler(MersenneTwister, Tuple{Int8,UInt8})
+    @test gentype(sp) == Tuple{Int8,UInt8}
+    @test rand(sp) isa Tuple{Int8,UInt8}
 end
 
 @testset "rand(make(Tuple, ...))" begin
