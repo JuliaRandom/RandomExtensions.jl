@@ -381,6 +381,43 @@ end
     @test r isa NTuple{3,UInt8}
 end
 
+@testset "NamedTuple" begin
+    for t = (rand(make(NamedTuple)), rand(NamedTuple))
+        @test t == NamedTuple()
+    end
+
+    for t = (rand(make(NamedTuple{(:a,)})), rand(NamedTuple{(:a,)}))
+        @test t isa NamedTuple{(:a,), Tuple{Float64}}
+    end
+    for t = (rand(make(NamedTuple{(:a,),Tuple{Int}})),
+             rand(NamedTuple{(:a,),Tuple{Int}}))
+        @test t isa NamedTuple{(:a,), Tuple{Int}}
+    end
+
+    t = rand(make(NamedTuple{(:a,)}, 1:3))
+    @test t isa NamedTuple{(:a,), Tuple{Int}}
+    @test t.a ∈ 1:3
+    t = rand(make(NamedTuple{(:a,),Tuple{Float64}}, 1:3))
+    @test t isa NamedTuple{(:a,), Tuple{Float64}}
+    @test t.a ∈ 1:3
+
+
+    for t = (rand(make(NamedTuple{(:a, :b)})),
+             rand(NamedTuple{(:a, :b)}))
+        @test t isa NamedTuple{(:a, :b), Tuple{Float64,Float64}}
+    end
+    for t = (rand(make(NamedTuple{(:a, :b),Tuple{Int,UInt8}})),
+             rand(NamedTuple{(:a, :b),Tuple{Int,UInt8}}))
+        @test t isa NamedTuple{(:a, :b), Tuple{Int,UInt8}}
+    end
+    t = rand(make(NamedTuple{(:a, :b)}, 1:3))
+    @test t isa NamedTuple{(:a, :b), Tuple{Int,Int}}
+    @test t.a ∈ 1:3 && t.b ∈ 1:3
+    t = rand(make(NamedTuple{(:a, :b),Tuple{Float64,UInt8}}, 1:3))
+    @test t isa NamedTuple{(:a, :b), Tuple{Float64,UInt8}}
+    @test t.a ∈ 1:3 && t.b ∈ 1:3
+end
+
 @testset "rand(make(String, ...))" begin
     b = UInt8['0':'9';'A':'Z';'a':'z']
 

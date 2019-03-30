@@ -8,7 +8,7 @@ export rand!, AbstractRNG, MersenneTwister, RandomDevice
 import Random: Sampler, rand, rand!, gentype
 
 using Random
-using Random: GLOBAL_RNG, SamplerTrivial, SamplerSimple, SamplerTag, Repetition
+using Random: GLOBAL_RNG, SamplerTrivial, SamplerSimple, SamplerTag, SamplerType, Repetition
 
 using SparseArrays: sprand, sprandn, AbstractSparseArray, SparseVector, SparseMatrixCSC
 

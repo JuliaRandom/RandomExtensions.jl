@@ -197,7 +197,7 @@ Sampler(RNG::Type{<:AbstractRNG}, ::Type{Complex{T}}, n::Repetition) where {T<:R
 
 #### "simple scalar" (non-make) version
 
-Sampler(RNG::Type{<:AbstractRNG}, ::Type{T}, n::Repetition) where {T<:Tuple} =
+Sampler(RNG::Type{<:AbstractRNG}, ::Type{T}, n::Repetition) where {T<:Union{Tuple,NamedTuple}} =
     Sampler(RNG, make(T), n)
 
 #### make
@@ -205,24 +205,35 @@ Sampler(RNG::Type{<:AbstractRNG}, ::Type{T}, n::Repetition) where {T<:Tuple} =
 # implement make(Tuple, S1, S2...), e.g. for rand(make(Tuple, Int, 1:3)),
 # and       make(NTuple{N}, S)
 
-@generated function _make(::Type{T}, args...) where T <: Tuple
-    if isempty(args)
-        TT = T === Tuple ? Tuple{} :
-            T === NTuple ? Tuple{} :
-            T isa UnionAll && Type{T} <: Type{NTuple{N}} where N ? T{default_gentype(Tuple)} :
-            T
-        return :(Make0{$TT}())
-    end
-    isNT = length(args) == 1 && T !== Tuple && (
+_find_type(::Type{T}) where {T<:Tuple} =
+    T === Tuple ?
+        Tuple{} :
+    T === NTuple ?
+        Tuple{} :
+    T isa UnionAll && Type{T} <: Type{NTuple{N}} where N ?
+        T{default_gentype(Tuple)} :
+        T
+
+function _find_type(::Type{T}, args...) where T <: Tuple
+    types = [t <: Type ? t.parameters[1] : gentype(t) for t in args]
+    TT = T === Tuple ?
+        Tuple{types...} :
+    _isNTuple(T, args...) ?
+        (T isa UnionAll ? Tuple{fill(types[1], fieldcount(T))...} : T ) :
+        T
+    TT
+end
+
+_isNTuple(::Type{T}, args...) where {T<:Tuple} =
+    length(args) == 1 && T !== Tuple && (
         T <: NTuple || !isa(T, UnionAll)) # !isa(Tuple, UnionAll) !!
 
-    types = [t <: Type ? t.parameters[1] : gentype(t) for t in args]
-    TT = T === Tuple ? Tuple{types...} :
-        isNT ? (T isa UnionAll ? Tuple{fill(types[1], fieldcount(T))...} : T ) :
-        T
+@generated function _make(::Type{T}, args...) where T <: Tuple
+    isempty(args) && return :(Make0{$(_find_type(T))}())
+    TT = _find_type(T, args...)
     samples = [t <: Type ? :(UniformType{$(t.parameters[1])}()) :
                :(args[$i]) for (i, t) in enumerate(args)]
-    if isNT
+    if _isNTuple(T, args...)
         :(Make1{$TT}($(samples[1])))
     else
         quote
@@ -253,22 +264,26 @@ make(::Type{NTuple{N,T} where N}, ::Type{X}, n::Integer) where {T,X} = make(NTup
 
 # disambiguate
 
-make(::Type{T}, X)         where {T<:Tuple}   = _make(T, X)
-make(::Type{T}, ::Type{X}) where {T<:Tuple,X} = _make(T, X)
+for Tupl = (Tuple, NamedTuple)
+    @eval begin
+        make(::Type{T}, X)         where {T<:$Tupl}   = _make(T, X)
+        make(::Type{T}, ::Type{X}) where {T<:$Tupl,X} = _make(T, X)
 
-make(::Type{T}, X,         Y)         where {T<:Tuple}     = _make(T, X, Y)
-make(::Type{T}, ::Type{X}, Y)         where {T<:Tuple,X}   = _make(T, X, Y)
-make(::Type{T}, X,         ::Type{Y}) where {T<:Tuple,Y}   = _make(T, X, Y)
-make(::Type{T}, ::Type{X}, ::Type{Y}) where {T<:Tuple,X,Y} = _make(T, X, Y)
+        make(::Type{T}, X,         Y)         where {T<:$Tupl}     = _make(T, X, Y)
+        make(::Type{T}, ::Type{X}, Y)         where {T<:$Tupl,X}   = _make(T, X, Y)
+        make(::Type{T}, X,         ::Type{Y}) where {T<:$Tupl,Y}   = _make(T, X, Y)
+        make(::Type{T}, ::Type{X}, ::Type{Y}) where {T<:$Tupl,X,Y} = _make(T, X, Y)
 
-make(::Type{T}, X,         Y,         Z)         where {T<:Tuple}       = _make(T, X, Y, Z)
-make(::Type{T}, ::Type{X}, Y,         Z)         where {T<:Tuple,X}     = _make(T, X, Y, Z)
-make(::Type{T}, X,         ::Type{Y}, Z)         where {T<:Tuple,Y}     = _make(T, X, Y, Z)
-make(::Type{T}, ::Type{X}, ::Type{Y}, Z)         where {T<:Tuple,X,Y}   = _make(T, X, Y, Z)
-make(::Type{T}, X,         Y,         ::Type{Z}) where {T<:Tuple,Z}     = _make(T, X, Y, Z)
-make(::Type{T}, ::Type{X}, Y,         ::Type{Z}) where {T<:Tuple,X,Z}   = _make(T, X, Y, Z)
-make(::Type{T}, X,         ::Type{Y}, ::Type{Z}) where {T<:Tuple,Y,Z}   = _make(T, X, Y, Z)
-make(::Type{T}, ::Type{X}, ::Type{Y}, ::Type{Z}) where {T<:Tuple,X,Y,Z} = _make(T, X, Y, Z)
+        make(::Type{T}, X,         Y,         Z)         where {T<:$Tupl}       = _make(T, X, Y, Z)
+        make(::Type{T}, ::Type{X}, Y,         Z)         where {T<:$Tupl,X}     = _make(T, X, Y, Z)
+        make(::Type{T}, X,         ::Type{Y}, Z)         where {T<:$Tupl,Y}     = _make(T, X, Y, Z)
+        make(::Type{T}, ::Type{X}, ::Type{Y}, Z)         where {T<:$Tupl,X,Y}   = _make(T, X, Y, Z)
+        make(::Type{T}, X,         Y,         ::Type{Z}) where {T<:$Tupl,Z}     = _make(T, X, Y, Z)
+        make(::Type{T}, ::Type{X}, Y,         ::Type{Z}) where {T<:$Tupl,X,Z}   = _make(T, X, Y, Z)
+        make(::Type{T}, X,         ::Type{Y}, ::Type{Z}) where {T<:$Tupl,Y,Z}   = _make(T, X, Y, Z)
+        make(::Type{T}, ::Type{X}, ::Type{Y}, ::Type{Z}) where {T<:$Tupl,X,Y,Z} = _make(T, X, Y, Z)
+    end
+end
 
 #### Sampler for general tuples
 
@@ -317,6 +332,38 @@ Sampler(RNG::Type{<:AbstractRNG}, c::Make1{T,X}, n::Repetition) where {T<:Tuple,
     rands = [:(convert($(T.parameters[i]), rand(rng, sp.data))) for i in 1:fieldcount(T)]
     :(tuple($(rands...)))
 end
+
+### named tuples
+
+make(T::Type{<:NamedTuple}, args...) = _make(T, args...)
+
+_make(::Type{NamedTuple{}}) = Make0{NamedTuple{}}()
+
+@generated function _make(::Type{NamedTuple{K}}, X...) where {K}
+    if length(X) <= 1
+        NT = NamedTuple{K,_find_type(NTuple{length(K)}, X...)}
+        :(Make1{$NT}(make(NTuple{length(K)}, X...)))
+    else
+        NT = NamedTuple{K,_find_type(Tuple, X...)}
+        :(Make1{$NT}(make(Tuple, X...)))
+    end
+end
+
+function _make(::Type{NamedTuple{K,V}}, X...) where {K,V}
+    Make1{NamedTuple{K,V}}(make(V, X...))
+end
+
+# necessary to avoid circular defintions
+Sampler(RNG::Type{<:AbstractRNG}, m::Make0{NamedTuple}, n::Repetition) =
+    SamplerType{NamedTuple}()
+
+Sampler(RNG::Type{<:AbstractRNG}, m::Make1{T}, n::Repetition) where T <: NamedTuple =
+    SamplerTag{Cont{T}}(Sampler(RNG, m.x , n))
+
+rand(rng::AbstractRNG, sp::SamplerType{NamedTuple{}}) = NamedTuple()
+
+rand(rng::AbstractRNG, sp::SamplerTag{Cont{T}}) where T <: NamedTuple =
+    T(rand(rng, sp.data))
 
 
 ## collections
