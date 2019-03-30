@@ -180,8 +180,11 @@ julia> julia> rand(Bernoulli(0.2), BitVector, 10) # using the Bernoulli distribu
 julia> rand(1:3, NTuple{3}) # NTuple{3} considered as a container, equivalent to rand(make(NTuple{3}, 1:3))
 (3, 3, 1)
 
-julia> rand(1:3, Tuple{Int,UInt8, BigFloat}) # works also with more general tuple types
+julia> rand(1:3, Tuple{Int,UInt8, BigFloat}) # works also with more general tuple types ...
 (3, 0x02, 2.0)
+
+julia> rand(1:3, NamedTuple{(:a, :b)}) # ... and with named tuples
+(a = 3, b = 2)
 
 julia> RandomExtensions.random_staticarrays() # poor man's conditional modules!
 # ugly warning

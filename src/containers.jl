@@ -75,6 +75,12 @@ end
 @make_container(T::Type{<:Tuple})
 @make_container(::Type{Tuple}, n::Integer)
 @make_container(T::Type{NTuple{N,TT} where N} => TT, n::Integer)
+@make_container(T::Type{<:NamedTuple{K}} => K)
+
+if VERSION < v"1.1.0"
+    # disambiguate
+    rand(rng::AbstractRNG, ::Type{NamedTuple}) = rand(rng, make(NamedTuple))
+end
 
 ## arrays (same as in Random, but with explicit type specification, e.g. rand(Int, Array, 4)
 

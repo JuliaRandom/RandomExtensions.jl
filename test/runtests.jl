@@ -416,6 +416,12 @@ end
     t = rand(make(NamedTuple{(:a, :b),Tuple{Float64,UInt8}}, 1:3))
     @test t isa NamedTuple{(:a, :b), Tuple{Float64,UInt8}}
     @test t.a ∈ 1:3 && t.b ∈ 1:3
+
+    # as container
+    @test rand(1:3, NamedTuple{(:a,)}) isa NamedTuple{(:a,), Tuple{Int}}
+    @test rand(1:3, NamedTuple{(:a,), Tuple{Float64}}) isa NamedTuple{(:a,), Tuple{Float64}}
+    @test rand(1:3, NamedTuple{(:a, :b)}) isa NamedTuple{(:a, :b), Tuple{Int,Int}}
+    @test rand(1:3, NamedTuple{(:a, :b), Tuple{Float64,Float64}}) isa NamedTuple{(:a, :b), Tuple{Float64,Float64}}
 end
 
 @testset "rand(make(String, ...))" begin
