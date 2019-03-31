@@ -65,6 +65,15 @@ end
 
 @make_container(::Type{String}, [n::Integer])
 
+# we disable smthg like rand(String, 2, 3) because it looks to similar to, but is too different
+# than, rand(String, 2) (Array of String vs String)
+
+string_error() = throw(ArgumentError(
+ "rand([rng], String, d1::Integer, d2::Integer, ...) is unsupported,
+ use rand(rng, make(String), d1, d2, ...) or rand(rng, String, (d1, d2, ...)) instead"))
+rand(rng::AbstractRNG, ::Type{String}, n::Integer...) = string_error()
+rand(                  ::Type{String}, n::Integer...) = string_error()
+
 # sparse vectors & matrices
 @make_container(::Type{SparseVector},    p::AbstractFloat, m::Integer)
 @make_container(::Type{SparseVector},    p::AbstractFloat, d::Dims{1})

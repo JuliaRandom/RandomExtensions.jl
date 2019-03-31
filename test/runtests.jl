@@ -189,6 +189,9 @@ const spString = Sampler(MersenneTwister, String)
     s = rand(rng..., "asd", String)
     @test length(s) == 8
     @test Set(s) <= Set("asd")
+    @test_throws ArgumentError rand(rng..., String, 2, 3)
+    @test_throws ArgumentError rand(rng..., String, 2, 3, 4)
+    @test_throws ArgumentError rand(rng..., String, 2, 3, 4, 5)
 
     # Tuple
     s = rand(rng..., Int, NTuple{3})
