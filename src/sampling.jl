@@ -47,15 +47,14 @@ Sampler(RNG::Type{<:AbstractRNG}, d::Union{UniformWrap,UniformType}, n::Repetiti
 ### fall-back on Random definitions
 
 for CO in (:CloseOpen01, :CloseOpen12)
-    @eval Sampler(::Type{<:AbstractRNG}, I::$CO{BigFloat}, ::Repetition) =
-        Random.SamplerBigFloat{Random.$CO{BigFloat}}(precision(BigFloat))
+    @eval begin
+        Sampler(RNG::Type{<:AbstractRNG}, ::$CO{T}, n::Repetition) where {T} =
+            Sampler(RNG, Random.$CO{T}(), n)
+
+        Sampler(::Type{<:AbstractRNG}, ::$CO{BigFloat}, ::Repetition) =
+            Random.SamplerBigFloat{Random.$CO{BigFloat}}(precision(BigFloat))
+    end
 end
-
-rand(r::AbstractRNG, ::SamplerTrivial{CloseOpen01{T}}) where {T} =
-    rand(r, SamplerTrivial(Random.CloseOpen01{T}()))
-
-rand(r::AbstractRNG, ::SamplerTrivial{CloseOpen12{T}}) where {T} =
-    rand(r, SamplerTrivial(Random.CloseOpen12{T}()))
 
 ### new intervals 01
 
