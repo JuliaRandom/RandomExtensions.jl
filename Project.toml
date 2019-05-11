@@ -1,17 +1,12 @@
 authors = ["Rafael Fourquet <fourquet.rafael@gmail.com>"]
 name = "RandomExtensions"
 uuid = "fb686558-2515-59ef-acaa-46db3789a887"
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
-Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-
-[extras]
-Test         = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Random       = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
-
-[targets]
-test = ["Test", "SparseArrays"]
+Test         = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 julia = "1"
