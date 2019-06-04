@@ -154,12 +154,14 @@ Sampler(RNG::Type{<:AbstractRNG}, c::Categorical, n::Repetition) =
 
 ## random elements from pairs
 
+#= disabled in favor of a special meaning for pairs
+
 Sampler(RNG::Type{<:AbstractRNG}, t::Pair, n::Repetition) =
     SamplerSimple(t, Sampler(RNG, Bool, n))
 
 rand(rng::AbstractRNG, sp::SamplerSimple{<:Pair}) =
     @inbounds return sp[][1 + rand(rng, sp.data)]
-
+=#
 
 ## composite types
 
@@ -559,3 +561,22 @@ let b = UInt8['0':'9';'A':'Z';'a':'z'],
 
     rand(rng::AbstractRNG, sp::SamplerTag{Cont{String}}) = String(rand(rng, sp.data.first, sp.data.second))
 end
+
+
+## X => a / X => (a, as...) syntax as an alternative to make(X, a) / make(X, a, as...)
+
+# this is experimental
+
+@inline Sampler(RNG::Type{<:AbstractRNG}, (a, b)::Pair{<:Union{DataType,UnionAll}},
+                r::Repetition) =
+    b isa Tuple ?
+        Sampler(RNG, make(a, b...), r) :
+        Sampler(RNG, make(a, b), r)
+
+# nothing can be inferred when only the pair type is available
+@inline gentype(::Type{<:Pair{<:Union{DataType,UnionAll}}}) = Any
+
+@inline gentype((a, b)::Pair{<:Union{DataType,UnionAll}}) =
+    b isa Tuple ?
+        gentype(make(a, b...)) :
+        gentype(make(a, b))

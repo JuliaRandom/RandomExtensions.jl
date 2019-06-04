@@ -41,6 +41,16 @@ is omitted). For example, `rand(make(Array, 2, 3), 3)` creates an array of matri
 Of course, `make` is not necessary, in that the same can be achieved with an ad hoc `struct`,
 which in some cases is clearer (e.g. `Normal(m, s)` rather than something like `make(Float64, Val(:Normal), m, s)`).
 
+As an experimental feature, the following alternative API is available:
+- `rand(T => x)` is equivalent to `rand(make(T, x))`
+- `rand(T => (x, y, ...))` is equivalent to `rand(make(T, x, y, ...))`
+
+This is for convenience only (it may be more readable), but may be less efficient due to the
+fact that the type of a pair containing a type doesn't know this exact type (e.g. `Pair => Int`
+has type `Pair{UnionAll,DataType}`), so `rand` can't infer the type of the generated value.
+Thanks to inlining, the inferred types can however be sufficiently tight in some cases
+(e.g. `rand(Complex => Int, 3)` is of type `Vector{Complex{Int64}}` instead of `Vector{Any}`).
+
 Point 3) allows something like `rand(1:30, Set, 10)` to produce a `Set` of length `10` with values
 from `1:30`. The idea is that `rand([rng], [S], Cont, etc...)` should always be equivalent to
 `rand([rng], make(Cont, [S], etc...))`. This design goes somewhat against the trend in `Base` to create
@@ -204,6 +214,12 @@ julia> collect(Iterators.take(Uniform(1:10), 3)) # distributions can be iterated
   7
  10
   5
+
+julia> rand(Complex => Int) # equivalent to rand(make(Complex, Int)) (experimental)
+4610038282330316390 + 4899086469899572461im
+
+julia> rand(Pair => (String, Int8)) # equivalent to rand(make(Pair, String, Int8)) (experimental)
+"ODNXIePK" => 4
 ```
 
 In some cases, the `Rand` iterator can provide efficiency gains compared to
