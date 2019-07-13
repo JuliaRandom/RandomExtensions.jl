@@ -17,7 +17,7 @@ make() = make(Float64)
 
 ### type
 
-find_type(::Type{X}) where{X} = X
+maketype(::Type{X}) where{X} = X
 
 Sampler(RNG::Type{<:AbstractRNG}, ::Make0{X}, n::Repetition) where {X} =
     Sampler(RNG, X, n)
@@ -151,16 +151,16 @@ rand(rng::AbstractRNG, sp::SamplerSimple{<:Pair}) =
 
 ### sampler for pairs and complex numbers
 
-find_type(::Type{Pair},              x, y)             = Pair{val_gentype(x), val_gentype(y)}
-find_type(::Type{Pair{X}},           _, y) where {X}   = Pair{X, val_gentype(y)}
-find_type(::Type{Pair{X,Y} where X}, x, _) where {Y}   = Pair{val_gentype(x), Y}
-find_type(::Type{Pair{X,Y}},         _, _) where {X,Y} = Pair{X,Y}
+maketype(::Type{Pair},              x, y)             = Pair{val_gentype(x), val_gentype(y)}
+maketype(::Type{Pair{X}},           _, y) where {X}   = Pair{X, val_gentype(y)}
+maketype(::Type{Pair{X,Y} where X}, x, _) where {Y}   = Pair{val_gentype(x), Y}
+maketype(::Type{Pair{X,Y}},         _, _) where {X,Y} = Pair{X,Y}
 
-find_type(::Type{Complex},    x) = Complex{val_gentype(x)}
-find_type(T::Type{<:Complex}, _) = T
+maketype(::Type{Complex},    x) = Complex{val_gentype(x)}
+maketype(T::Type{<:Complex}, _) = T
 
-find_type(::Type{Complex},    x, y) = Complex{promote_type(val_gentype(x), val_gentype(y))}
-find_type(T::Type{<:Complex}, _, _) = T
+maketype(::Type{Complex},    x, y) = Complex{promote_type(val_gentype(x), val_gentype(y))}
+maketype(T::Type{<:Complex}, _, _) = T
 
 function Sampler(RNG::Type{<:AbstractRNG}, u::Make2{T}, n::Repetition) where T <: Union{Pair,Complex}
     sp1 = sampler(RNG, u.x, n)
@@ -199,7 +199,7 @@ Sampler(RNG::Type{<:AbstractRNG}, ::Type{T}, n::Repetition) where {T<:Union{Tupl
 # implement make(Tuple, S1, S2...), e.g. for rand(make(Tuple, Int, 1:3)),
 # and       make(NTuple{N}, S)
 
-_find_type(::Type{T}) where {T<:Tuple} =
+_maketype(::Type{T}) where {T<:Tuple} =
     T === Tuple ?
         Tuple{} :
     T === NTuple ?
@@ -208,7 +208,7 @@ _find_type(::Type{T}) where {T<:Tuple} =
         T{default_gentype(Tuple)} :
         T
 
-function _find_type(::Type{T}, args...) where T <: Tuple
+function _maketype(::Type{T}, args...) where T <: Tuple
     types = [t <: Type ? t.parameters[1] : gentype(t) for t in args]
     TT = T === Tuple ?
         Tuple{types...} :
@@ -223,8 +223,8 @@ _isNTuple(::Type{T}, args...) where {T<:Tuple} =
         T <: NTuple || !isa(T, UnionAll)) # !isa(Tuple, UnionAll) !!
 
 @generated function _make(::Type{T}, args...) where T <: Tuple
-    isempty(args) && return :(Make0{$(_find_type(T))}())
-    TT = _find_type(T, args...)
+    isempty(args) && return :(Make0{$(_maketype(T))}())
+    TT = _maketype(T, args...)
     samples = [t <: Type ? :(UniformType{$(t.parameters[1])}()) :
                :(args[$i]) for (i, t) in enumerate(args)]
     if _isNTuple(T, args...)
@@ -335,10 +335,10 @@ _make(::Type{NamedTuple{}}) = Make0{NamedTuple{}}()
 
 @generated function _make(::Type{NamedTuple{K}}, X...) where {K}
     if length(X) <= 1
-        NT = NamedTuple{K,_find_type(NTuple{length(K)}, X...)}
+        NT = NamedTuple{K,_maketype(NTuple{length(K)}, X...)}
         :(Make1{$NT}(make(NTuple{length(K)}, X...)))
     else
-        NT = NamedTuple{K,_find_type(Tuple, X...)}
+        NT = NamedTuple{K,_maketype(Tuple, X...)}
         :(Make1{$NT}(make(Tuple, X...)))
     end
 end
@@ -366,8 +366,8 @@ rand(rng::AbstractRNG, sp::SamplerTag{Cont{T}}) where T <: NamedTuple =
 
 const SetDict = Union{AbstractSet,AbstractDict}
 
-make(T::Type{<:SetDict}, X,         n::Integer)           = Make2{find_type(T, X, n)}(X , Int(n))
-make(T::Type{<:SetDict}, ::Type{X}, n::Integer) where {X} = Make2{find_type(T, X, n)}(X , Int(n))
+make(T::Type{<:SetDict}, X,         n::Integer)           = Make2{maketype(T, X, n)}(X , Int(n))
+make(T::Type{<:SetDict}, ::Type{X}, n::Integer) where {X} = Make2{maketype(T, X, n)}(X , Int(n))
 make(T::Type{<:SetDict},            n::Integer)           = make(T, default_sampling(T), Int(n))
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make2{T}, n::Repetition) where {T<:SetDict} =
@@ -387,20 +387,20 @@ default_sampling(::Type{<:AbstractSet{T}}) where {T} = Uniform(T)
 
 #### Set
 
-find_type(::Type{Set},    X, _)           = Set{val_gentype(X)}
-find_type(::Type{Set{T}}, _, _) where {T} = Set{T}
+maketype(::Type{Set},    X, _)           = Set{val_gentype(X)}
+maketype(::Type{Set{T}}, _, _) where {T} = Set{T}
 
 ### BitSet
 
 default_sampling(::Type{BitSet}) = Uniform(Int8) # almost arbitrary, may change
 
-find_type(::Type{BitSet}, _, _) = BitSet
+maketype(::Type{BitSet}, _, _) = BitSet
 
 
 ### dicts
 
-find_type(D::Type{<:AbstractDict{K,V}}, _,      ::Integer) where {K,V} = D
-find_type(D::Type{<:AbstractDict{K,V}}, ::Type, ::Integer) where {K,V} = D
+maketype(D::Type{<:AbstractDict{K,V}}, _,      ::Integer) where {K,V} = D
+maketype(D::Type{<:AbstractDict{K,V}}, ::Type, ::Integer) where {K,V} = D
 
 #### Dict/ImmutableDict
 
@@ -411,9 +411,9 @@ for D in (Dict, Base.ImmutableDict)
         default_sampling(::Type{$D{K,V}}) where {K,V} = Uniform(Pair{K,V})
         default_sampling(D::Type{<:$D})               = throw(ArgumentError("under-specified scalar type for $D"))
 
-        find_type(::Type{$D{K}},           X, ::Integer) where {K} = $D{K,fieldtype(val_gentype(X), 2)}
-        find_type(::Type{$D{K,V} where K}, X, ::Integer) where {V} = $D{fieldtype(val_gentype(X), 1),V}
-        find_type(::Type{$D},              X, ::Integer)           = $D{fieldtype(val_gentype(X), 1),fieldtype(val_gentype(X), 2)}
+        maketype(::Type{$D{K}},           X, ::Integer) where {K} = $D{K,fieldtype(val_gentype(X), 2)}
+        maketype(::Type{$D{K,V} where K}, X, ::Integer) where {V} = $D{fieldtype(val_gentype(X), 1),V}
+        maketype(::Type{$D},              X, ::Integer)           = $D{fieldtype(val_gentype(X), 1),fieldtype(val_gentype(X), 2)}
     end
 end
 
@@ -451,10 +451,10 @@ rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:AbstractArray} =
 
 # cf. inference bug https://github.com/JuliaLang/julia/issues/28762
 # we have to write out all combinations for getting proper inference
-find_type(A::Type{Array{T}},           _, ::Dims{N}) where {T, N} = Array{T, N}
-find_type(A::Type{Array{T,N}},         _, ::Dims{N}) where {T, N} = Array{T, N}
-find_type(A::Type{Array{T,N} where T}, X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
-find_type(A::Type{Array},              X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
+maketype(A::Type{Array{T}},           _, ::Dims{N}) where {T, N} = Array{T, N}
+maketype(A::Type{Array{T,N}},         _, ::Dims{N}) where {T, N} = Array{T, N}
+maketype(A::Type{Array{T,N} where T}, X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
+maketype(A::Type{Array},              X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
 
 # special shortcut
 
@@ -471,17 +471,17 @@ make(           dims::Integer...)                        = make(Array, default_s
 
 default_sampling(::Type{<:BitArray}) = Uniform(Bool)
 
-find_type(::Type{BitArray{N}}, _, ::Dims{N}) where {N} = BitArray{N}
-find_type(::Type{BitArray},    _, ::Dims{N}) where {N} = BitArray{N}
+maketype(::Type{BitArray{N}}, _, ::Dims{N}) where {N} = BitArray{N}
+maketype(::Type{BitArray},    _, ::Dims{N}) where {N} = BitArray{N}
 
 
 #### sparse vectors & matrices
 
-find_type(::Type{SparseVector},    X, p::AbstractFloat, dims::Dims{1}) = SparseVector{   val_gentype(X), Int}
-find_type(::Type{SparseMatrixCSC}, X, p::AbstractFloat, dims::Dims{2}) = SparseMatrixCSC{val_gentype(X), Int}
+maketype(::Type{SparseVector},    X, p::AbstractFloat, dims::Dims{1}) = SparseVector{   val_gentype(X), Int}
+maketype(::Type{SparseMatrixCSC}, X, p::AbstractFloat, dims::Dims{2}) = SparseMatrixCSC{val_gentype(X), Int}
 
-find_type(::Type{SparseVector{X}},    _, p::AbstractFloat, dims::Dims{1}) where {X} = SparseVector{   X, Int}
-find_type(::Type{SparseMatrixCSC{X}}, _, p::AbstractFloat, dims::Dims{2}) where {X} = SparseMatrixCSC{X, Int}
+maketype(::Type{SparseVector{X}},    _, p::AbstractFloat, dims::Dims{1}) where {X} = SparseVector{   X, Int}
+maketype(::Type{SparseMatrixCSC{X}}, _, p::AbstractFloat, dims::Dims{2}) where {X} = SparseMatrixCSC{X, Int}
 
 # need to be explicit and split these defs in 2 (or 4) to avoid ambiguities
 make(T::Type{SparseVector},    X,         p::AbstractFloat, d1::Integer)                        = make(T, X, p, Dims((d1,)))
@@ -529,8 +529,8 @@ function random_staticarrays()
     @eval using StaticArrays: tuple_length, tuple_prod, SArray, MArray
     for Arr = (:SArray, :MArray)
         @eval begin
-            find_type(::Type{<:$Arr{S}}  , X) where {S<:Tuple}   = $Arr{S,val_gentype(X),tuple_length(S),tuple_prod(S)}
-            find_type(::Type{<:$Arr{S,T}}, _) where {S<:Tuple,T} = $Arr{S,T,tuple_length(S),tuple_prod(S)}
+            maketype(::Type{<:$Arr{S}}  , X) where {S<:Tuple}   = $Arr{S,val_gentype(X),tuple_length(S),tuple_prod(S)}
+            maketype(::Type{<:$Arr{S,T}}, _) where {S<:Tuple,T} = $Arr{S,T,tuple_length(S),tuple_prod(S)}
 
             Sampler(RNG::Type{<:AbstractRNG}, c::Make1{A}, n::Repetition) where {A<:$Arr} =
                 SamplerTag{Cont{A}}(Sampler(RNG, c.x, n))
