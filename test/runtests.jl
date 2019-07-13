@@ -491,10 +491,10 @@ end
         @test s isa  Arr{dim}
         @test length(s) == 6
     end
-    @test_throws MethodError make(Matrix, 2)
-    @test_throws MethodError make(Vector, 2, 3)
-    @test_throws MethodError make(BitMatrix, 2)
-    @test_throws MethodError make(BitVector, 2, 3)
+    @test_throws MethodError rand(make(Matrix, 2))
+    @test_throws MethodError rand(make(Vector, 2, 3))
+    @test_throws MethodError rand(make(BitMatrix, 2))
+    @test_throws MethodError rand(make(BitVector, 2, 3))
 
     @test rand(make(Array, spString, 9)) isa Array{String}
     @test rand(make(BitArray, Sampler(MersenneTwister, [0, 0, 0, 1]), 9)) isa BitArray
