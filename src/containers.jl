@@ -118,7 +118,10 @@ _make_cont(args...) = make(args...)
 @make_array_container(t::Type{<:Array})
 @make_array_container(t::Type{<:BitArray})
 @make_array_container(t::AbstractFloat)
-_make_cont(t::AbstractFloat, x, dims::Dims) = make(x, t, dims)
+_make_cont(t::AbstractFloat, x, dims::Dims{1}) = make(SparseVector,    x, t, dims)
+_make_cont(t::AbstractFloat,    dims::Dims{1}) = make(SparseVector,       t, dims)
+_make_cont(t::AbstractFloat, x, dims::Dims{2}) = make(SparseMatrixCSC, x, t, dims)
+_make_cont(t::AbstractFloat,    dims::Dims{2}) = make(SparseMatrixCSC,    t, dims)
 
 ## sets/dicts
 

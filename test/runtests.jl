@@ -498,20 +498,21 @@ end
 
     @test rand(make(Array, spString, 9)) isa Array{String}
     @test rand(make(BitArray, Sampler(MersenneTwister, [0, 0, 0, 1]), 9)) isa BitArray
-
+    # TODO: below was testing without explicit `Array` as 1st argument, so this test
+    # may now be obsolete, redundant with tests above
     for dims = ((), (2, 3), (0x2, 3), (2,), (0x2,)),
         s    = ([], [Int], [1:3])
 
         T = s == [] ? Float64 : Int
         if dims != ()
-            a = rand(make(s..., dims...))
+            a = rand(make(Array, s..., dims...))
             @test a isa Array{T,length(dims)}
             if s == [1:3]
                 @test all(in(1:3), a)
             end
         end
-        if s != [] && dims isa Dims
-            a = rand(make(s..., dims))
+        if dims isa Dims
+            a = rand(make(Array, s..., dims))
             @test a isa Array{T,length(dims)}
             if s == [1:3]
                 @test all(in(1:3), a)
@@ -526,17 +527,17 @@ end
                     [(2,3)]             => 2,
                     [6]                 => 1,
                     [2, 3]              => 2,
-                    [Int8(2), Int16(3)] => 2),
-        form = ([], [dim == 1 ? SparseVector : SparseMatrixCSC])
+                    [Int8(2), Int16(3)] => 2)
 
-        s = rand(make(form..., k..., 0.3, d...))
+        typ = dim == 1 ? SparseVector : SparseMatrixCSC
+
+        s = rand(make(typ, k..., 0.3, d...))
         @test s isa (dim == 1 ? SparseVector{Float64,Int} :
                                 SparseMatrixCSC{Float64,Int})
         @test length(s) == 6
     end
-    @test rand(make(spString, 0.3, 9)) isa SparseVector{String}
-    @test rand(make(String, 0.9, 2)) isa SparseVector{String} # can be ambiguous with make(String, chars, n)
-    @test rand(make(make(1:9, 0.3, 2, 3), .1, 4)) isa SparseVector{SparseMatrixCSC{Int64,Int64},Int64}
+    @test rand(make(SparseVector, spString, 0.3, 9)) isa SparseVector{String}
+    @test rand(make(SparseVector, make(SparseMatrixCSC, 1:9, 0.3, 2, 3), .1, 4)) isa SparseVector{SparseMatrixCSC{Int64,Int64},Int64}
 end
 
 @testset "rand(make(default))" begin

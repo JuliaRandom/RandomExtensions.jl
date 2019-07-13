@@ -456,17 +456,6 @@ maketype(A::Type{Array{T,N}},         _, ::Dims{N}) where {T, N} = Array{T, N}
 maketype(A::Type{Array{T,N} where T}, X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
 maketype(A::Type{Array},              X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
 
-# special shortcut
-
-make(X,         dims::Dims)                              = make(Array, X,                       dims)
-make(X,         d1::Integer, dims::Integer...)           = make(Array, X,                       Dims((d1, dims...)))
-make(::Type{X}, dims::Dims)           where {X}          = make(Array, X,                       dims)
-make(::Type{X}, d1::Integer, dims::Integer...) where {X} = make(Array, X,                       Dims((d1, dims...)))
-make(           dims::Integer...)                        = make(Array, default_sampling(Array), Dims(dims))
-
-# omitted: make(dims::Dims)
-# for the same reason that rand(dims::Dims) doesn't produce an array, i.e. it produces a scalar picked from the tuple
-
 #### BitArray
 
 default_sampling(::Type{<:BitArray}) = Uniform(Bool)
@@ -495,21 +484,6 @@ make(T::Type{SparseMatrixCSC}, p::AbstractFloat, d1::Integer, d2::Integer) = mak
 make(T::Type{SparseVector},    p::AbstractFloat, dims::Dims{1}) = make(T, default_sampling(T), p, dims)
 make(T::Type{SparseMatrixCSC}, p::AbstractFloat, dims::Dims{2}) = make(T, default_sampling(T), p, dims)
 
-make(X,         p::AbstractFloat, dims::Dims{1})           = make(SparseVector, X, p, dims)
-make(::Type{X}, p::AbstractFloat, dims::Dims{1}) where {X} = make(SparseVector, X, p, dims)
-make(X,         p::AbstractFloat, dims::Dims{2})           = make(SparseMatrixCSC, X, p, dims)
-make(::Type{X}, p::AbstractFloat, dims::Dims{2}) where {X} = make(SparseMatrixCSC, X, p, dims)
-
-make(X,         p::AbstractFloat, d1::Integer)                        = make(X,                               p, Dims(d1))
-make(X,         p::AbstractFloat, d1::Integer, d2::Integer)           = make(X,                               p, Dims((d1, d2)))
-make(::Type{X}, p::AbstractFloat, d1::Integer) where {X}              = make(X,                               p, Dims(d1))
-make(::Type{X}, p::AbstractFloat, d1::Integer, d2::Integer) where {X} = make(X,                               p, Dims((d1, d2)))
-make(           p::AbstractFloat, dims::Dims)                         = make(default_sampling(AbstractArray), p, dims)
-make(           p::AbstractFloat, d1::Integer)                        = make(default_sampling(AbstractArray), p, Dims(d1))
-make(           p::AbstractFloat, d1::Integer, d2::Integer)           = make(default_sampling(AbstractArray), p, Dims((d1, d2)))
-
-# disambiguate (away from make(String, chars, n::Integer))
-make(::Type{String}, p::AbstractFloat, d1::Integer) = make(String, p, Dims(d1))
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make3{A}, n::Repetition) where {A<:AbstractSparseArray} =
     SamplerTag{Cont{A}}((sp = sampler(RNG, c.x, n),
