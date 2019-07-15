@@ -141,10 +141,11 @@ julia> rand(Normal(), SparseMatrixCSC, 0.3, 2, 3) # equivalent to sprandn(2, 3, 
   [2, 1]  =  0.448981
   [1, 2]  =  0.730103
 
-# like for Array, sparse arrays enjoy to be special cased: `SparseVector` or `SparseMatrixCSC` can be omitted:
+# like for Array, sparse arrays enjoy to be special cased: `SparseVector` or `SparseMatrixCSC`
+# can be omitted in the `rand` call (not in the `make` call):
 
-julia> rand(make(make(1:9, 0.3, 2, 3), 0.1, 4)) # possible, bug ugly output when non-empty :-/
-4-element SparseVector{SparseMatrixCSC{Int64,Int64},Int64} with 0 stored entries
+julia> rand(make(SparseVector, 1:9, 0.3, 2), 0.1, 4, 3) # possible, bug ugly output when non-empty :-/
+4×3 SparseMatrixCSC{SparseVector{Int64,Int64},Int64} with 0 stored entries
 
 julia> rand(String, 4) # equivalent to randstring(4)
 "5o75"
