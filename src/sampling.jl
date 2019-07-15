@@ -17,8 +17,6 @@ make() = make(Float64)
 
 ### type
 
-maketype(::Type{X}) where{X} = X
-
 Sampler(RNG::Type{<:AbstractRNG}, ::Make0{X}, n::Repetition) where {X} =
     Sampler(RNG, X, n)
 
