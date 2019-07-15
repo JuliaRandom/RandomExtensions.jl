@@ -23,7 +23,7 @@ Sampler(RNG::Type{<:AbstractRNG}, ::Make0{X}, n::Repetition) where {X} =
 ### object
 
 # like Make1
-struct MakeWrap{T,X} <: Make{T}
+struct MakeWrap{T,X} <: Distribution{T}
     x::X
 end
 
@@ -161,8 +161,8 @@ maketype(::Type{Complex},    x, y) = Complex{promote_type(val_gentype(x), val_ge
 maketype(T::Type{<:Complex}, _, _) = T
 
 function Sampler(RNG::Type{<:AbstractRNG}, u::Make2{T}, n::Repetition) where T <: Union{Pair,Complex}
-    sp1 = sampler(RNG, u.x, n)
-    sp2 = u.x == u.y ? sp1 : sampler(RNG, u.y, n)
+    sp1 = sampler(RNG, u[1], n)
+    sp2 = u[1] == u[2] ? sp1 : sampler(RNG, u[2], n)
     SamplerTag{Cont{T}}((sp1, sp2))
 end
 
@@ -178,7 +178,7 @@ Sampler(RNG::Type{<:AbstractRNG}, ::Type{Pair{A,B}}, n::Repetition) where {A,B} 
 
 # rand(make(Complex, x)) => rand(make(Complex, x, x))
 Sampler(RNG::Type{<:AbstractRNG}, u::Make1{T}, n::Repetition) where {T<:Complex} =
-    Sampler(RNG, make(T, u.x, u.x), n)
+    Sampler(RNG, make(T, u[1], u[1]), n)
 
 # rand(Complex{T}) => rand(make(Complex{T}, T, T)) (redundant with implem in Random)
 Sampler(RNG::Type{<:AbstractRNG}, ::Type{Complex{T}}, n::Repetition) where {T<:Real} =
@@ -281,7 +281,7 @@ end
 
 @generated function Sampler(RNG::Type{<:AbstractRNG}, c::Make1{T,X}, n::Repetition) where {T<:Tuple,X<:Tuple}
     @assert fieldcount(T) == fieldcount(X)
-    sps = [:(sampler(RNG, c.x[$i], n)) for i in 1:length(T.parameters)]
+    sps = [:(sampler(RNG, c[1][$i], n)) for i in 1:length(T.parameters)]
     :(SamplerTag{Cont{T}}(tuple($(sps...))))
 end
 
@@ -318,7 +318,7 @@ end
 # should catch Tuple{Integer,Integer} which is not NTuple, or even Tuple{Int,UInt}, when only one sampler was passed
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make1{T,X}, n::Repetition) where {T<:Tuple,X} =
-    SamplerTag{Cont{T}}(sampler(RNG, c.x, n))
+    SamplerTag{Cont{T}}(sampler(RNG, c[1], n))
 
 @generated function rand(rng::AbstractRNG, sp::SamplerTag{Cont{T},S}) where {T<:Tuple,S<:Sampler}
     rands = [:(convert($(T.parameters[i]), rand(rng, sp.data))) for i in 1:fieldcount(T)]
@@ -350,7 +350,7 @@ Sampler(RNG::Type{<:AbstractRNG}, m::Make0{NamedTuple}, n::Repetition) =
     SamplerType{NamedTuple}()
 
 Sampler(RNG::Type{<:AbstractRNG}, m::Make1{T}, n::Repetition) where T <: NamedTuple =
-    SamplerTag{Cont{T}}(Sampler(RNG, m.x , n))
+    SamplerTag{Cont{T}}(Sampler(RNG, m[1] , n))
 
 rand(rng::AbstractRNG, sp::SamplerType{NamedTuple{}}) = NamedTuple()
 
@@ -369,8 +369,8 @@ make(T::Type{<:SetDict}, ::Type{X}, n::Integer) where {X} = Make2{maketype(T, X,
 make(T::Type{<:SetDict},            n::Integer)           = make(T, default_sampling(T), Int(n))
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make2{T}, n::Repetition) where {T<:SetDict} =
-    SamplerTag{Cont{T}}((sp = sampler(RNG, c.x, n),
-                         len = c.y))
+    SamplerTag{Cont{T}}((sp = sampler(RNG, c[1], n),
+                         len = c[2]))
 
 function rand(rng::AbstractRNG, sp::SamplerTag{Cont{S}}) where {S<:SetDict}
     # assuming S() creates an empty set/dict
@@ -439,7 +439,7 @@ if VERSION < v"1.1.0"
 end
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make2{A}, n::Repetition) where {A<:AbstractArray} =
-    SamplerTag{A}((sampler(RNG, c.x, n), c.y))
+    SamplerTag{A}((sampler(RNG, c[1], n), c[2]))
 
 rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:AbstractArray} =
     rand!(rng, A(undef, sp.data[2]), sp.data[1])
@@ -484,9 +484,9 @@ make(T::Type{SparseMatrixCSC}, p::AbstractFloat, dims::Dims{2}) = make(T, defaul
 
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make3{A}, n::Repetition) where {A<:AbstractSparseArray} =
-    SamplerTag{Cont{A}}((sp = sampler(RNG, c.x, n),
-                         p = c.y,
-                         dims = c.z))
+    SamplerTag{Cont{A}}((sp = sampler(RNG, c[1], n),
+                         p = c[2],
+                         dims = c[3]))
 
 rand(rng::AbstractRNG, sp::SamplerTag{Cont{A}}) where {A<:SparseVector} =
     sprand(rng, sp.data.dims[1], sp.data.p, (r, n)->rand(r, sp.data.sp, n))
@@ -505,7 +505,7 @@ function random_staticarrays()
             maketype(::Type{<:$Arr{S,T}}, _) where {S<:Tuple,T} = $Arr{S,T,tuple_length(S),tuple_prod(S)}
 
             Sampler(RNG::Type{<:AbstractRNG}, c::Make1{A}, n::Repetition) where {A<:$Arr} =
-                SamplerTag{Cont{A}}(Sampler(RNG, c.x, n))
+                SamplerTag{Cont{A}}(Sampler(RNG, c[1], n))
 
             rand(rng::AbstractRNG, sp::SamplerTag{Cont{$Arr{S,T,N,L}}}) where {S,T,N,L} =
                 $Arr{S,T,N,L}(rand(rng, make(NTuple{L}, sp.data)))
@@ -536,9 +536,9 @@ let b = UInt8['0':'9';'A':'Z';'a':'z'],
         SamplerTag{Cont{String}}((RNG === MersenneTwister ? s : Sampler(RNG, b, n)) => 8)
 
     function Sampler(RNG::Type{<:AbstractRNG}, c::Make2{String}, n::Repetition)
-        sp = RNG === MersenneTwister && c.y === b ?
-            s : sampler(RNG, c.y, n)
-        SamplerTag{Cont{String}}(sp => c.x)
+        sp = RNG === MersenneTwister && c[2] === b ?
+            s : sampler(RNG, c[2], n)
+        SamplerTag{Cont{String}}(sp => c[1])
     end
 
     rand(rng::AbstractRNG, sp::SamplerTag{Cont{String}}) = String(rand(rng, sp.data.first, sp.data.second))
