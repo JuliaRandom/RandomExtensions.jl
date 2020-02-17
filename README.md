@@ -227,7 +227,7 @@ stable code, the `rand` machinery likes to know the exact type of the object whi
 `rand(m)`, and `maketype(T, args...)` is supposed to return that type. For example,
 `maketype(Pair, 1:3, UInt) == Pair{Int,UInt}`.
 Then just define `rand` for `m` like documented in the `Random` module, e.g.
-`rand(rng::AbstractRNG, sp::SamplerTrivial{<:Make{P}}) where {P<:Pair} = P(rand(sp[].x), rand(sp[].y))`.
+`rand(rng::AbstractRNG, sp::SamplerTrivial{<:Make{P}}) where {P<:Pair} = P(rand(sp[][1]), rand(sp[][2]))`.
 For convenience, `maketype(T, ...)` defaults to `T`, which means that for simple cases, only the
 `rand` function has to be defined. But in cases like for `Pair` above, if `maketype` is not
 defined, the generated type will be assumed to be `Pair`, which is not a concrete type
