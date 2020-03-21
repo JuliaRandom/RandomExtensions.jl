@@ -426,40 +426,57 @@ rand(rng::AbstractRNG, sp::SamplerTag{Cont{S}}) where {S<:Base.ImmutableDict} =
 default_sampling(::Type{<:AbstractArray{T}}) where {T} = Uniform(T)
 default_sampling(::Type{<:AbstractArray})              = Uniform(Float64)
 
-make(A::Type{<:AbstractArray}, X,         d1::Integer, dims::Integer...)           = make(A, X, Dims((d1, dims...)))
-make(A::Type{<:AbstractArray}, ::Type{X}, d1::Integer, dims::Integer...) where {X} = make(A, X, Dims((d1, dims...)))
+_makedim(d::Integer) = Const(Int(d))
+_makedim(d) = _makedim(d, gentype(d))
+_makedim(d, ::Type{Int}) = d
+_makedim(d, T) = throw(ArgumentError("the passed dimension distribution doesn't yield an Int"))
 
-make(A::Type{<:AbstractArray}, dims::Dims)                    = make(A, default_sampling(A), dims)
-make(A::Type{<:AbstractArray}, d1::Integer, dims::Integer...) = make(A, default_sampling(A), Dims((d1, dims...)))
+make(A::Type{<:AbstractArray}, d1::Integer, dims::Integer...) =
+    make(A, default_sampling(A), Const(Dims((d1, dims...))))
 
-if VERSION < v"1.1.0"
-     # to resolve ambiguity
-    make(A::Type{<:AbstractArray}, X, d1::Integer)              = make(A, X, Dims((d1,)))
-    make(A::Type{<:AbstractArray}, X, d1::Integer, d2::Integer) = make(A, X, Dims((d1, d2)))
-end
+make(A::Type{<:AbstractArray}, dims::Dims) =         make(A, default_sampling(A), Const(dims))
+make(A::Type{<:AbstractArray}, dims::Distribution) = make(A, default_sampling(A), dims)
+
+# make sure that dims is interpreted as dimensions, not as an Int distribution
+make(A::Type{<:AbstractArray}, X,         dims::Dims) =           make(A, X, Const(dims))
+make(A::Type{<:AbstractArray}, ::Type{X}, dims::Dims) where {X} = make(A, X, Const(dims))
+
+make(A::Type{<:AbstractArray}, X, d1, dims...) =
+    make(A, X, make(Tuple, _makedim(d1), _makedim.(dims)...))
+
+make(A::Type{<:AbstractArray}, ::Type{X}, d1, dims...) where {X} =
+    make(A, X, make(Tuple, _makedim(d1), _makedim.(dims)...))
+
+# stop the recursion
+make(A::Type{<:AbstractArray}, X, dims::Distribution) =
+    Make{maketype(A, X, dims)}(X, dims)
+
+make(A::Type{<:AbstractArray}, ::Type{X}, dims::Distribution) where {X} =
+    Make{maketype(A, X, dims)}(X, dims)
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make2{A}, n::Repetition) where {A<:AbstractArray} =
-    SamplerTag{A}((sampler(RNG, c[1], n), c[2]))
+    SamplerTag{A}((sampler(RNG, c[1], Val(Inf)), # values
+                   Sampler(RNG, c[2], n)))       # dimensions
 
 rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:AbstractArray} =
-    rand!(rng, A(undef, sp.data[2]), sp.data[1])
+    rand!(rng, A(undef, rand(rng, sp.data[2])), sp.data[1])
 
 
 #### Array
 
 # cf. inference bug https://github.com/JuliaLang/julia/issues/28762
 # we have to write out all combinations for getting proper inference
-maketype(A::Type{Array{T}},           _, ::Dims{N}) where {T, N} = Array{T, N}
-maketype(A::Type{Array{T,N}},         _, ::Dims{N}) where {T, N} = Array{T, N}
-maketype(A::Type{Array{T,N} where T}, X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
-maketype(A::Type{Array},              X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
+maketype(A::Type{Array{T}},           _, ::Distribution{Dims{N}}) where {T, N} = Array{T, N}
+maketype(A::Type{Array{T,N}},         _, ::Distribution{Dims{N}}) where {T, N} = Array{T, N}
+maketype(A::Type{Array{T,N} where T}, X, ::Distribution{Dims{N}}) where {N}    = Array{val_gentype(X), N}
+maketype(A::Type{Array},              X, ::Distribution{Dims{N}}) where {N}    = Array{val_gentype(X), N}
 
 #### BitArray
 
 default_sampling(::Type{<:BitArray}) = Uniform(Bool)
 
-maketype(::Type{BitArray{N}}, _, ::Dims{N}) where {N} = BitArray{N}
-maketype(::Type{BitArray},    _, ::Dims{N}) where {N} = BitArray{N}
+maketype(::Type{BitArray{N}}, _, ::Distribution{Dims{N}}) where {N} = BitArray{N}
+maketype(::Type{BitArray},    _, ::Distribution{Dims{N}}) where {N} = BitArray{N}
 
 
 #### sparse vectors & matrices
@@ -481,6 +498,13 @@ make(T::Type{SparseMatrixCSC}, p::AbstractFloat, d1::Integer, d2::Integer) = mak
 
 make(T::Type{SparseVector},    p::AbstractFloat, dims::Dims{1}) = make(T, default_sampling(T), p, dims)
 make(T::Type{SparseMatrixCSC}, p::AbstractFloat, dims::Dims{2}) = make(T, default_sampling(T), p, dims)
+
+# stop the recursion
+make(T::Type{<:AbstractSparseArray}, X, p::AbstractFloat, dims::Dims) =
+    Make{maketype(T, X, p, dims)}(X, p, dims)
+
+make(T::Type{<:AbstractSparseArray}, ::Type{X}, p::AbstractFloat, dims::Dims) where {X} =
+    Make{maketype(T, X, p, dims)}(X, p, dims)
 
 
 Sampler(RNG::Type{<:AbstractRNG}, c::Make3{A}, n::Repetition) where {A<:AbstractSparseArray} =

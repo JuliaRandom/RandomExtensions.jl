@@ -478,23 +478,35 @@ end
 @testset "rand(make(Array/BitArray, ...))" begin
     for (T, Arr) = (Bool => BitArray, Float64 => Array{Float64}),
         k = ([], [T], [Bernoulli(T, 0.3)]),
-        (d, dim) = ([(6,)]              => 1,
-                    [(2,3)]             => 2,
-                    [6]                 => 1,
-                    [2, 3]              => 2,
-                    [Int8(2), Int16(3)] => 2),
+        (needk, d, sz, dim) = ((false, [(6,)],              (6,),   1),
+                               (false, [(2,3)],             (2,3),  2),
+                               (false, [6],                 (6,),   1),
+                               (false, [2, 3],              (2, 3), 2),
+                               (false, [Int8(2), Int16(3)], (2, 3), 2),
+
+                               (false, [make(Tuple, 1:3)],      (1:3,),     1),
+                               (false, [make(Tuple, 1:3, 1:9)], (1:3, 1:9), 2),
+                               (true,  [1:3],                   (1:3,),     1),
+                               (true,  [1:3, Uniform(1:9)],     (1:3, 1:9), 2),
+                               (true,  [1:3, 9],                (1:3, 9),   2),
+#                              (true,  [0x1:0x3, 9],            (1:3, 9),   2),
+                               (true,  [3, Uniform(1:9)],       (3, 1:9),   2),
+                               ),
         A = (T == Bool ?
              (BitArray, BitArray{dim}) :
              (Array, Array{Float64}, Array{Float64,dim}, Array{U,dim} where U))
 
+        needk && isempty(k) && continue
         s = rand(make(A, k..., d...))
         @test s isa  Arr{dim}
-        @test length(s) == 6
+        @test all(issubset.(size(s), sz))
     end
     @test_throws MethodError rand(make(Matrix, 2))
     @test_throws MethodError rand(make(Vector, 2, 3))
     @test_throws MethodError rand(make(BitMatrix, 2))
     @test_throws MethodError rand(make(BitVector, 2, 3))
+
+    @test_throws ArgumentError rand(make(Vector, Int, 2, 'a':'c'))
 
     @test rand(make(Array, spString, 9)) isa Array{String}
     @test rand(make(BitArray, Sampler(MersenneTwister, [0, 0, 0, 1]), 9)) isa BitArray
