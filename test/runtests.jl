@@ -79,7 +79,20 @@ const spString = Sampler(MersenneTwister, String)
             a = rand(rng..., Int8, A, 10)
             @test a isa Vector{AT}
             @test all(in(rInt8), a)
+            a = rand(rng..., Int8, A, 10:20)
+            @test a isa Vector{AT}
+            @test all(in(rInt8), a)
+            @test length(a) ∈ 10:20
         end
+        a = rand(rng..., Int8, Array, make(Tuple, 1:3, 1:4))
+        @test a isa Matrix{Int8}
+        @test all(issubset.(size(a), (1:3, 1:4)))
+        a = rand(rng..., Int8, Array, 3, 1:4)
+        @test a isa Matrix{Int8}
+        @test all(issubset.(size(a), (3:3, 1:4)))
+        a = rand(rng..., Array, 1:3, 4)
+        @test a isa Matrix{Float64}
+        @test all(issubset.(size(a), (1:3, 4:4)))
     end
 
     # Set
