@@ -1,6 +1,7 @@
 module RandomExtensions
 
-export make, Uniform, Normal, Exponential, CloseOpen, OpenClose, OpenOpen, CloseClose, Rand, Bernoulli
+export make, Uniform, Normal, Exponential, CloseOpen, OpenClose, OpenOpen, CloseClose, Rand,
+       Bernoulli, Categorical
 
 # re-exports from Random, which don't overlap with new functionality and not from misc.jl
 export rand!, AbstractRNG, MersenneTwister, RandomDevice

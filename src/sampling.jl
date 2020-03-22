@@ -136,6 +136,22 @@ rand(rng::AbstractRNG, sp::SamplerTag{Bernoulli{T}}) where {T} =
     ifelse(rand(rng, CloseOpen12()) < sp.data, one(T), zero(T))
 
 
+## Categorical
+
+Sampler(RNG::Type{<:AbstractRNG}, c::Categorical, n::Repetition) =
+    SamplerSimple(c, Sampler(RNG, CloseOpen(), n))
+
+# unfortunately requires @inline to avoid allocating
+@inline rand(rng::AbstractRNG, sp::SamplerSimple{Categorical{T}}) where {T} =
+    let c = rand(rng, sp.data)
+        T(findfirst(x -> x >= c, sp[].cdf))
+    end
+
+# NOTE:
+# if length(cdf) is somewhere between 150 and 200, the following gets faster:
+#   T(searchsortedfirst(sp[].cdf, rand(rng, sp.data)))
+
+
 ## random elements from pairs
 
 Sampler(RNG::Type{<:AbstractRNG}, t::Pair, n::Repetition) =

@@ -62,6 +62,24 @@ using Test
         r = rand(Bernoulli(T, 1))
         @test r == 1
     end
+
+    # Categorical
+    n = rand(1:9)
+    @test rand(Categorical(n)) ∈ 1:9
+    @test all(∈(1:9), rand(Categorical(n), 10))
+    @test rand(Categorical(n)) isa Int
+    c = Categorical(Float64(n))
+    @test rand(c) isa Float64
+    @test rand(c) ∈ 1:9
+    c = Categorical([1, 7, 2])
+    # cf. Bernoulli tests
+    @test 620 < count(==(2), rand(c, 1000)) < 780
+    @test rand(c) isa Int
+    @test rand(Categorical{Float64}((1, 2, 3, 4))) isa Float64
+
+    @test_throws ArgumentError Categorical(())
+    @test_throws ArgumentError Categorical([])
+    @test_throws ArgumentError Categorical(x for x in 1:0)
 end
 
 const rInt8 = typemin(Int8):typemax(Int8)
