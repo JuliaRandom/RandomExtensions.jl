@@ -1,7 +1,7 @@
 module RandomExtensions
 
 export make, Uniform, Normal, Exponential, CloseOpen, OpenClose, OpenOpen, CloseClose, Rand,
-       Bernoulli, Categorical
+       Bernoulli, Categorical, @rand
 
 # re-exports from Random, which don't overlap with new functionality and not from misc.jl
 export rand!, AbstractRNG, MersenneTwister, RandomDevice
@@ -39,6 +39,7 @@ include("distributions.jl")
 include("sampling.jl")
 include("containers.jl")
 include("iteration.jl")
+include("macros.jl")
 
 
 ## updated rand docstring (TODO: replace Base's one)

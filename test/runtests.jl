@@ -564,3 +564,34 @@ end
     @test rand(make(1:3)) ∈ 1:3
     @test rand(make(Float64)) isa Float64
 end
+
+## @rand
+
+struct Die
+    n::Int
+end
+
+Base.eltype(::Type{Die}) = Int
+
+@rand function rand(d::Die)
+    7
+end
+
+@testset "@rand" begin
+    d = Die(6)
+    rng = MersenneTwister()
+
+    @test rand(d) == 7
+
+    # redefinition
+    @rand rand(d::Die) = rand(1:d.n)
+    @test rand(d) ∈ 1:6
+    @test rand(rng, d) ∈ 1:6
+    @test all(∈(1:6), rand(rng, d, 10))
+    @test eltype(rand(d, 3)) == Int
+
+    # redefinition (multiple inner samplers)
+    @rand rand(d::Die) = rand(10:10) + rand(1:d.n)
+    @test rand(d) ∈ 11:16
+    @test all(∈(11:16), rand(d, 10))
+end
