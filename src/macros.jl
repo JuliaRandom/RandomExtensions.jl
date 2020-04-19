@@ -22,16 +22,32 @@ function rand_macro(ex)
                             :(rng::AbstractRNG),
                             as_sampler(ex.args[1].args[2], istrivial)),
               body)
-    istrivial && return ex
-    sp = quote
-        Random.Sampler(::Type{RNG}, n::Repetition) where {RNG<:AbstractRNG} =
-            SamplerSimple($name, tuple(SP))
+
+    sp = if istrivial
+        # we explicitly define Sampler even in the trivial case to handle
+        # redefinitions, where the old rand/sampler pair (for SamplerSimple)
+        # is overwritten by a new one (for SamplerTrivial)
+        quote
+            Random.Sampler(::Type{RNG}, n::Repetition) where {RNG<:AbstractRNG} =
+                SamplerTrivial($name)
+        end
+    else
+        quote
+            Random.Sampler(::Type{RNG}, n::Repetition) where {RNG<:AbstractRNG} =
+                SamplerSimple($name, tuple(SP))
+        end
     end
+
     # insert x::X in the argument list, between RNG and n::Repetition
     insert!(sp.args[2].args[1].args[1].args, 3, namefull)
-    SP = [Expr(:call, :Sampler, :RNG, x, :n) for x in sps]
-    @assert :SP == pop!(sp.args[2].args[2].args[2].args[3].args)
-    append!(sp.args[2].args[2].args[2].args[3].args, SP)
+
+    # insert inner samplers
+    if !istrivial
+        SP = [Expr(:call, :Sampler, :RNG, x, :n) for x in sps]
+        @assert :SP == pop!(sp.args[2].args[2].args[2].args[3].args)
+        append!(sp.args[2].args[2].args[2].args[3].args, SP)
+    end
+
     quote
         $ex
         $(sp.args[2]) # unwrap the quote/block around the definition

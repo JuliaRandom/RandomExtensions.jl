@@ -594,4 +594,8 @@ end
     @rand rand(d::Die) = rand(10:10) + rand(1:d.n)
     @test rand(d) ∈ 11:16
     @test all(∈(11:16), rand(d, 10))
+
+    # redefinition back to SamplerTrivial
+    @rand rand(d::Die) = 0
+    @test all(==(0), rand(d, 100))
 end
