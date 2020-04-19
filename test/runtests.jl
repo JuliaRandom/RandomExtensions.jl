@@ -632,3 +632,20 @@ Base.eltype(::Type{DieT{T}}) where {T} = T
         T(typemin(T) + rand(typemin(T):typemax(T)))
     @test rand(d) isa Bool
 end
+
+module TestAtRand
+# only using RandomExtensions, not Random, to check we don't depend on
+# some imported names like e.g. SamplerTrivial
+using RandomExtensions, Test
+
+struct Die n end
+
+@testset "@rand in module" begin
+    @rand rand(d::Die) = d.n # SamplerTrivial
+    @test rand(Die(123)) == 123
+    @test rand(RandomDevice(), Die(123)) == 123
+    @rand rand(d::Die) = rand(1:d.n) # SamplerSimple
+    @test rand(Die(1)) == 1
+    @test rand(RandomDevice(), Die(1)) == 1
+end
+end # module
