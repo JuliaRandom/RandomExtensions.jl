@@ -4,7 +4,7 @@ end
 
 function rand_macro(ex)
     whereparams = []
-    ex isa Expr && ex.head ∈ (:(=), :function) ||
+    ex isa Expr && ex.head ∈ (:(=), :function, :->) ||
         throw(ArgumentError("@rand requires an expression defining `rand`"))
     sig = ex.args[1]
     body = ex.args[2]
@@ -12,6 +12,14 @@ function rand_macro(ex)
     if sig.head == :where
         append!(whereparams, sig.args[2:end])
         sig = sig.args[1]
+    end
+
+    if ex.head == :function && sig.head == :tuple # anonymous function
+        sig = Expr(:call, :rand, sig.args...)
+    end
+    if ex.head == :->
+        # TODO: check that only one argument is passed
+        sig = Expr(:call, :rand, sig)
     end
 
     sig.head == :call &&
@@ -37,7 +45,7 @@ function rand_macro(ex)
         exsig = Expr(:where, exsig, map(esc, whereparams)...)
     end
 
-    ex = Expr(ex.head, exsig, esc(body))
+    ex = Expr(:function, exsig, esc(body))
 
     sp = if istrivial
         # we explicitly define Sampler even in the trivial case to handle

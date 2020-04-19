@@ -588,6 +588,10 @@ Base.eltype(::Type{DieT{T}}) where {T} = T
         7
     end
     @test rand(d) == 7
+    @rand function (d::Die) 7 end
+    @test rand(d) == 7
+    @rand (d::Die) -> 7
+    @test rand(d) == 7
 
     # redefinition
     @rand rand(d::Die) = rand(1:d.n)
@@ -596,8 +600,30 @@ Base.eltype(::Type{DieT{T}}) where {T} = T
     @test all(∈(1:6), rand(rng0, d, 10))
     @test eltype(rand(d, 3)) == Int
 
+    @rand function (d::Die) rand(1:d.n) end
+    @test rand(d) ∈ 1:6
+    @test rand(rng0, d) ∈ 1:6
+    @test all(∈(1:6), rand(rng0, d, 10))
+    @test eltype(rand(d, 3)) == Int
+
+    @rand (d::Die) -> rand(1:d.n)
+    @test rand(d) ∈ 1:6
+    @test rand(rng0, d) ∈ 1:6
+    @test all(∈(1:6), rand(rng0, d, 10))
+    @test eltype(rand(d, 3)) == Int
+
     # redefinition (multiple inner samplers)
     @rand rand(d::Die) = rand(10:10) + rand(1:d.n)
+    @test rand(d) ∈ 11:16
+    @test all(∈(11:16), rand(d, 10))
+
+    @rand function (d::Die)
+        rand(10:10) + rand(1:d.n)
+    end
+    @test rand(d) ∈ 11:16
+    @test all(∈(11:16), rand(d, 10))
+
+    @rand (d::Die) -> rand(10:10) + rand(1:d.n)
     @test rand(d) ∈ 11:16
     @test all(∈(11:16), rand(d, 10))
 
@@ -619,6 +645,19 @@ Base.eltype(::Type{DieT{T}}) where {T} = T
 
     @rand rand(d::DieT{T}) where {T} = 1
     @test rand(d) == 1
+
+    @rand function rand(d::DieT{T}) where {T}
+        2
+    end
+    @test rand(d) == 2
+
+    @rand function (d::DieT{T}) where {T}
+        3
+    end
+    @test rand(d) == 3
+
+    @rand ((d::DieT{T}) where {T}) -> 4
+    @test rand(d) == 4
 
     @rand rand(d::DieT{Int}) = 0
     @test rand(d) == 0
