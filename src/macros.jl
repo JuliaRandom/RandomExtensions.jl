@@ -3,10 +3,16 @@ macro rand(exp)
 end
 
 function rand_macro(ex)
+    whereparams = []
     ex isa Expr && ex.head ∈ (:(=), :function) ||
         throw(ArgumentError("@rand requires an expression defining `rand`"))
     sig = ex.args[1]
     body = ex.args[2]
+
+    if sig.head == :where
+        append!(whereparams, sig.args[2:end])
+        sig = sig.args[1]
+    end
 
     sig.head == :call &&
         sig.args[1] == :rand || throw(ArgumentError(
@@ -27,6 +33,10 @@ function rand_macro(ex)
                  :($(esc(rng))::AbstractRNG),
                  esc(as_sampler(namefull, istrivial)))
 
+    if !isempty(whereparams)
+        exsig = Expr(:where, exsig, map(esc, whereparams)...)
+    end
+
     ex = Expr(ex.head, exsig, esc(body))
 
     sp = if istrivial
@@ -43,6 +53,8 @@ function rand_macro(ex)
                 SamplerSimple($(esc(argname)), tuple(SP))
         end
     end
+    @assert sp.args[2].args[1].head == :where
+    append!(sp.args[2].args[1].args, map(esc, whereparams))
 
     # insert x::X in the argument list, between RNG and n::Repetition
     insert!(sp.args[2].args[1].args[1].args, 3, esc(namefull))

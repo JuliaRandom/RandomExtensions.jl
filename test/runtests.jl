@@ -573,6 +573,12 @@ end
 
 Base.eltype(::Type{Die}) = Int
 
+struct DieT{T}
+    n::T
+end
+
+Base.eltype(::Type{DieT{T}}) where {T} = T
+
 @testset "@rand" begin
     # rng0 to be sure rng is not accessed in `esc`aped body of @rand
     rng0 = MersenneTwister()
@@ -607,4 +613,22 @@ Base.eltype(::Type{Die}) = Int
     VAR = 100
     @rand rand(d::Die) = rand(VAR+1:VAR+d.n) - VAR
     @test all(∈(1:6), rand(d, 100))
+
+    # with type parameters
+    d = DieT(6)
+
+    @rand rand(d::DieT{T}) where {T} = 1
+    @test rand(d) == 1
+
+    @rand rand(d::DieT{Int}) = 0
+    @test rand(d) == 0
+
+    d = DieT(0x0)
+    @rand rand(d::DieT{T}) where {T<:UInt8} = rand(typemin(T):typemax(T))
+    @test rand(d) isa UInt8
+
+    d = DieT(true)
+    @rand rand(d::DieT{T}) where {T<:Bool} =
+        T(typemin(T) + rand(typemin(T):typemax(T)))
+    @test rand(d) isa Bool
 end
