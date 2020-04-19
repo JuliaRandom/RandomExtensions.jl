@@ -574,9 +574,10 @@ end
 Base.eltype(::Type{Die}) = Int
 
 @testset "@rand" begin
-    d = Die(6)
-    rng = MersenneTwister()
+    # rng0 to be sure rng is not accessed in `esc`aped body of @rand
+    rng0 = MersenneTwister()
 
+    d = Die(6)
     @rand function rand(d::Die)
         7
     end
@@ -585,8 +586,8 @@ Base.eltype(::Type{Die}) = Int
     # redefinition
     @rand rand(d::Die) = rand(1:d.n)
     @test rand(d) ∈ 1:6
-    @test rand(rng, d) ∈ 1:6
-    @test all(∈(1:6), rand(rng, d, 10))
+    @test rand(rng0, d) ∈ 1:6
+    @test all(∈(1:6), rand(rng0, d, 10))
     @test eltype(rand(d, 3)) == Int
 
     # redefinition (multiple inner samplers)
@@ -601,4 +602,9 @@ Base.eltype(::Type{Die}) = Int
     # redefinition back to SamplerTrivial
     @rand rand(d::Die) = d.n
     @test all(==(6), rand(d, 100))
+
+    # test esc-correctness
+    VAR = 100
+    @rand rand(d::Die) = rand(VAR+1:VAR+d.n) - VAR
+    @test all(∈(1:6), rand(d, 100))
 end
