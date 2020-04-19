@@ -63,6 +63,10 @@ function as_sampler(ex, istrivial)
 end
 
 function samplerize!(sps, ex, name)
+    if ex == name
+        # not within a rand() call
+        return Expr(:ref, name) # name -> name[]
+    end
     ex isa Expr || return ex
     if ex.head == :call && ex.args[1] == :rand
         # TODO: handle Repetition == Val(Inf) for arrays

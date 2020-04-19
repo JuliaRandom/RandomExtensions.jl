@@ -573,14 +573,13 @@ end
 
 Base.eltype(::Type{Die}) = Int
 
-@rand function rand(d::Die)
-    7
-end
-
 @testset "@rand" begin
     d = Die(6)
     rng = MersenneTwister()
 
+    @rand function rand(d::Die)
+        7
+    end
     @test rand(d) == 7
 
     # redefinition
@@ -595,7 +594,11 @@ end
     @test rand(d) ∈ 11:16
     @test all(∈(11:16), rand(d, 10))
 
+    # redefinition access to argument not within rand call
+    @rand rand(d::Die) = rand(1:1) + d.n
+    @test all(==(7), rand(d, 10))
+
     # redefinition back to SamplerTrivial
-    @rand rand(d::Die) = 0
-    @test all(==(0), rand(d, 100))
+    @rand rand(d::Die) = d.n
+    @test all(==(6), rand(d, 100))
 end
