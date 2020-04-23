@@ -30,11 +30,12 @@ function rand_macro(ex)
     namefull = sig.args[2] # x::X
     @assert namefull.head == :(::) # TODO: throw exception
 
-    sps = Any[] # sub-samplers
+    # sub-samplers; second argument true forces Val(Inf) for the sampler
+    sps = Pair{<:Any,Bool}[]
+
     rng = gensym()
     body = samplerize!(sps, body, argname, rng)
     istrivial = isempty(sps)
-    # rand -> Base.rand
 
     exsig = Expr(:call,
                  :(Random.rand),
@@ -69,7 +70,7 @@ function rand_macro(ex)
 
     # insert inner samplers
     if !istrivial
-        SP = [Expr(:call, :Sampler, :RNG, esc(x), :n) for x in sps]
+        SP = [Expr(:call, :Sampler, :RNG, esc(x), many ? Val{Inf}() : :n) for (x, many) in sps]
         @assert :SP == pop!(sp.args[2].args[2].args[2].args[3].args)
         append!(sp.args[2].args[2].args[2].args[3].args, SP)
     end
@@ -95,8 +96,9 @@ function samplerize!(sps, ex, name, rng)
     end
     ex isa Expr || return ex
     if ex.head == :call && ex.args[1] == :rand
-        # TODO: handle Repetition == Val(Inf) for arrays
-        push!(sps, ex.args[2])
+        # we assume that if rand has more than one arg, we want
+        # a Val(Inf) sampler (e.g. rand(1:9, 2, 3)
+        push!(sps, ex.args[2] => length(ex.args) > 2)
         i = length(sps)
         Expr(:call, :rand, rng, :($name.data[$i]), ex.args[3:end]...)
     else

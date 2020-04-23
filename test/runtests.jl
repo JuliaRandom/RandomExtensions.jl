@@ -635,6 +635,15 @@ Base.eltype(::Type{DieT{T}}) where {T} = T
     @rand rand(d::Die) = d.n
     @test all(==(6), rand(d, 100))
 
+    # redefinition (Val(Inf) iff rand calls with 2+ arguments)
+    @rand rand(d::Die) = (rand("asd") + rand("asd", 3)[1]; 1)
+    s = Sampler(MersenneTwister, d, Val(1))
+    @test s.data[1] isa Random.SamplerSimple{String}
+    @test s.data[2] isa Random.SamplerSimple{Vector{Char}} # "proof" of Val(Inf)
+    s = Sampler(MersenneTwister, d, Val(Inf))
+    @test s.data[1] isa Random.SamplerSimple{Vector{Char}}
+    @test s.data[2] isa Random.SamplerSimple{Vector{Char}}
+
     # test esc-correctness
     VAR = 100
     @rand rand(d::Die) = rand(VAR+1:VAR+d.n) - VAR
