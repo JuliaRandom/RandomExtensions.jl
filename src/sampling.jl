@@ -574,12 +574,10 @@ pair_to_make((a, b)::Pair) =
 
 pair_to_make(x) = x
 
-@inline Sampler(RNG::Type{<:AbstractRNG}, p::Pair{<:Union{DataType,UnionAll}},
-                r::Repetition) =
-                    Sampler(RNG, pair_to_make(p), r)
+@inline Sampler(RNG::Type{<:AbstractRNG}, p::Pair, r::Repetition) =
+    Sampler(RNG, pair_to_make(p), r)
 
 # nothing can be inferred when only the pair type is available
-@inline gentype(::Type{<:Pair{<:Union{DataType,UnionAll}}}) = Any
+@inline gentype(::Type{<:Pair}) = Any
 
-@inline gentype(p::Pair{<:Union{DataType,UnionAll}}) =
-    gentype(pair_to_make(p))
+@inline gentype(p::Pair) = gentype(pair_to_make(p))
