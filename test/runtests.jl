@@ -579,6 +579,28 @@ end
     @test nt isa NTuple{4,Complex{Int64}}
 end
 
+##  make(x1, xs...)
+
+struct MyType
+    x
+end
+
+RandomExtensions.maketype(x::MyType, y) = eltype(x.x:y)
+
+Base.rand(rng::AbstractRNG,
+          x::Random.SamplerTrivial{<:RandomExtensions.Make2{<:Integer, MyType}}) =
+              rand(rng, x[][1].x:x[][2])
+
+@testset "rand(make(CustomType(), ...))" begin
+    m = MyType(3)
+    @test rand(make(m, 3)) == 3
+    @test rand(make(m, big(5))) isa BigInt
+    @test rand(make(m, big(5))) ∈ 3:5
+    a = rand(make(m, big(6)), 5)
+    @test a isa Vector{BigInt}
+    @test length(a) == 5
+    @test all(∈(3:6), a)
+end
 
 ## @rand
 
