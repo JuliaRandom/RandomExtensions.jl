@@ -95,33 +95,46 @@ end
 
 macro make_array_container(Cont)
     definitions =
-        [ :(rand(rng::AbstractRNG,            $Cont, dims::Dims) =                 rand(rng,        _make_cont(t, dims))),
-          :(rand(                             $Cont, dims::Dims) =                 rand(GLOBAL_RNG, _make_cont(t, dims))),
-          :(rand(rng::AbstractRNG,            $Cont, dims::Integer...) =           rand(rng,        _make_cont(t, Dims(dims)))),
-          :(rand(                             $Cont, dims::Integer...) =           rand(GLOBAL_RNG, _make_cont(t, Dims(dims)))),
+        [ :(rand(rng::AbstractRNG,            $Cont, dims...)           = rand(rng,        _make_cont(t, _default_sampling(t), dims...))),
+          :(rand(                             $Cont, dims...)           = rand(GLOBAL_RNG, _make_cont(t, _default_sampling(t), dims...))),
 
-          :(rand(rng::AbstractRNG, X,         $Cont, dims::Dims) =                 rand(rng,        _make_cont(t, X, dims))),
-          :(rand(                  X,         $Cont, dims::Dims) =                 rand(GLOBAL_RNG, _make_cont(t, X, dims))),
-          :(rand(rng::AbstractRNG, X,         $Cont, dims::Integer...) =           rand(rng,        _make_cont(t, X, Dims(dims)))),
-          :(rand(                  X,         $Cont, dims::Integer...) =           rand(GLOBAL_RNG, _make_cont(t, X, Dims(dims)))),
+          :(rand(rng::AbstractRNG, X,         $Cont, dims...)           = rand(rng,        _make_cont(t, X, dims...))),
+          :(rand(                  X,         $Cont, dims...)           = rand(GLOBAL_RNG, _make_cont(t, X, dims...))),
 
-          :(rand(rng::AbstractRNG, ::Type{X}, $Cont, dims::Dims)       where {X} = rand(rng,        _make_cont(t, X, dims))),
-          :(rand(                  ::Type{X}, $Cont, dims::Dims)       where {X} = rand(GLOBAL_RNG, _make_cont(t, X, dims))),
-          :(rand(rng::AbstractRNG, ::Type{X}, $Cont, dims::Integer...) where {X} = rand(rng,        _make_cont(t, X, Dims(dims)))),
-          :(rand(                  ::Type{X}, $Cont, dims::Integer...) where {X} = rand(GLOBAL_RNG, _make_cont(t, X, Dims(dims)))),
+          :(rand(rng::AbstractRNG, ::Type{X}, $Cont, dims...) where {X} = rand(rng,        _make_cont(t, X, dims...))),
+          :(rand(                  ::Type{X}, $Cont, dims...) where {X} = rand(GLOBAL_RNG, _make_cont(t, X, dims...))),
+
+          # remove ambiguities with Random
+          :(rand(rng::AbstractRNG,            $Cont, dims::Integer...)           = rand(rng,        _make_cont(t, _default_sampling(t), dims...))),
+          :(rand(                             $Cont, dims::Integer...)           = rand(GLOBAL_RNG, _make_cont(t, _default_sampling(t), dims...))),
+
+          :(rand(rng::AbstractRNG, X,         $Cont, dims::Integer...)           = rand(rng,        _make_cont(t, X, dims...))),
+          :(rand(                  X,         $Cont, dims::Integer...)           = rand(GLOBAL_RNG, _make_cont(t, X, dims...))),
+
+          :(rand(rng::AbstractRNG, ::Type{X}, $Cont, dims::Integer...) where {X} = rand(rng,        _make_cont(t, X, dims...))),
+          :(rand(                  ::Type{X}, $Cont, dims::Integer...) where {X} = rand(GLOBAL_RNG, _make_cont(t, X, dims...))),
         ]
     esc(Expr(:block, definitions...))
 end
 
-_make_cont(args...) = make(args...)
-
 @make_array_container(t::Type{<:Array})
 @make_array_container(t::Type{<:BitArray})
 @make_array_container(t::AbstractFloat)
-_make_cont(t::AbstractFloat, x, dims::Dims{1}) = make(SparseVector,    x, t, dims)
-_make_cont(t::AbstractFloat,    dims::Dims{1}) = make(SparseVector,       t, dims)
-_make_cont(t::AbstractFloat, x, dims::Dims{2}) = make(SparseMatrixCSC, x, t, dims)
-_make_cont(t::AbstractFloat,    dims::Dims{2}) = make(SparseMatrixCSC,    t, dims)
+
+_make_cont(args...) = make(args...)
+_default_sampling(t) = default_sampling(t)
+
+_make_cont(t::AbstractFloat, x, dims::Dims{1})            = make(SparseVector,    x, t, dims)
+_make_cont(t::AbstractFloat, x, d1::Integer)              = make(SparseVector,    x, t, d1)
+_make_cont(t::AbstractFloat, x, dims::Dims{2})            = make(SparseMatrixCSC, x, t, dims)
+_make_cont(t::AbstractFloat, x, d1::Integer, d2::Integer) = make(SparseMatrixCSC, x, t, d1, d2)
+
+_default_sampling(t::AbstractFloat) = default_sampling(SparseVector)
+
+# ambiguities
+rand(rng::AbstractRNG, t::AbstractFloat, dims::Dims) = rand(rng, _make_cont(t, _default_sampling(t), dims))
+rand(                  t::AbstractFloat, dims::Dims) = rand(     _make_cont(t, _default_sampling(t), dims))
+
 
 ## sets/dicts
 

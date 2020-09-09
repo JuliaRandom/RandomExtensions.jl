@@ -57,6 +57,18 @@ _deduce_type(::Type{T}, ::Val{true},  ::Type{X}) where {T,X} = T
 _deduce_type(::Type{T}, ::Val{false}, ::Type{X}) where {T,X} = T{X}
 
 
+## Const
+
+# distribution always yielding the same value
+struct Const{T} <: Distribution{T}
+    x::T
+end
+
+Base.getindex(c::Const) = c.x
+
+rand(::AbstractRNG, c::SamplerTrivial{<:Const}) = c[][]
+
+
 ## Uniform
 
 abstract type Uniform{T} <: Distribution{T} end

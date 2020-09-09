@@ -178,6 +178,18 @@ julia> julia> rand(Bernoulli(0.2), BitVector, 10) # using the Bernoulli distribu
  false
   true
 
+julia> rand(Int8, Array, 3, 5) # more explicit syntax than rand(Int8, 3, 5) ...
+3×5 Array{Int8,2}:
+  -4  -110  70   -4    63
+ -38     4  55  -86  -106
+ -56  -124  46  118   114
+
+julia> rand(Int8, Array, 1:3, 3:5) # ... but dimensions can be specified with a distribution!
+                                   #     the size will be computed as (rand(1:3), rand(3:5))
+2×5 Array{Int8,2}:
+   -2  -43  106   -74   18
+ -117  -97    2  -126  125
+
 julia> rand(1:3, NTuple{3}) # NTuple{3} considered as a container, equivalent to rand(make(NTuple{3}, 1:3))
 (3, 3, 1)
 
