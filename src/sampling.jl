@@ -567,16 +567,19 @@ end
 
 # this is experimental
 
-@inline Sampler(RNG::Type{<:AbstractRNG}, (a, b)::Pair{<:Union{DataType,UnionAll}},
-                r::Repetition) =
+pair_to_make((a, b)::Pair) =
     b isa Tuple ?
-        Sampler(RNG, make(a, b...), r) :
-        Sampler(RNG, make(a, b), r)
+        make(a, map(pair_to_make, b)...) :
+        make(a, pair_to_make(b))
+
+pair_to_make(x) = x
+
+@inline Sampler(RNG::Type{<:AbstractRNG}, p::Pair{<:Union{DataType,UnionAll}},
+                r::Repetition) =
+                    Sampler(RNG, pair_to_make(p), r)
 
 # nothing can be inferred when only the pair type is available
 @inline gentype(::Type{<:Pair{<:Union{DataType,UnionAll}}}) = Any
 
-@inline gentype((a, b)::Pair{<:Union{DataType,UnionAll}}) =
-    b isa Tuple ?
-        gentype(make(a, b...)) :
-        gentype(make(a, b))
+@inline gentype(p::Pair{<:Union{DataType,UnionAll}}) =
+    gentype(pair_to_make(p))
