@@ -574,6 +574,9 @@ end
 
     @test rand(Complex => Int, 3) isa Vector{Complex{Int}}
     @test rand(Pair => (String, Int8), Set, 3) isa Set{Pair{String,Int8}}
+
+    nt = rand(NTuple{4} => Complex => 1:3)
+    @test nt isa NTuple{4,Complex{Int64}}
 end
 
 
