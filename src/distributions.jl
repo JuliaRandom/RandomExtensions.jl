@@ -39,6 +39,10 @@ maketype(::Type{T}, x...) where {T} = T
 
 make(::Type{T}, x...) where {T} = Make{maketype(T, x...)}(x...)
 
+# make(x) is defined in sampling.jl, and is a special case wrapping already valid
+# distributions (explicit or implicit)
+make(x1, x2, xs...) = Make{maketype(x1, x2, xs...)}(x1, x2, xs...)
+
 find_deduced_type(::Type{T}, ::X,     ) where {T,X} = deduce_type(T, gentype(X))
 find_deduced_type(::Type{T}, ::Type{X}) where {T,X} = deduce_type(T, X)
 
