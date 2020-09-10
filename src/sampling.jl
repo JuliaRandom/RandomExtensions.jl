@@ -2,9 +2,13 @@
 
 
 # allows to call `Sampler` only when the the arg isn't a Sampler itself
-sampler(RNG::Type{<:AbstractRNG}, X,          n::Repetition=Val(Inf))           = Sampler(RNG, X, n)
-sampler(RNG::Type{<:AbstractRNG}, ::Type{X},  n::Repetition=Val(Inf)) where {X} = Sampler(RNG, X, n)
-sampler(RNG::Type{<:AbstractRNG}, X::Sampler, n::Repetition=Val(Inf))           = X
+sampler(::Type{RNG}, X,          n::Repetition=Val(Inf)) where {RNG<:AbstractRNG} =
+    Sampler(RNG, X, n)
+
+sampler(::Type{RNG}, ::Type{X},  n::Repetition=Val(Inf)) where {RNG<:AbstractRNG,X} =
+    Sampler(RNG, X, n)
+
+sampler(::Type{RNG}, X::Sampler, n::Repetition=Val(Inf)) where {RNG<:AbstractRNG} = X
 
 sampler(rng::AbstractRNG, X, n::Repetition=Val(Inf)) = sampler(typeof(rng), X, n)
 
@@ -20,7 +24,7 @@ make() = make(Float64)
 # rand(rng, ::SamplerType{Make0{X}}) should not be overloaded, as make(T)
 # has this special pass-thru Sampler defined below
 
-Sampler(RNG::Type{<:AbstractRNG}, ::Make0{X}, n::Repetition) where {X} =
+Sampler(::Type{RNG}, ::Make0{X}, n::Repetition) where {RNG<:AbstractRNG,X} =
     Sampler(RNG, X, n)
 
 ### object: handles e.g. rand(make(1:3))
@@ -39,14 +43,15 @@ end
 # make(::Type) is intercepted in distribution.jl
 make(x) = MakeWrap{gentype(x),typeof(x)}(x)
 
-Sampler(RNG::Type{<:AbstractRNG}, x::MakeWrap, n::Repetition) =
+Sampler(::Type{RNG}, x::MakeWrap, n::Repetition) where {RNG<:AbstractRNG} =
     Sampler(RNG, x.x, n)
 
 
 ## Uniform
 
-Sampler(RNG::Type{<:AbstractRNG}, d::Union{UniformWrap,UniformType}, n::Repetition) =
-    Sampler(RNG, d[], n)
+Sampler(::Type{RNG}, d::Union{UniformWrap,UniformType}, n::Repetition
+        ) where {RNG<:AbstractRNG} =
+            Sampler(RNG, d[], n)
 
 
 ## floats
@@ -55,7 +60,7 @@ Sampler(RNG::Type{<:AbstractRNG}, d::Union{UniformWrap,UniformType}, n::Repetiti
 
 for CO in (:CloseOpen01, :CloseOpen12)
     @eval begin
-        Sampler(RNG::Type{<:AbstractRNG}, ::$CO{T}, n::Repetition) where {T} =
+        Sampler(::Type{RNG}, ::$CO{T}, n::Repetition) where {RNG<:AbstractRNG,T} =
             Sampler(RNG, Random.$CO{T}(), n)
 
         Sampler(::Type{<:AbstractRNG}, ::$CO{BigFloat}, ::Repetition) =
@@ -68,7 +73,7 @@ end
 # TODO: optimize for BigFloat
 
 for CO = (:OpenClose01, :OpenOpen01, :CloseClose01)
-    @eval Sampler(RNG::Type{<:AbstractRNG}, I::$CO{T}, n::Repetition) where {T} =
+    @eval Sampler(::Type{RNG}, I::$CO{T}, n::Repetition) where {RNG<:AbstractRNG,T} =
               SamplerSimple(I, CloseOpen01(T))
 end
 
@@ -108,7 +113,7 @@ for (CO, CO01) = (CloseOpenAB => CloseOpen01,
                   CloseCloseAB => CloseClose01,
                   OpenOpenAB => OpenOpen01)
 
-    @eval Sampler(RNG::Type{<:AbstractRNG}, d::$CO{T}, n::Repetition) where {T} =
+    @eval Sampler(::Type{RNG}, d::$CO{T}, n::Repetition) where {RNG<:AbstractRNG,T} =
         SamplerTag{$CO{T}}((a=d.a, d=d.b - d.a, sp=Sampler(RNG, $CO01{T}(), n)))
 
     @eval rand(rng::AbstractRNG, sp::SamplerTag{$CO{T}}) where {T} =
@@ -120,7 +125,7 @@ end
 rand(rng::AbstractRNG, ::SamplerTrivial{Normal01{T}}) where {T<:NormalTypes} =
     randn(rng, T)
 
-Sampler(RNG::Type{<:AbstractRNG}, d::Normalμσ{T}, n::Repetition) where {T} =
+Sampler(::Type{RNG}, d::Normalμσ{T}, n::Repetition) where {RNG<:AbstractRNG,T} =
     SamplerSimple(d, Sampler(RNG, Normal(T), n))
 
 rand(rng::AbstractRNG, sp::SamplerSimple{Normalμσ{T},<:Sampler}) where {T} =
@@ -129,7 +134,7 @@ rand(rng::AbstractRNG, sp::SamplerSimple{Normalμσ{T},<:Sampler}) where {T} =
 rand(rng::AbstractRNG, ::SamplerTrivial{Exponential1{T}}) where {T<:AbstractFloat} =
     randexp(rng, T)
 
-Sampler(RNG::Type{<:AbstractRNG}, d::Exponentialθ{T}, n::Repetition) where {T} =
+Sampler(::Type{RNG}, d::Exponentialθ{T}, n::Repetition) where {RNG<:AbstractRNG,T} =
     SamplerSimple(d, Sampler(RNG, Exponential(T), n))
 
 rand(rng::AbstractRNG, sp::SamplerSimple{Exponentialθ{T},<:Sampler}) where {T} =
@@ -138,7 +143,7 @@ rand(rng::AbstractRNG, sp::SamplerSimple{Exponentialθ{T},<:Sampler}) where {T} 
 
 ## Bernoulli
 
-Sampler(RNG::Type{<:AbstractRNG}, b::Bernoulli, n::Repetition) =
+Sampler(::Type{RNG}, b::Bernoulli, n::Repetition) where {RNG<:AbstractRNG} =
     SamplerTag{typeof(b)}(b.p+1.0)
 
 rand(rng::AbstractRNG, sp::SamplerTag{Bernoulli{T}}) where {T} =
@@ -147,7 +152,7 @@ rand(rng::AbstractRNG, sp::SamplerTag{Bernoulli{T}}) where {T} =
 
 ## Categorical
 
-Sampler(RNG::Type{<:AbstractRNG}, c::Categorical, n::Repetition) =
+Sampler(::Type{RNG}, c::Categorical, n::Repetition) where {RNG<:AbstractRNG} =
     SamplerSimple(c, Sampler(RNG, CloseOpen(), n))
 
 # unfortunately requires @inline to avoid allocating
@@ -182,12 +187,13 @@ maketype(::Type{Pair{X,Y} where X}, x, _) where {Y}   = Pair{val_gentype(x), Y}
 maketype(::Type{Pair{X,Y}},         _, _) where {X,Y} = Pair{X,Y}
 
 maketype(::Type{Complex},    x) = Complex{val_gentype(x)}
-maketype(T::Type{<:Complex}, _) = T
+maketype(::Type{T}, _) where {T<:Complex} = T
 
 maketype(::Type{Complex},    x, y) = Complex{promote_type(val_gentype(x), val_gentype(y))}
-maketype(T::Type{<:Complex}, _, _) = T
+maketype(::Type{T}, _, _) where {T<:Complex} = T
 
-function Sampler(RNG::Type{<:AbstractRNG}, u::Make2{T}, n::Repetition) where T <: Union{Pair,Complex}
+function Sampler(::Type{RNG}, u::Make2{T}, n::Repetition
+                 ) where RNG<:AbstractRNG where T <: Union{Pair,Complex}
     sp1 = sampler(RNG, u[1], n)
     sp2 = u[1] == u[2] ? sp1 : sampler(RNG, u[2], n)
     SamplerTag{Cont{T}}((sp1, sp2))
@@ -200,15 +206,15 @@ rand(rng::AbstractRNG, sp::SamplerTag{Cont{T}}) where {T<:Union{Pair,Complex}} =
 #### additional convenience methods
 
 # rand(Pair{A,B}) => rand(make(Pair{A,B}, A, B))
-Sampler(RNG::Type{<:AbstractRNG}, ::Type{Pair{A,B}}, n::Repetition) where {A,B} =
+Sampler(::Type{RNG}, ::Type{Pair{A,B}}, n::Repetition) where {RNG<:AbstractRNG,A,B} =
     Sampler(RNG, make(Pair{A,B}, A, B), n)
 
 # rand(make(Complex, x)) => rand(make(Complex, x, x))
-Sampler(RNG::Type{<:AbstractRNG}, u::Make1{T}, n::Repetition) where {T<:Complex} =
+Sampler(::Type{RNG}, u::Make1{T}, n::Repetition) where {RNG<:AbstractRNG,T<:Complex} =
     Sampler(RNG, make(T, u[1], u[1]), n)
 
 # rand(Complex{T}) => rand(make(Complex{T}, T, T)) (redundant with implem in Random)
-Sampler(RNG::Type{<:AbstractRNG}, ::Type{Complex{T}}, n::Repetition) where {T<:Real} =
+Sampler(::Type{RNG}, ::Type{Complex{T}}, n::Repetition) where {RNG<:AbstractRNG,T<:Real} =
     Sampler(RNG, make(Complex{T}, T, T), n)
 
 
@@ -216,8 +222,9 @@ Sampler(RNG::Type{<:AbstractRNG}, ::Type{Complex{T}}, n::Repetition) where {T<:R
 
 #### "simple scalar" (non-make) version
 
-Sampler(RNG::Type{<:AbstractRNG}, ::Type{T}, n::Repetition) where {T<:Union{Tuple,NamedTuple}} =
-    Sampler(RNG, make(T), n)
+Sampler(::Type{RNG}, ::Type{T}, n::Repetition
+        ) where {RNG<:AbstractRNG,T<:Union{Tuple,NamedTuple}} =
+            Sampler(RNG, make(T), n)
 
 #### make
 
@@ -265,7 +272,7 @@ _isNTuple(::Type{T}, args...) where {T<:Tuple} =
     end
 end
 
-make(T::Type{<:Tuple}, args...) = _make(T, args...)
+make(::Type{T}, args...) where {T<:Tuple} = _make(T, args...)
 
 # make(Tuple, X, n::Integer)
 
@@ -306,13 +313,15 @@ end
 
 #### Sampler for general tuples
 
-@generated function Sampler(RNG::Type{<:AbstractRNG}, c::Make1{T,X}, n::Repetition) where {T<:Tuple,X<:Tuple}
+@generated function Sampler(::Type{RNG}, c::Make1{T,X}, n::Repetition
+                            ) where {RNG<:AbstractRNG,T<:Tuple,X<:Tuple}
     @assert fieldcount(T) == fieldcount(X)
     sps = [:(sampler(RNG, c[1][$i], n)) for i in 1:length(T.parameters)]
     :(SamplerTag{Cont{T}}(tuple($(sps...))))
 end
 
-@generated function Sampler(RNG::Type{<:AbstractRNG}, ::Make0{T}, n::Repetition) where {T<:Tuple}
+@generated function Sampler(::Type{RNG}, ::Make0{T}, n::Repetition
+                            ) where {RNG<:AbstractRNG,T<:Tuple}
     d = Dict{DataType,Int}()
     sps = []
     for t in T.parameters
@@ -344,7 +353,7 @@ end
 
 # should catch Tuple{Integer,Integer} which is not NTuple, or even Tuple{Int,UInt}, when only one sampler was passed
 
-Sampler(RNG::Type{<:AbstractRNG}, c::Make1{T,X}, n::Repetition) where {T<:Tuple,X} =
+Sampler(::Type{RNG}, c::Make1{T,X}, n::Repetition) where {RNG<:AbstractRNG,T<:Tuple,X} =
     SamplerTag{Cont{T}}(sampler(RNG, c[1], n))
 
 @generated function rand(rng::AbstractRNG, sp::SamplerTag{Cont{T},S}) where {T<:Tuple,S<:Sampler}
@@ -354,7 +363,7 @@ end
 
 ### named tuples
 
-make(T::Type{<:NamedTuple}, args...) = _make(T, args...)
+make(::Type{T}, args...) where {T<:NamedTuple} = _make(T, args...)
 
 _make(::Type{NamedTuple{}}) = Make0{NamedTuple{}}()
 
@@ -373,10 +382,10 @@ function _make(::Type{NamedTuple{K,V}}, X...) where {K,V}
 end
 
 # necessary to avoid circular defintions
-Sampler(RNG::Type{<:AbstractRNG}, m::Make0{NamedTuple}, n::Repetition) =
+Sampler(::Type{RNG}, m::Make0{NamedTuple}, n::Repetition) where {RNG<:AbstractRNG} =
     SamplerType{NamedTuple}()
 
-Sampler(RNG::Type{<:AbstractRNG}, m::Make1{T}, n::Repetition) where T <: NamedTuple =
+Sampler(::Type{RNG}, m::Make1{T}, n::Repetition) where {RNG<:AbstractRNG, T <: NamedTuple} =
     SamplerTag{Cont{T}}(Sampler(RNG, m[1] , n))
 
 rand(rng::AbstractRNG, sp::SamplerType{NamedTuple{}}) = NamedTuple()
@@ -391,11 +400,11 @@ rand(rng::AbstractRNG, sp::SamplerTag{Cont{T}}) where T <: NamedTuple =
 
 const SetDict = Union{AbstractSet,AbstractDict}
 
-make(T::Type{<:SetDict}, X,         n::Integer)           = Make2{maketype(T, X, n)}(X , Int(n))
-make(T::Type{<:SetDict}, ::Type{X}, n::Integer) where {X} = Make2{maketype(T, X, n)}(X , Int(n))
-make(T::Type{<:SetDict},            n::Integer)           = make(T, default_sampling(T), Int(n))
+make(::Type{T}, X,         n::Integer) where {T<:SetDict}   = Make2{maketype(T, X, n)}(X , Int(n))
+make(::Type{T}, ::Type{X}, n::Integer) where {T<:SetDict,X} = Make2{maketype(T, X, n)}(X , Int(n))
+make(::Type{T},            n::Integer) where {T<:SetDict}   = make(T, default_sampling(T), Int(n))
 
-Sampler(RNG::Type{<:AbstractRNG}, c::Make2{T}, n::Repetition) where {T<:SetDict} =
+Sampler(::Type{RNG}, c::Make2{T}, n::Repetition) where {RNG<:AbstractRNG,T<:SetDict} =
     SamplerTag{Cont{T}}((sp = sampler(RNG, c[1], n),
                          len = c[2]))
 
@@ -424,8 +433,9 @@ maketype(::Type{BitSet}, _, _) = BitSet
 
 ### dicts
 
-maketype(D::Type{<:AbstractDict{K,V}}, _,      ::Integer) where {K,V} = D
-maketype(D::Type{<:AbstractDict{K,V}}, ::Type, ::Integer) where {K,V} = D
+# K,V parameters are necessary here
+maketype(::Type{D}, _,      ::Integer) where {K,V,D<:AbstractDict{K,V}} = D
+maketype(::Type{D}, ::Type, ::Integer) where {K,V,D<:AbstractDict{K,V}} = D
 
 #### Dict/ImmutableDict
 
@@ -453,11 +463,17 @@ rand(rng::AbstractRNG, sp::SamplerTag{Cont{S}}) where {S<:Base.ImmutableDict} =
 default_sampling(::Type{<:AbstractArray{T}}) where {T} = Uniform(T)
 default_sampling(::Type{<:AbstractArray})              = Uniform(Float64)
 
-make(A::Type{<:AbstractArray}, X,         d1::Integer, dims::Integer...)           = make(A, X, Dims((d1, dims...)))
-make(A::Type{<:AbstractArray}, ::Type{X}, d1::Integer, dims::Integer...) where {X} = make(A, X, Dims((d1, dims...)))
+make(::Type{A}, X,         d1::Integer, dims::Integer...) where {A<:AbstractArray} =
+    make(A, X, Dims((d1, dims...)))
 
-make(A::Type{<:AbstractArray}, dims::Dims)                    = make(A, default_sampling(A), dims)
-make(A::Type{<:AbstractArray}, d1::Integer, dims::Integer...) = make(A, default_sampling(A), Dims((d1, dims...)))
+make(::Type{A}, ::Type{X}, d1::Integer, dims::Integer...) where {A<:AbstractArray,X} =
+    make(A, X, Dims((d1, dims...)))
+
+make(::Type{A}, dims::Dims)                    where {A<:AbstractArray} =
+    make(A, default_sampling(A), dims)
+
+make(::Type{A}, d1::Integer, dims::Integer...) where {A<:AbstractArray} =
+    make(A, default_sampling(A), Dims((d1, dims...)))
 
 if VERSION < v"1.1.0"
      # to resolve ambiguity
@@ -465,7 +481,7 @@ if VERSION < v"1.1.0"
     make(A::Type{<:AbstractArray}, X, d1::Integer, d2::Integer) = make(A, X, Dims((d1, d2)))
 end
 
-Sampler(RNG::Type{<:AbstractRNG}, c::Make2{A}, n::Repetition) where {A<:AbstractArray} =
+Sampler(::Type{RNG}, c::Make2{A}, n::Repetition) where {RNG<:AbstractRNG,A<:AbstractArray} =
     SamplerTag{A}((sampler(RNG, c[1], n), c[2]))
 
 rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:AbstractArray} =
@@ -476,10 +492,10 @@ rand(rng::AbstractRNG, sp::SamplerTag{A}) where {A<:AbstractArray} =
 
 # cf. inference bug https://github.com/JuliaLang/julia/issues/28762
 # we have to write out all combinations for getting proper inference
-maketype(A::Type{Array{T}},           _, ::Dims{N}) where {T, N} = Array{T, N}
-maketype(A::Type{Array{T,N}},         _, ::Dims{N}) where {T, N} = Array{T, N}
-maketype(A::Type{Array{T,N} where T}, X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
-maketype(A::Type{Array},              X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
+maketype(::Type{Array{T}},           _, ::Dims{N}) where {T, N} = Array{T, N}
+maketype(::Type{Array{T,N}},         _, ::Dims{N}) where {T, N} = Array{T, N}
+maketype(::Type{Array{T,N} where T}, X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
+maketype(::Type{Array},              X, ::Dims{N}) where {N}    = Array{val_gentype(X), N}
 
 #### BitArray
 
@@ -498,6 +514,7 @@ maketype(::Type{SparseVector{X}},    _, p::AbstractFloat, dims::Dims{1}) where {
 maketype(::Type{SparseMatrixCSC{X}}, _, p::AbstractFloat, dims::Dims{2}) where {X} = SparseMatrixCSC{X, Int}
 
 # need to be explicit and split these defs in 2 (or 4) to avoid ambiguities
+# TODO: check that using T instead of SparseVector in the RHS doesn't have perfs issues
 make(T::Type{SparseVector},    X,         p::AbstractFloat, d1::Integer)                        = make(T, X, p, Dims((d1,)))
 make(T::Type{SparseVector},    ::Type{X}, p::AbstractFloat, d1::Integer)              where {X} = make(T, X, p, Dims((d1,)))
 make(T::Type{SparseMatrixCSC}, X,         p::AbstractFloat, d1::Integer, d2::Integer)           = make(T, X, p, Dims((d1, d2)))
@@ -510,7 +527,7 @@ make(T::Type{SparseVector},    p::AbstractFloat, dims::Dims{1}) = make(T, defaul
 make(T::Type{SparseMatrixCSC}, p::AbstractFloat, dims::Dims{2}) = make(T, default_sampling(T), p, dims)
 
 
-Sampler(RNG::Type{<:AbstractRNG}, c::Make3{A}, n::Repetition) where {A<:AbstractSparseArray} =
+Sampler(::Type{RNG}, c::Make3{A}, n::Repetition) where {RNG<:AbstractRNG,A<:AbstractSparseArray} =
     SamplerTag{Cont{A}}((sp = sampler(RNG, c[1], n),
                          p = c[2],
                          dims = c[3]))
@@ -531,7 +548,7 @@ function random_staticarrays()
             maketype(::Type{<:$Arr{S}}  , X) where {S<:Tuple}   = $Arr{S,val_gentype(X),tuple_length(S),tuple_prod(S)}
             maketype(::Type{<:$Arr{S,T}}, _) where {S<:Tuple,T} = $Arr{S,T,tuple_length(S),tuple_prod(S)}
 
-            Sampler(RNG::Type{<:AbstractRNG}, c::Make1{A}, n::Repetition) where {A<:$Arr} =
+            Sampler(::Type{RNG}, c::Make1{A}, n::Repetition) where {RNG<:AbstractRNG,A<:$Arr} =
                 SamplerTag{Cont{A}}(Sampler(RNG, c[1], n))
 
             rand(rng::AbstractRNG, sp::SamplerTag{Cont{$Arr{S,T,N,L}}}) where {S,T,N,L} =
@@ -559,10 +576,10 @@ let b = UInt8['0':'9';'A':'Z';'a':'z'],
     make(::Type{String}, n::Integer, chars)                = Make2{String}(Int(n), chars)
     make(::Type{String}, n::Integer, ::Type{C}) where {C}  = Make2{String}(Int(n), C)
 
-    Sampler(RNG::Type{<:AbstractRNG}, ::Type{String}, n::Repetition) =
+    Sampler(::Type{RNG}, ::Type{String}, n::Repetition) where {RNG<:AbstractRNG} =
         SamplerTag{Cont{String}}((RNG === MersenneTwister ? s : Sampler(RNG, b, n)) => 8)
 
-    function Sampler(RNG::Type{<:AbstractRNG}, c::Make2{String}, n::Repetition)
+    function Sampler(::Type{RNG}, c::Make2{String}, n::Repetition) where {RNG<:AbstractRNG}
         sp = RNG === MersenneTwister && c[2] === b ?
             s : sampler(RNG, c[2], n)
         SamplerTag{Cont{String}}(sp => c[1])
@@ -583,7 +600,7 @@ pair_to_make((a, b)::Pair) =
 
 pair_to_make(x) = x
 
-@inline Sampler(RNG::Type{<:AbstractRNG}, p::Pair, r::Repetition) =
+@inline Sampler(::Type{RNG}, p::Pair, r::Repetition) where {RNG<:AbstractRNG} =
     Sampler(RNG, pair_to_make(p), r)
 
 # nothing can be inferred when only the pair type is available
