@@ -13,10 +13,18 @@ struct Make{T,X<:Tuple, XX<:Tuple} <: Distribution{T}
 end
 
 # @inline necessary for one @inferred test on arrays
-@inline Base.getindex(m::Make{T,X}, i::Int) where {T,X} =
+@inline function Base.getindex(m::Make{T,X}, i::Integer) where {T,X}
+    i = Int(i)
     fieldtype(X, i) <: Type ?
         fieldtype(X, i).parameters[1] :
         m.x[i]
+end
+
+@inline Base.getindex(m::Make, idxs::AbstractVector{<:Integer}) =
+    ntuple(i->m[idxs[i]], length(idxs))
+# seems faster than `Tuple(m[i] for i in idxs)`
+
+Base.lastindex(m::Make) = lastindex(m.x)
 
 @generated function Make{T}(X...) where T
     XX = Tuple{(x <: Type ? Nothing : x for x in X)...}

@@ -602,6 +602,19 @@ Base.rand(rng::AbstractRNG,
     @test all(∈(3:6), a)
 end
 
+## Make getindex
+
+@testset "Make getindex" begin
+    m = make(Pair, 1:2, Bool, make(String, 3))
+    @test m isa RandomExtensions.Make3
+    @test m[1] == 1:2
+    @test m[0x2] == Bool
+    @test m[3] isa RandomExtensions.Make2
+    @test m[1:2] == (m[1], m[2])
+    @test m[[2, 3]] == m[2:end] == (m[2], m[3])
+    @test m[big(3)][1:end] == m[3][1:2]
+end
+
 ## @rand
 
 struct Die
