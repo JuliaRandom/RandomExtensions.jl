@@ -42,13 +42,21 @@ Make1{T}(x)       where {T} = Make{T}(x)
 Make2{T}(x, y)    where {T} = Make{T}(x, y)
 Make3{T}(x, y, z) where {T} = Make{T}(x, y, z)
 
-# default maketype & make
+# default maketype & make & Make(...)
+
+# Make(...) is not meant to be specialized, i.e. Make(a, b, c) always create a Make3,
+# and is equal to the *default* make(...)
+# (it's a fall-back for client code which can help break recursivity)
+# TODO: add tests for Make(...)
+
 maketype(::Type{T}, x...) where {T} = T
 
+Make(::Type{T}, x...) where {T} = Make{maketype(T, x...)}(x...)
 make(::Type{T}, x...) where {T} = Make{maketype(T, x...)}(x...)
 
 # make(x) is defined in sampling.jl, and is a special case wrapping already valid
 # distributions (explicit or implicit)
+Make(x1, x2, xs...) = Make{maketype(x1, x2, xs...)}(x1, x2, xs...)
 make(x1, x2, xs...) = Make{maketype(x1, x2, xs...)}(x1, x2, xs...)
 
 find_deduced_type(::Type{T}, ::X,     ) where {T,X} = deduce_type(T, gentype(X))

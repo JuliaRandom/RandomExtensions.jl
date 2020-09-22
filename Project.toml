@@ -1,7 +1,7 @@
 authors = ["Rafael Fourquet <fourquet.rafael@gmail.com>"]
 name = "RandomExtensions"
 uuid = "fb686558-2515-59ef-acaa-46db3789a887"
-version = "0.4.0"
+version = "0.4.1"
 
 [deps]
 Random       = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
