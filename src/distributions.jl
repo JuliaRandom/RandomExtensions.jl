@@ -33,14 +33,18 @@ Base.lastindex(m::Make) = lastindex(m.x)
 end
 
 Make0{T} = Make{T,Tuple{}}
-Make1{T} = Make{T,Tuple{X}}     where X
-Make2{T} = Make{T,Tuple{X,Y}}   where {X, Y}
-Make3{T} = Make{T,Tuple{X,Y,Z}} where {X, Y, Z}
+Make1{T} = Make{T,Tuple{X}}         where X
+Make2{T} = Make{T,Tuple{X,Y}}       where {X, Y}
+Make3{T} = Make{T,Tuple{X,Y,Z}}     where {X, Y, Z}
+Make4{T} = Make{T,Tuple{X,Y,Z,U}}   where {X, Y, Z, U}
+Make5{T} = Make{T,Tuple{X,Y,Z,U,V}} where {X, Y, Z, U, V}
 
-Make0{T}()        where {T} = Make{T}()
-Make1{T}(x)       where {T} = Make{T}(x)
-Make2{T}(x, y)    where {T} = Make{T}(x, y)
-Make3{T}(x, y, z) where {T} = Make{T}(x, y, z)
+Make0{T}()              where {T} = Make{T}()
+Make1{T}(x)             where {T} = Make{T}(x)
+Make2{T}(x, y)          where {T} = Make{T}(x, y)
+Make3{T}(x, y, z)       where {T} = Make{T}(x, y, z)
+Make4{T}(x, y, z, u)    where {T} = Make{T}(x, y, z, u)
+Make5{T}(x, y, z, u, v) where {T} = Make{T}(x, y, z, u, v)
 
 # default maketype & make & Make(...)
 
