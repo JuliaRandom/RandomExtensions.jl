@@ -76,6 +76,10 @@ _deduce_type(::Type{T}, ::Val{false}, ::Type{X}, ::Type{Y}) where {T,X,Y} = dedu
 _deduce_type(::Type{T}, ::Val{true},  ::Type{X}) where {T,X} = T
 _deduce_type(::Type{T}, ::Val{false}, ::Type{X}) where {T,X} = T{X}
 
+# show(::Make)
+
+Base.show(io::IO, m::Make{T}) where {T} = print(io, typeof(m).name, "{", T, "}", m.x)
+
 
 ## Uniform
 
