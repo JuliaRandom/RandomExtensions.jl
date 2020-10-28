@@ -82,7 +82,15 @@ _deduce_type(::Type{T}, ::Val{false}, ::Type{X}) where {T,X} = T{X}
 
 # show(::Make)
 
-Base.show(io::IO, m::Make{T}) where {T} = print(io, typeof(m).name, "{", T, "}", m.x)
+function Base.show(io::IO, m::Make{T}) where {T}
+    M = typeof(m)
+    P = M.parameters[2].parameters
+    t = ntuple(length(m.x)) do i
+        P[i] isa Type{<:Type} ? P[i].parameters[1] : m.x[i]
+    end
+    Base.show_type_name(io, M.name)
+    print(io, "{", T, "}", t)
+end
 
 
 ## Uniform
