@@ -33,6 +33,15 @@ val_gentype(X)                   = gentype(X)
 val_gentype(::Type{X}) where {X} = X
 
 
+## rand! for non-containers
+
+rand!(y, X)                   = rand!(GLOBAL_RNG, y, X)
+rand!(y, ::Type{X}) where {X} = rand!(GLOBAL_RNG, y, X)
+
+rand!(rng::AbstractRNG, y, X)                   = rand!(rng, y, Sampler(rng, X, Val(1)))
+rand!(rng::AbstractRNG, y, ::Type{X}) where {X} = rand!(rng, y, Sampler(rng, X, Val(1)))
+
+
 ## includes
 
 include("distributions.jl")
