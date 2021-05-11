@@ -87,7 +87,11 @@ end
 const rInt8 = typemin(Int8):typemax(Int8)
 const spString = Sampler(MersenneTwister, String)
 
-@testset "Containers" for rng in ([], [MersenneTwister(0)], [RandomDevice()])
+const RNGS = ([]                   => "global RNG",
+              [MersenneTwister(0)] => "MersenneTwister",
+              [RandomDevice()]     => "RandomDevice")
+
+@testset "Containers $name" for (rng, name) in RNGS
     # Array
     for T = (Int, Int8)
         for (A, AT) = ((Array, Int8), (Array{T}, T), (Vector, Int8), (Vector{T}, T))
@@ -124,6 +128,7 @@ const spString = Sampler(MersenneTwister, String)
     @test s isa BitSet
     @test length(s) == 3
     @test s <= Set(1:10)
+
     @testset "default_sampling(::BitSet) == Int8" begin
         Random.seed!(0)
         rand!(s)
@@ -248,7 +253,7 @@ const spString = Sampler(MersenneTwister, String)
     @test all(in(1:3), s)
 end
 
-@testset "Rand" for rng in ([], [MersenneTwister(0)], [RandomDevice()])
+@testset "Rand $name" for (rng, name) in RNGS
     for XT = zip(([Int], [1:3], []), (Int, Int, Float64))
         X, T = XT
         r = Rand(rng..., X...)
