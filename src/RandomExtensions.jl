@@ -69,7 +69,7 @@ Pick a random element or collection of random elements from the set of values sp
 * an `AbstractDict` or `AbstractSet` object,
 * a string (considered as a collection of characters), or
 * a type: the set of values to pick from is then equivalent to `typemin(S):typemax(S)` for
-  integers (this is not applicable to [`BigInt`](@ref)), and to ``[0, 1)`` for floating
+  integers (this is not applicable to `BigInt`, and to ``[0, 1)`` for floating
   point numbers;
 * a `Distribution` object, e.g. `Normal()` for a normal distribution (like `randn()`),
   or `CloseOpen(10.0, 20.0)` for uniform `Float64` numbers in the range ``[10.0, 20.0)``;
@@ -78,7 +78,7 @@ Pick a random element or collection of random elements from the set of values sp
   given as concrete types, e.g. `make(ComplexF64, 1:3, Int)` to generate `ComplexF64` instead
   of `Complex{Int}`.
 
-`S` usually defaults to [`Float64`](@ref).
+`S` usually defaults to `Float64`.
 
 If `C...` is not specified, `rand` produces a scalar. Otherwise, `C` can be:
 

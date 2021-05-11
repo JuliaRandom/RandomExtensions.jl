@@ -1,8 +1,8 @@
 # RandomExtensions
 
-[![Build Status](https://travis-ci.org/rfourquet/RandomExtensions.jl.svg?branch=master)](https://travis-ci.org/rfourquet/RandomExtensions.jl)
-[![Coverage Status](https://coveralls.io/repos/rfourquet/RandomExtensions.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/rfourquet/RandomExtensions.jl?branch=master)
-[![codecov.io](http://codecov.io/github/rfourquet/RandomExtensions.jl/coverage.svg?branch=master)](http://codecov.io/github/rfourquet/RandomExtensions.jl?branch=master)
+[![Tests Status](https://github.com/JuliaRandom/RandomExtensions.jl/workflows/CI/badge.svg)](https://github.com/JuliaRandom/RandomExtensions.jl/actions?query=workflow%3ACI)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaRandom.github.io/RandomExtensions.jl/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaRandom.github.io/RandomExtensions.jl/dev)
 
 This package explores a possible extension of `rand`-related
 functionalities (from the `Random` module); the code is initially
