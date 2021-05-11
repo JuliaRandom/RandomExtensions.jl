@@ -9,9 +9,10 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [extras]
 ReTest = "e0db7c4e-2690-44b9-bad6-7687da720f89"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["ReTest"]
+test = ["ReTest", "Test"]
 
 [compat]
 ReTest = "0.2"

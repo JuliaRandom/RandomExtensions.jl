@@ -1,6 +1,6 @@
 module RandomExtensionsTests
 
-using Test
+using ReTest
 include("tests.jl")
 
 end

@@ -1,8 +1,5 @@
-module RandomExtensionsTests
-
 using RandomExtensions, Random, SparseArrays
 using Random: Sampler, gentype
-using ReTest
 
 @testset "Distributions" begin
     # Normal/Exponential
@@ -749,7 +746,8 @@ end
 module TestAtRand
 # only using RandomExtensions, not Random, to check we don't depend on
 # some imported names like e.g. SamplerTrivial
-using RandomExtensions, ReTest
+using RandomExtensions
+using ..RandomExtensionsTests: @test, @testset
 
 struct Die n end
 
@@ -763,5 +761,3 @@ struct Die n end
 end
 
 end # module TestAtRand
-
-end # module RandomExtensionsTests
