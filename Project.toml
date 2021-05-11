@@ -14,5 +14,5 @@ ReTest = "e0db7c4e-2690-44b9-bad6-7687da720f89"
 test = ["ReTest"]
 
 [compat]
-ReTest = "0.1"
+ReTest = "0.2"
 julia = "1"
