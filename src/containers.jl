@@ -50,7 +50,7 @@ macro make_container(margs...)
             end
         end
         for def in (:(rand(rng::AbstractRNG) where {} = rand(rng, make())),
-                    :(rand() where {} = rand(GLOBAL_RNG, make())))
+                    :(rand() where {} = rand(default_rng(), make())))
             append!(def.args[1].args[1].args, filter(!=(()), as1))
             as2 = copy(as1)
             as2[1], as2[2] = as2[2], as2[1]
@@ -95,20 +95,20 @@ end
 
 macro make_array_container(Cont)
     definitions =
-        [ :(rand(rng::AbstractRNG,            $Cont, dims::Dims) =                 rand(rng,        _make_cont(t, dims))),
-          :(rand(                             $Cont, dims::Dims) =                 rand(GLOBAL_RNG, _make_cont(t, dims))),
-          :(rand(rng::AbstractRNG,            $Cont, dims::Integer...) =           rand(rng,        _make_cont(t, Dims(dims)))),
-          :(rand(                             $Cont, dims::Integer...) =           rand(GLOBAL_RNG, _make_cont(t, Dims(dims)))),
+        [ :(rand(rng::AbstractRNG,            $Cont, dims::Dims) =                 rand(rng,           _make_cont(t, dims))),
+          :(rand(                             $Cont, dims::Dims) =                 rand(default_rng(), _make_cont(t, dims))),
+          :(rand(rng::AbstractRNG,            $Cont, dims::Integer...) =           rand(rng,           _make_cont(t, Dims(dims)))),
+          :(rand(                             $Cont, dims::Integer...) =           rand(default_rng(), _make_cont(t, Dims(dims)))),
 
-          :(rand(rng::AbstractRNG, X,         $Cont, dims::Dims) =                 rand(rng,        _make_cont(t, X, dims))),
-          :(rand(                  X,         $Cont, dims::Dims) =                 rand(GLOBAL_RNG, _make_cont(t, X, dims))),
-          :(rand(rng::AbstractRNG, X,         $Cont, dims::Integer...) =           rand(rng,        _make_cont(t, X, Dims(dims)))),
-          :(rand(                  X,         $Cont, dims::Integer...) =           rand(GLOBAL_RNG, _make_cont(t, X, Dims(dims)))),
+          :(rand(rng::AbstractRNG, X,         $Cont, dims::Dims) =                 rand(rng,           _make_cont(t, X, dims))),
+          :(rand(                  X,         $Cont, dims::Dims) =                 rand(default_rng(), _make_cont(t, X, dims))),
+          :(rand(rng::AbstractRNG, X,         $Cont, dims::Integer...) =           rand(rng,           _make_cont(t, X, Dims(dims)))),
+          :(rand(                  X,         $Cont, dims::Integer...) =           rand(default_rng(), _make_cont(t, X, Dims(dims)))),
 
-          :(rand(rng::AbstractRNG, ::Type{X}, $Cont, dims::Dims)       where {X} = rand(rng,        _make_cont(t, X, dims))),
-          :(rand(                  ::Type{X}, $Cont, dims::Dims)       where {X} = rand(GLOBAL_RNG, _make_cont(t, X, dims))),
-          :(rand(rng::AbstractRNG, ::Type{X}, $Cont, dims::Integer...) where {X} = rand(rng,        _make_cont(t, X, Dims(dims)))),
-          :(rand(                  ::Type{X}, $Cont, dims::Integer...) where {X} = rand(GLOBAL_RNG, _make_cont(t, X, Dims(dims)))),
+          :(rand(rng::AbstractRNG, ::Type{X}, $Cont, dims::Dims)       where {X} = rand(rng,           _make_cont(t, X, dims))),
+          :(rand(                  ::Type{X}, $Cont, dims::Dims)       where {X} = rand(default_rng(), _make_cont(t, X, dims))),
+          :(rand(rng::AbstractRNG, ::Type{X}, $Cont, dims::Integer...) where {X} = rand(rng,           _make_cont(t, X, Dims(dims)))),
+          :(rand(                  ::Type{X}, $Cont, dims::Integer...) where {X} = rand(default_rng(), _make_cont(t, X, Dims(dims)))),
         ]
     esc(Expr(:block, definitions...))
 end
@@ -133,9 +133,9 @@ function _rand!(rng::AbstractRNG, A::SetDict, n::Integer, sp::Sampler)
     A
 end
 
-rand!(                  A::SetDict, X=default_sampling(A)) = rand!(GLOBAL_RNG, A, X)
+rand!(                  A::SetDict, X=default_sampling(A)) = rand!(default_rng(), A, X)
 rand!(rng::AbstractRNG, A::SetDict, X=default_sampling(A)) = _rand!(rng, A, length(A), sampler(rng, X))
-rand!(                  A::SetDict, ::Type{X}) where {X}  = rand!(GLOBAL_RNG, A, X)
+rand!(                  A::SetDict, ::Type{X}) where {X}  = rand!(default_rng(), A, X)
 rand!(rng::AbstractRNG, A::SetDict, ::Type{X}) where {X}  = rand!(rng, A, Sampler(rng, X))
 
 @make_container(T::Type{<:SetDict}, n::Integer)

@@ -13,6 +13,12 @@ using Random: GLOBAL_RNG, SamplerTrivial, SamplerSimple, SamplerTag, SamplerType
 
 using SparseArrays: sprand, sprandn, AbstractSparseArray, SparseVector, SparseMatrixCSC
 
+if isdefined(Random, :default_rng)
+    using Random: default_rng
+else
+    @inline default_rng() = GLOBAL_RNG
+end
+
 
 ## a dummy container type to take advangage of SamplerTag constructor
 
@@ -35,8 +41,8 @@ val_gentype(::Type{X}) where {X} = X
 
 ## rand! for non-containers
 
-rand!(y, X)                   = rand!(GLOBAL_RNG, y, X)
-rand!(y, ::Type{X}) where {X} = rand!(GLOBAL_RNG, y, X)
+rand!(y, X)                   = rand!(default_rng(), y, X)
+rand!(y, ::Type{X}) where {X} = rand!(default_rng(), y, X)
 
 rand!(rng::AbstractRNG, y, X)                   = rand!(rng, y, Sampler(rng, X, Val(1)))
 rand!(rng::AbstractRNG, y, ::Type{X}) where {X} = rand!(rng, y, Sampler(rng, X, Val(1)))

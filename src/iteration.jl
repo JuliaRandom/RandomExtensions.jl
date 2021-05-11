@@ -11,8 +11,8 @@ end
 Rand(rng::AbstractRNG, X) = Rand(rng, Sampler(rng, X))
 Rand(rng::AbstractRNG, ::Type{X}=Float64) where {X} = Rand(rng, Sampler(rng, X))
 
-Rand(X) = Rand(GLOBAL_RNG, X)
-Rand(::Type{X}=Float64) where {X} = Rand(GLOBAL_RNG, X)
+Rand(X) = Rand(default_rng(), X)
+Rand(::Type{X}=Float64) where {X} = Rand(default_rng(), X)
 
 (R::Rand)(args...) = rand(R.rng, R.sp, args...)
 
@@ -24,5 +24,5 @@ Base.eltype(::Type{<:Rand{R, <:Sampler{T}}}) where {R,T} = T
 
 # convenience iteration over distributions
 
-Base.iterate(d::Distribution) = iterate(Rand(GLOBAL_RNG, d))
+Base.iterate(d::Distribution) = iterate(Rand(default_rng(), d))
 Base.IteratorSize(::Type{<:Distribution}) = Base.IsInfinite()
