@@ -1,5 +1,7 @@
 using RandomExtensions, Random, SparseArrays
-using Random: Sampler, gentype
+using Random: Sampler, gentype, SamplerSimple
+using RandomExtensions: Distribution
+using StableRNGs
 
 @testset "Distributions" begin
     # Normal/Exponential
@@ -636,6 +638,8 @@ end
 
 Base.eltype(::Type{DieT{T}}) where {T} = T
 
+struct PlayWithDice <: Distribution{Tuple{Int,Int}} end
+
 @testset "@rand" begin
     must_run = !run_once
     global run_once = true
@@ -740,6 +744,41 @@ Base.eltype(::Type{DieT{T}}) where {T} = T
         @rand rand(d::DieT{T}) where {T<:Bool} =
             T(typemin(T) + rand(typemin(T):typemax(T)))
         @test rand(d) isa Bool
+    end
+
+    @testset "variable dependency" begin
+        @rand function (p::PlayWithDice)
+            u = 1:99
+            a, x = rand(u), 0 # depends on variable assigned above, don't put in subsampler
+            # also check that multiple assignments works fine
+            b = rand(u, rand(1:9)) # idem, but second arg can be put in subsampler
+            c = rand(1:a) # depends on randomized expression (a), can't put in subsampler
+            for i=1:3
+                rand(1:i) # depends on loop variable, can't put in subsampler
+            end
+            d = rand(1:rand(1:33)) # nested rand calls, can't put outer one in subsampler
+            length(b), d
+        end
+        pwd = PlayWithDice()
+        l_v = rand(pwd, 9)
+        @test l_v isa Vector{Tuple{Int,Int}}
+        @test all(in(1:33), last.(l_v))
+        @test all(in(1:9), first.(l_v))
+        # check that all rand calls depend on the passed rng
+        seed = rand(UInt)
+        # we use StableRNGs because sp1 below has stable type across Julia versions
+        len_res = rand(StableRNG(seed), pwd)
+        @test all(_ -> len_res == rand(StableRNG(seed), pwd), 1:100)
+        # check that we create subsampler for inner call in rand(1:rand(1:33))
+        sp = Sampler(StableRNG, pwd)
+        @test sp isa SamplerSimple && length(sp.data) == 2
+        sp1, sp2 = sp.data
+        @test sp1 isa StableRNGs.SamplerRangeFast
+        @test sp1.m == 9-1
+        @test rand(StableRNG(0), sp1) ∈ 1:9
+        @test sp2 isa StableRNGs.SamplerRangeFast
+        @test sp2.m == 33-1
+        @test rand(StableRNG(0), sp2) ∈ 1:33
     end
 end
 

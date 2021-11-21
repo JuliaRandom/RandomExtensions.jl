@@ -89,19 +89,55 @@ function as_sampler(ex, istrivial)
               Expr(:(<:), ex.args[2])))
 end
 
-function samplerize!(sps, ex, name, rng)
+# dependson checks whether an expression depends on previously defined
+# variables, stored in `vars`; as a hack, `vars` also contains `:rand` as we
+# can't store a sampler defined in terms of a random value
+dependson(s::Symbol, vars) = s in vars
+dependson(_, vars) = false
+dependson(ex::Expr, vars) = any(x -> dependson(x, vars), ex.args)
+
+# only `sps` and `vars` gets mutated, not `ex`
+function samplerize!(sps, ex, name, rng; vars = Set{Symbol}([:rand]))
     if ex == name
         # not within a rand() call
         return Expr(:ref, name) # name -> name[]
     end
     ex isa Expr || return ex
     if ex.head == :call && ex.args[1] == :rand
-        # we assume that if rand has more than one arg, we want
-        # a Val(Inf) sampler (e.g. rand(1:9, 2, 3)
-        push!(sps, ex.args[2] => length(ex.args) > 2)
-        i = length(sps)
-        Expr(:call, :rand, rng, :($name.data[$i]), ex.args[3:end]...)
+        # if the rand expression depends on a local variable, don't create a sampler
+        # (if this variable's value depends on a call to rand, we can't do anything,
+        # but otherwise we might still create a subsampler, by splicing the code creating
+        # this variable within the `Sampler` method, although the complication might
+        # not be worth it)
+        makesub = !any(x -> dependson(x, vars), ex.args[2:end])
+        if makesub
+            # we assume that if rand has more than one arg, we want
+            # a Val(Inf) sampler (e.g. rand(1:9, 2, 3)
+            # TODO: within a loop, we also want Val(Inf)
+            push!(sps, ex.args[2] => length(ex.args) > 2)
+            i = length(sps)
+            Expr(:call, :rand, rng, :($name.data[$i]), ex.args[3:end]...)
+            # TODO: for tail arguments, allow them to contain rand calls (which
+            # can create subsamplers), by assuming and @asserting they are
+            # Integer
+        else
+            # the arguments of rand might contain other rand calls (which need
+            # `rng` inserted), possibly with a subsampler
+            Expr(:call, :rand, rng, map(e -> samplerize!(sps, e, name, rng; vars=vars),
+                                        ex.args[2:end])...)
+        end
     else
-        Expr(ex.head, map(e -> samplerize!(sps, e, name, rng), ex.args)...)
+        if ex.head == :(=) # works also for `for` loops
+            if ex.args[1] isa Symbol
+                push!(vars, ex.args[1])
+            else
+                @assert Meta.isexpr(ex.args[1], :tuple)
+                push!(vars, ex.args[1].args...)
+            end
+            # TODO: we should probably pop! vars which come from nested blocks, i.e.
+            # restore `vars` to its initial state when samplerize! was entered, except
+            # keep the newly added var at this level
+        end
+        Expr(ex.head, map(e -> samplerize!(sps, e, name, rng; vars=vars), ex.args)...)
     end
 end
