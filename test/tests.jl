@@ -638,7 +638,10 @@ end
 
 Base.eltype(::Type{DieT{T}}) where {T} = T
 
-struct PlayWithDice <: Distribution{Tuple{Int,Int}} end
+struct PlayWithDice <: Distribution{Tuple{Int,Int}}
+    n::Int
+    m
+end
 
 @testset "@rand" begin
     must_run = !run_once
@@ -751,15 +754,15 @@ struct PlayWithDice <: Distribution{Tuple{Int,Int}} end
             u = 1:99
             a, x = rand(u), 0 # depends on variable assigned above, don't put in subsampler
             # also check that multiple assignments works fine
-            b = rand(u, rand(1:9)) # idem, but second arg can be put in subsampler
+            b = rand(u, rand(1:p.n)) # idem, but second arg could be put in subsampler
             c = rand(1:a) # depends on randomized expression (a), can't put in subsampler
             for i=1:3
                 rand(1:i) # depends on loop variable, can't put in subsampler
             end
-            d = rand(1:rand(1:33)) # nested rand calls, can't put outer one in subsampler
+            d = rand(1:rand(p.m)) # nested rand calls, can't put outer one in subsampler
             length(b), d
         end
-        pwd = PlayWithDice()
+        pwd = PlayWithDice(9, 1:33)
         l_v = rand(pwd, 9)
         @test l_v isa Vector{Tuple{Int,Int}}
         @test all(in(1:33), last.(l_v))

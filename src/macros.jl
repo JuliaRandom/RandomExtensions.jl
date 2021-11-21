@@ -98,6 +98,8 @@ dependson(ex::Expr, vars) = any(x -> dependson(x, vars), ex.args)
 
 # only `sps` and `vars` gets mutated, not `ex`
 function samplerize!(sps, ex, name, rng; vars = Set{Symbol}([:rand]))
+    samplerizeall!(args) = map(e -> samplerize!(sps, e, name, rng; vars=vars), args)
+
     if ex == name
         # not within a rand() call
         return Expr(:ref, name) # name -> name[]
@@ -116,15 +118,16 @@ function samplerize!(sps, ex, name, rng; vars = Set{Symbol}([:rand]))
             # TODO: within a loop, we also want Val(Inf)
             push!(sps, ex.args[2] => length(ex.args) > 2)
             i = length(sps)
-            Expr(:call, :rand, rng, :($name.data[$i]), ex.args[3:end]...)
+            Expr(:call, :rand, rng, :($name.data[$i]), samplerizeall!(ex.args[3:end])...)
+            # above, call to samplerizeall! essentially to handle case `ex == name`
+            # at the top of samplerize!
             # TODO: for tail arguments, allow them to contain rand calls (which
             # can create subsamplers), by assuming and @asserting they are
             # Integer
         else
             # the arguments of rand might contain other rand calls (which need
             # `rng` inserted), possibly with a subsampler
-            Expr(:call, :rand, rng, map(e -> samplerize!(sps, e, name, rng; vars=vars),
-                                        ex.args[2:end])...)
+            Expr(:call, :rand, rng, samplerizeall!(ex.args[2:end])...)
         end
     else
         if ex.head == :(=) # works also for `for` loops
@@ -138,6 +141,6 @@ function samplerize!(sps, ex, name, rng; vars = Set{Symbol}([:rand]))
             # restore `vars` to its initial state when samplerize! was entered, except
             # keep the newly added var at this level
         end
-        Expr(ex.head, map(e -> samplerize!(sps, e, name, rng; vars=vars), ex.args)...)
+        Expr(ex.head, samplerizeall!(ex.args)...)
     end
 end
