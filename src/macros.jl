@@ -1,5 +1,9 @@
-macro rand(exp)
-    rand_macro(exp)
+macro rand(ex::Expr)
+    rand_macro(ex)
+end
+
+macro distribution(ex::Expr)
+    distribution_macro(ex)
 end
 
 function rand_macro(ex)
@@ -33,7 +37,7 @@ function rand_macro(ex)
     # sub-samplers; second argument true forces Val(Inf) for the sampler
     sps = Pair{<:Any,Bool}[]
 
-    rng = gensym()
+    rng = gensym(:rng)
     body = samplerize!(sps, body, argname, rng)
     istrivial = isempty(sps)
 
@@ -143,4 +147,97 @@ function samplerize!(sps, ex, name, rng; vars = Set{Symbol}([:rand]))
         end
         Expr(ex.head, samplerizeall!(ex.args)...)
     end
+end
+
+
+function distribution_macro(ex)
+    def = splitdef(ex, throw=false)
+    def === nothing &&
+        error("@distribution expects a function definition")
+    dname = get(def, :name, nothing)
+    dname === nothing &&
+        error("@distribution expects a function with a name")
+
+    params = get(def, :params, [])
+    whereparams = get(def, :whereparams, [])
+    if !isempty(whereparams)
+        if isempty(params)
+            # params is considered "implicit"
+            copy!(params, whereparams)
+        elseif !issubset(whereparams, params)
+            error("`where` parameters were specified which don't appear as ",
+                  "distribution type parameters")
+        end
+    end
+
+    # dfullname: distribution name used for creating struct, with all type parameters
+    dfullname = isempty(params) ? dname : Expr(:curly, dname, params...)
+    # darg: distribution name used as argument for rand
+    if isempty(whereparams)
+        darg = dname
+    else
+        darg = copy(dfullname)
+        for ii in eachindex(params)
+            if darg.args[ii+1] ∉ whereparams
+                darg.args[ii+1] = Expr(:<:, :Any)
+            end
+        end
+    end
+
+    rtype = get(def, :rtype, nothing)
+    argname = gensym(:arg)
+    fields = get(def, :args, [])
+    for field in fields
+        if Meta.isexpr(field, :(::))
+            field.args[2] = esc(field.args[2])
+        end
+    end
+
+    # replace all arguments in body by dotted access
+    syms = args_tuple_expr(fields).args
+
+    function replace_args!(ex::Expr)
+        map!(replace_args!, ex.args, ex.args)
+        ex
+    end
+    function replace_args!(s::Symbol)
+        if s ∈ syms
+            Expr(:., argname, QuoteNode(s))
+        else
+            s
+        end
+    end
+    replace_args!(x) = x
+
+    body = def[:body]
+    loc = body.args[1] isa LineNumberNode ? body.args[1] : LineNumberNode(0, :none)
+
+    randdef = Dict{Symbol, Any}(
+        :body => replace_args!(body),
+        :args => Any[:($argname :: $darg)],
+        :head => :function, # can't use def[:head], as it can be :(=), incompatible with
+                            # empty :name
+    )
+
+    distritype = Expr(:curly, :Distribution)
+    if rtype !== nothing
+        rtype = esc(rtype)
+        # randdef[:rtype] = rtype # TODO: @rand doesn't support rtype for now
+        push!(distritype.args, rtype)
+    else
+        push!(distritype.args, :Any)
+    end
+    if !isempty(whereparams)
+        randdef[:whereparams] = whereparams
+    end
+
+    if Meta.isexpr(dfullname, :curly)
+        dfullname = Expr(:curly, dfullname.args[1], esc.(dfullname.args[2:end])...)
+    end
+
+    Expr(:block,
+         Expr(:struct, false,
+              Expr(:<:, dfullname, distritype),
+              Expr(:block, loc, fields...)),
+         rand_macro(combinedef(randdef)))
 end

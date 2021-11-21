@@ -1,7 +1,7 @@
 module RandomExtensions
 
 export make, Uniform, Normal, Exponential, CloseOpen, OpenClose, OpenOpen, CloseClose, Rand,
-       Bernoulli, Categorical, @rand
+       Bernoulli, Categorical, @rand, @distribution
 
 # re-exports from Random, which don't overlap with new functionality and not from misc.jl
 export rand!, AbstractRNG, MersenneTwister, RandomDevice
@@ -12,6 +12,8 @@ using Random
 using Random: GLOBAL_RNG, SamplerTrivial, SamplerSimple, SamplerTag, SamplerType, Repetition
 
 using SparseArrays: sprand, sprandn, AbstractSparseArray, SparseVector, SparseMatrixCSC
+
+using ExprTools
 
 if isdefined(Random, :default_rng)
     using Random: default_rng

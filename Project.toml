@@ -4,13 +4,14 @@ authors = ["Rafael Fourquet <fourquet.rafael@gmail.com>"]
 version = "0.4.3"
 
 [deps]
+ExprTools = "e2ba6199-217a-4e67-a87a-7c52f15ade04"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
 ReTest = "0.3"
 StableRNGs = "1"
-julia = "1"
+julia = "1.1"
 
 [extras]
 ReTest = "e0db7c4e-2690-44b9-bad6-7687da720f89"

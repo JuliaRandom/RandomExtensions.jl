@@ -785,6 +785,41 @@ end
     end
 end
 
+@testset "@distribution" begin
+    @distribution function PlayDist{K,V}(k::K, v::V)::Int where V
+        if V == Int # check that using K works
+            rand(k:v)
+        else
+            rand(1:k)
+        end
+    end
+
+    p1 = PlayDist(10, 20)
+    @test eltype(p1) == Int
+    @test all(in(10:20), rand(p1, 100))
+
+    p2 = PlayDist(5, 0xa) # v must still be integer, so that k:v can be put in a
+    # subsampler
+    @test eltype(p2) == Int
+    @test all(in(1:5), rand(p2, 100))
+
+    @distribution PlayDist2() = rand(1:6)
+    vs = rand(PlayDist2(), 100)
+    @test eltype(vs) == Any
+    @test all(in(1:6), vs)
+
+    @distribution PlayDist3()::Int = rand(1:6)
+    vs = rand(PlayDist3(), 100)
+    @test eltype(vs) == Int
+    @test all(in(1:6), vs)
+
+    # type parameters automatically deduced from where parameters
+    @distribution (PlayDist4(x::T)::T) where T = rand(one(x):x)
+    vs = rand(PlayDist4(0x6), 100)
+    @test eltype(vs) == UInt8
+    @test all(in(1:6), vs)
+end
+
 module TestAtRand
 # only using RandomExtensions, not Random, to check we don't depend on
 # some imported names like e.g. SamplerTrivial
