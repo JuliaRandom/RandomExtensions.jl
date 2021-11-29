@@ -55,13 +55,11 @@ Make5{T}(x, y, z, u, v) where {T} = Make{T}(x, y, z, u, v)
 
 maketype(::Type{T}, x...) where {T} = T
 
-Make(::Type{T}, x...) where {T} = Make{maketype(T, x...)}(x...)
-make(::Type{T}, x...) where {T} = Make{maketype(T, x...)}(x...)
+Make(::Type{T}, xs...) where {T} = Make{maketype(T, xs...)}(xs...)
+make(::Type{T}, xs...) where {T} = Make{maketype(T, xs...)}(xs...)
 
-# make(x) is defined in sampling.jl, and is a special case wrapping already valid
-# distributions (explicit or implicit)
-Make(x1, x2, xs...) = Make{maketype(x1, x2, xs...)}(x1, x2, xs...)
-make(x1, x2, xs...) = Make{maketype(x1, x2, xs...)}(x1, x2, xs...)
+Make(x1, xs...) = Make{maketype(x1, xs...)}(x1, xs...)
+make(x1, xs...) = Make{maketype(x1, xs...)}(x1, xs...)
 
 find_deduced_type(::Type{T}, ::X,     ) where {T,X} = deduce_type(T, gentype(X))
 find_deduced_type(::Type{T}, ::Type{X}) where {T,X} = deduce_type(T, X)

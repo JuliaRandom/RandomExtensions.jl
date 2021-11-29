@@ -13,40 +13,6 @@ sampler(::Type{RNG}, X::Sampler, n::Repetition=Val(Inf)) where {RNG<:AbstractRNG
 sampler(rng::AbstractRNG, X, n::Repetition=Val(Inf)) = sampler(typeof(rng), X, n)
 
 
-## defaults
-
-### 0-arg
-
-make() = make(Float64)
-
-### type: handles e.g. rand(make(Int))
-
-# rand(rng, ::SamplerType{Make0{X}}) should not be overloaded, as make(T)
-# has this special pass-thru Sampler defined below
-
-Sampler(::Type{RNG}, ::Make0{X}, n::Repetition) where {RNG<:AbstractRNG,X} =
-    Sampler(RNG, X, n)
-
-### object: handles e.g. rand(make(1:3))
-
-# make(x) where x isn't a type should create a distribution d such that rand(x) is
-# equivalent to rand(d); so we need to overload make(x) to give a different type
-# than Make1{gentype(x)}, as we can't simply define a generic pass-thru Sampler for
-# that Make1 type (because users expect the default to be a SamplerTrivial{<:Make1{...}},
-# and might want to define only a rand method on this SamplerTrivial)
-
-# like Make1
-struct MakeWrap{T,X} <: Distribution{T}
-    x::X
-end
-
-# make(::Type) is intercepted in distribution.jl
-make(x) = MakeWrap{gentype(x),typeof(x)}(x)
-
-Sampler(::Type{RNG}, x::MakeWrap, n::Repetition) where {RNG<:AbstractRNG} =
-    Sampler(RNG, x.x, n)
-
-
 ## Uniform
 
 Sampler(::Type{RNG}, d::Union{UniformWrap,UniformType}, n::Repetition

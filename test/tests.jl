@@ -1,6 +1,6 @@
 using RandomExtensions, Random, SparseArrays
-using Random: Sampler, gentype, SamplerSimple
-using RandomExtensions: Distribution
+using Random: Sampler, gentype, SamplerSimple, SamplerTrivial
+using RandomExtensions: Distribution, Make
 using StableRNGs
 
 @testset "Distributions" begin
@@ -269,7 +269,7 @@ end
 struct PairDistrib <: RandomExtensions.Distribution{Pair}
 end
 
-Random.rand(rng::AbstractRNG, ::Random.SamplerTrivial{PairDistrib}) = 1=>2
+Random.rand(rng::AbstractRNG, ::SamplerTrivial{PairDistrib}) = 1=>2
 
 @testset "allow abstract Pair when generating a Dict" begin
     d = rand(PairDistrib(), Dict, 1)
@@ -566,13 +566,6 @@ end
     @test rand(make(SparseVector, make(SparseMatrixCSC, 1:9, 0.3, 2, 3), .1, 4)) isa SparseVector{SparseMatrixCSC{Int64,Int64},Int64}
 end
 
-@testset "rand(make(default))" begin
-    @test rand(make()) isa Float64
-    @test rand(make(1:3)) isa Int
-    @test rand(make(1:3)) ∈ 1:3
-    @test rand(make(Float64)) isa Float64
-end
-
 @testset "rand(T => x) & rand(T => (x, y, ...))" begin
     @test rand(Complex => Int) isa Complex{Int}
     @test rand(Pair => (String, Int8)) isa Pair{String,Int8}
@@ -591,21 +584,33 @@ struct MyType
     x
 end
 
-RandomExtensions.maketype(x::MyType, y) = eltype(x.x:y)
+RandomExtensions.maketype(x::MyType, y=x.x, z...) = eltype(x.x:y)
 
-Base.rand(rng::AbstractRNG,
-          x::Random.SamplerTrivial{<:RandomExtensions.Make2{<:Integer, MyType}}) =
-              rand(rng, x[][1].x:x[][2])
+# make(::MyType, x...) where x can have any length, even 0
+function Base.rand(rng::AbstractRNG,
+                   x::SamplerTrivial{<:Make{<:Integer, <:Tuple{MyType, Vararg}}})
+    a = x[][1].x
+    b = lastindex(x[]) == 1 ? a : sum(x[][2:end])
+    rand(rng, a:b)
+end
+
+# test that Sampler(rng, make(::Type)) should not have a general fallback definition
+Random.rand(rng::AbstractRNG, ::SamplerTrivial{<:RandomExtensions.Make0{MyType}}) =
+    MyType(42)
 
 @testset "rand(make(CustomType(), ...))" begin
     m = MyType(3)
+    @test rand(make(m)) == 3
+    @test rand(Make(m)) == 3
     @test rand(make(m, 3)) == 3
+    @test rand(Make(m, 2, 1)) == 3
     @test rand(make(m, big(5))) isa BigInt
     @test rand(make(m, big(5))) ∈ 3:5
     a = rand(make(m, big(6)), 5)
     @test a isa Vector{BigInt}
     @test length(a) == 5
     @test all(∈(3:6), a)
+    @test rand(make(MyType)).x == 42
 end
 
 ## Make getindex
