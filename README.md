@@ -1,6 +1,7 @@
 # RandomExtensions
 
 [![Tests Status](https://github.com/JuliaRandom/RandomExtensions.jl/workflows/CI/badge.svg)](https://github.com/JuliaRandom/RandomExtensions.jl/actions?query=workflow%3ACI)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaRandom.github.io/RandomExtensions.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaRandom.github.io/RandomExtensions.jl/dev)
 
 This package explores a possible extension of `rand`-related
