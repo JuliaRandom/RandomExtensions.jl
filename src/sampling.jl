@@ -228,6 +228,17 @@ Sampler(::Type{RNG}, ::Type{T}, n::Repetition
         ) where {RNG<:AbstractRNG,T<:Union{Tuple,NamedTuple}} =
             Sampler(RNG, make(T), n)
 
+if VERSION >= v"1.11.0-DEV.573"
+    # now `Random` implements `rand(Tuple{...})`, so be more specific for
+    # special stuff still not implemented by `Random`
+    # TODO: we should probably remove this
+    Sampler(::Type{RNG}, ::Type{Tuple}, n::Repetition) where {RNG <: AbstractRNG} =
+        Sampler(RNG, make(Tuple), n)
+
+    Sampler(::Type{RNG}, ::Type{NTuple{N}}, n::Repetition) where {RNG <: AbstractRNG, N} =
+        Sampler(RNG, make(NTuple{N}), n)
+end
+
 #### make
 
 # implement make(Tuple, S1, S2...), e.g. for rand(make(Tuple, Int, 1:3)),
