@@ -206,8 +206,10 @@ rand(rng::AbstractRNG, sp::SamplerTag{Cont{T}}) where {T<:Union{Pair,Complex}} =
 #### additional convenience methods
 
 # rand(Pair{A,B}) => rand(make(Pair{A,B}, A, B))
-Sampler(::Type{RNG}, ::Type{Pair{A,B}}, n::Repetition) where {RNG<:AbstractRNG,A,B} =
-    Sampler(RNG, make(Pair{A,B}, A, B), n)
+if VERSION < v"1.11.0-DEV.618" # now implemented in `Random`
+    Sampler(::Type{RNG}, ::Type{Pair{A,B}}, n::Repetition) where {RNG<:AbstractRNG,A,B} =
+        Sampler(RNG, make(Pair{A,B}, A, B), n)
+end
 
 # rand(make(Complex, x)) => rand(make(Complex, x, x))
 Sampler(::Type{RNG}, u::Make1{T}, n::Repetition) where {RNG<:AbstractRNG,T<:Complex} =
