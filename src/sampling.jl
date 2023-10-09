@@ -206,8 +206,10 @@ rand(rng::AbstractRNG, sp::SamplerTag{Cont{T}}) where {T<:Union{Pair,Complex}} =
 #### additional convenience methods
 
 # rand(Pair{A,B}) => rand(make(Pair{A,B}, A, B))
-Sampler(::Type{RNG}, ::Type{Pair{A,B}}, n::Repetition) where {RNG<:AbstractRNG,A,B} =
-    Sampler(RNG, make(Pair{A,B}, A, B), n)
+if VERSION < v"1.11.0-DEV.618" # now implemented in `Random`
+    Sampler(::Type{RNG}, ::Type{Pair{A,B}}, n::Repetition) where {RNG<:AbstractRNG,A,B} =
+        Sampler(RNG, make(Pair{A,B}, A, B), n)
+end
 
 # rand(make(Complex, x)) => rand(make(Complex, x, x))
 Sampler(::Type{RNG}, u::Make1{T}, n::Repetition) where {RNG<:AbstractRNG,T<:Complex} =
@@ -225,6 +227,17 @@ Sampler(::Type{RNG}, ::Type{Complex{T}}, n::Repetition) where {RNG<:AbstractRNG,
 Sampler(::Type{RNG}, ::Type{T}, n::Repetition
         ) where {RNG<:AbstractRNG,T<:Union{Tuple,NamedTuple}} =
             Sampler(RNG, make(T), n)
+
+if VERSION >= v"1.11.0-DEV.573"
+    # now `Random` implements `rand(Tuple{...})`, so be more specific for
+    # special stuff still not implemented by `Random`
+    # TODO: we should probably remove this
+    Sampler(::Type{RNG}, ::Type{Tuple}, n::Repetition) where {RNG <: AbstractRNG} =
+        Sampler(RNG, make(Tuple), n)
+
+    Sampler(::Type{RNG}, ::Type{NTuple{N}}, n::Repetition) where {RNG <: AbstractRNG, N} =
+        Sampler(RNG, make(NTuple{N}), n)
+end
 
 #### make
 
