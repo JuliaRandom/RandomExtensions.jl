@@ -7,12 +7,12 @@
 
 This package explores a possible extension of `rand`-related
 functionalities (from the `Random` module); the code is initially
-taken from https://github.com/JuliaLang/julia/pull/24912.
+taken from <https://github.com/JuliaLang/julia/pull/24912>.
 Note that type piracy is committed!
 While hopefully useful, this package is still experimental, and
 hence unstable. User feedback, and design or implementation contributions are welcome.
 
-This does essentially 4 things:
+This does essentially four things:
 
 1) define distribution objects, to give first-class status to features
    provided by `Random`; for example `rand(Normal(), 3)` is equivalent
@@ -63,7 +63,7 @@ For convenience, the following names from `Random` are re-exported
 in this package: `rand!`, `AbstractRNG`, `MersenneTwister`,
 `RandomDevice` (`rand` is in `Base`). Functions like `randn!` or
 `randstring` are considered to be obsoleted by this package so are not
-re-exported. It's still needed to import `Random` separately in order
+re-exported. It is still necessary to import `Random` separately in order
 to use functions which don't extend the `rand` API, namely
 `randsubseq`, `shuffle`, `randperm`, `randcycle`, and their mutating
 variants.
@@ -92,7 +92,7 @@ julia> rand(make(Pair, 1:10, Normal())) # random Pair, where both members have d
 5 => 0.674375
 
 julia> rand(make(Pair{Number,Any}, 1:10, Normal())) # specify the Pair type
-Pair{Number,Any}(1, -0.131617)
+Pair{Number, Any}(1, -0.131617)
 
 julia> rand(Pair{Float64,Int}) # equivalent to rand(make(Pair, Float64, Int))
 0.321676 => -4583276276690463733
@@ -122,35 +122,46 @@ julia> rand(Normal(ComplexF64)) # equivalent to randn(ComplexF64)
 0.9322376894079347 + 0.2812214248483498im
 
 julia> rand(Set, 3)
-Set([0.717172, 0.78481, 0.86901])
+Set{Float64} with 3 elements:
+  0.0675168818514279
+  0.31058418699493895
+  0.15029104540378424
 
-julia>  rand!(ans, Exponential())
-Set([0.7935073925105659, 2.593684878770254, 1.629181233597078])
+julia> rand!(ans, Exponential())
+Set{Float64} with 3 elements:
+  1.082312697650858
+  1.2984094155972015
+  0.016146678329819485
 
 julia> rand(1:9, Set, 3) # if you try `rand(1:3, Set, 9)`, it will take a while ;-)
-Set([3, 5, 8])
+Set{Int64} with 3 elements:
+  4
+  7
+  1
 
 julia> rand(Dict{String,Int8}, 2)
-Dict{String,Int8} with 3 entries:
+Dict{String, Int8} with 2 entries:
   "vxybIbae" => 42
   "bO2fTwuq" => -13
 
 julia> rand(make(Pair, 1:9, Normal()), Dict, 3)
-Dict{Int64,Float64} with 3 entries:
+Dict{Int64, Float64} with 3 entries:
   9 => 0.916406
   3 => -2.44958
   8 => -0.703348
 
+julia> using SparseArrays
+
 julia> rand(SparseVector, 0.3, 9) # equivalent to sprand(9, 0.3)
-9-element SparseVector{Float64,Int64} with 3 stored entries:
+9-element SparseVector{Float64, Int64} with 3 stored entries:
   [1]  =  0.173858
   [6]  =  0.568631
   [8]  =  0.297207
 
 julia> rand(Normal(), SparseMatrixCSC, 0.3, 2, 3) # equivalent to sprandn(2, 3, 0.3)
-2×3 SparseMatrixCSC{Float64,Int64} with 2 stored entries:
-  [2, 1]  =  0.448981
-  [1, 2]  =  0.730103
+2×3 SparseMatrixCSC{Float64, Int64} with 2 stored entries:
+  ⋅        -1.5617   ⋅
+ 0.572305    ⋅       ⋅
 
 # like for Array, sparse arrays enjoy to be special cased: `SparseVector` or `SparseMatrixCSC`
 # can be omitted in the `rand` call (not in the `make` call):
@@ -168,26 +179,29 @@ julia> rand(make(String, 3, "123")) # ... which is as always equivalent to a cal
 "211"
 
 julia> rand(String, Set, 3) # String considered as a scalar
-Set(["0Dfqj6Yr", "ILngfcRz", "HT5IEyK3"])
+Set{String} with 3 elements:
+  "jDbjXu9b"
+  "0Lo75VKo"
+  "webpNhfY"
 
 julia> rand(BitArray, 3) # equivalent to, but unfortunately more verbose than, bitrand(3)
-3-element BitArray{1}:
-  true
-  true
- false
+3-element BitVector:
+ 1
+ 1
+ 0
 
-julia> julia> rand(Bernoulli(0.2), BitVector, 10) # using the Bernoulli distribution
-10-element BitArray{1}:
- false
- false
- false
- false
-  true
- false
-  true
- false
- false
-  true
+julia> rand(Bernoulli(0.2), BitVector, 10) # using the Bernoulli distribution
+10-element BitVector:
+ 0
+ 1
+ 0
+ 1
+ 0
+ 0
+ 0
+ 0
+ 0
+ 1
 
 julia> rand(1:3, NTuple{3}) # NTuple{3} considered as a container, equivalent to rand(make(NTuple{3}, 1:3))
 (3, 3, 1)
@@ -208,13 +222,15 @@ julia> rand(make(MVector{2,AbstractString}, String), SMatrix{3, 2})
  ["fFJuUtJQ", "H2mAQrIV"]  ["pt0OYFJw", "O0fCfjjR"]
 
 julia> Set(Iterators.take(Rand(RandomDevice(), 1:10), 3)) # RNG defaults to Random.default_rng()
-Set([9, 2, 6]) # note that the set could end up with less than 3 elements if `Rand` generates duplicates
+Set{Int64} with 2 elements: # note that the set can end up with less than 3 elements if `Rand` generates duplicates
+  5
+  9
 
 julia> collect(Iterators.take(Uniform(1:10), 3)) # distributions can be iterated over, using Random.default_rng() implicitly
-3-element Array{Int64,1}:
-  7
- 10
-  5
+3-element Vector{Int64}:
+ 9
+ 6
+ 8
 
 julia> rand(Complex => Int) # equivalent to rand(make(Complex, Int)) (experimental)
 4610038282330316390 + 4899086469899572461im
