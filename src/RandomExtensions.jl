@@ -9,14 +9,14 @@ export rand!, AbstractRNG, MersenneTwister, RandomDevice
 import Random: Sampler, rand, rand!, gentype
 
 using Random
-using Random: GLOBAL_RNG, SamplerTrivial, SamplerSimple, SamplerTag, SamplerType, Repetition
+using Random: SamplerTrivial, SamplerSimple, SamplerTag, SamplerType, Repetition
 
 using SparseArrays: sprand, sprandn, AbstractSparseArray, SparseVector, SparseMatrixCSC
 
 if isdefined(Random, :default_rng)
     using Random: default_rng
 else
-    @inline default_rng() = GLOBAL_RNG
+    @inline default_rng() = Random.GLOBAL_RNG
 end
 
 
@@ -60,7 +60,7 @@ include("macros.jl")
 ## updated rand docstring (TODO: replace Base's one)
 
 """
-    rand([rng=GLOBAL_RNG], [S], [C...]) # RandomExtensions
+    rand([rng=default_rng()], [S], [C...]) # RandomExtensions
 
 Pick a random element or collection of random elements from the set of values specified by `S`;
 `S` can be
