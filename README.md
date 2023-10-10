@@ -1,6 +1,7 @@
 # RandomExtensions
 
 [![Tests Status](https://github.com/JuliaRandom/RandomExtensions.jl/workflows/CI/badge.svg)](https://github.com/JuliaRandom/RandomExtensions.jl/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/JuliaRandom/RandomExtensions.jl/graph/badge.svg?token=3crLCcitZR)](https://codecov.io/gh/JuliaRandom/RandomExtensions.jl)
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaRandom.github.io/RandomExtensions.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaRandom.github.io/RandomExtensions.jl/dev)
 
