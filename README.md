@@ -207,10 +207,10 @@ julia> rand(make(MVector{2,AbstractString}, String), SMatrix{3, 2})
  ["FMTKcBY8", "eoYtNntD"]  ["FzdD530L", "ux6sWGMU"]
  ["fFJuUtJQ", "H2mAQrIV"]  ["pt0OYFJw", "O0fCfjjR"]
 
-julia> Set(Iterators.take(Rand(RandomDevice(), 1:10), 3)) # RNG defaults to Random.GLOBAL_RNG
+julia> Set(Iterators.take(Rand(RandomDevice(), 1:10), 3)) # RNG defaults to Random.default_rng()
 Set([9, 2, 6]) # note that the set could end up with less than 3 elements if `Rand` generates duplicates
 
-julia> collect(Iterators.take(Uniform(1:10), 3)) # distributions can be iterated over, using Random.GLOBAL_RNG implicitly
+julia> collect(Iterators.take(Uniform(1:10), 3)) # distributions can be iterated over, using Random.default_rng() implicitly
 3-element Array{Int64,1}:
   7
  10
